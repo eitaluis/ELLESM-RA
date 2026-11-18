@@ -10,7 +10,7 @@ function construirMenoa(){
   const grupo=new THREE.Group(),cx=-380,cz=520,yBase=alturaTerreno(cx,cz);
   // Livro: Menoa tem a mesma altura das árvores vizinhas; é o tronco que é
   // colossal, mais grosso que cem árvores comuns. Diâmetro de projeto: 60 m.
-  const altura=94,raioBase=34,raioTopo=15;
+  const altura=245,raioBase=34,raioTopo=15;
   const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0xb0956d,roughness:.98,side:THREE.DoubleSide});
   const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x957a55,roughness:1,side:THREE.DoubleSide});
   const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xb69a6d,roughness:1,side:THREE.DoubleSide});

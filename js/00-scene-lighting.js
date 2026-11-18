@@ -3,7 +3,7 @@
 // ============================================================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xaec5d0);
-scene.fog = new THREE.FogExp2(0xc5d8c2, 0.00042);
+scene.fog = new THREE.FogExp2(0xc5d8c2, 0.00076);
 
 const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 8000);
 camera.position.set(0, 1.7, 34);
@@ -41,6 +41,46 @@ scene.add(sun); scene.add(sun.target);
 const fill = new THREE.DirectionalLight(0xd8ead5, 1.15);
 fill.position.set(400, 200, -400);
 scene.add(fill);
+
+// Camadas de névoa suspensas entre os três níveis da floresta.
+// As copas superiores só se revelam gradualmente conforme o visitante sobe.
+function criarNeblinaDeCopas(){
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
+  const ctx=canvas.getContext('2d');
+  const g=ctx.createRadialGradient(256,128,8,256,128,238);
+  g.addColorStop(0,'rgba(245,250,246,0.46)');
+  g.addColorStop(.34,'rgba(235,244,239,0.30)');
+  g.addColorStop(.72,'rgba(224,237,231,0.10)');
+  g.addColorStop(1,'rgba(224,237,231,0)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,512,256);
+  for(let i=0;i<34;i++){
+    const x=20+Math.random()*472,y=40+Math.random()*176,rx=24+Math.random()*82,ry=8+Math.random()*25;
+    const puff=ctx.createRadialGradient(x,y,1,x,y,Math.max(rx,ry));
+    puff.addColorStop(0,'rgba(255,255,255,0.22)');
+    puff.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=puff;ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.random()*.6-.3,0,Math.PI*2);ctx.fill();
+  }
+  const texture=new THREE.CanvasTexture(canvas);
+  const material=new THREE.MeshBasicMaterial({map:texture,color:0xe0e9e3,transparent:true,opacity:.31,depthWrite:false,side:THREE.DoubleSide});
+  const geometry=new THREE.PlaneGeometry(210,76);
+  const count=32,clouds=new THREE.InstancedMesh(geometry,material,count),dummy=new THREE.Object3D();
+  const bands=[58,112,166,218];
+  let index=0;
+  for(let band=0;band<bands.length;band++)for(let j=0;j<8;j++){
+    const x=((j*347+band*191)%1900)-950;
+    const z=((j*563+band*277)%1900)-950;
+    dummy.position.set(x,bands[band]+(Math.random()-.5)*12,z);
+    dummy.rotation.set((Math.random()-.5)*.18,Math.random()*Math.PI,(Math.random()-.5)*.16);
+    dummy.scale.set(.72+Math.random()*.95,.72+Math.random()*.7,1);
+    dummy.updateMatrix();clouds.setMatrixAt(index++,dummy.matrix);
+  }
+  clouds.instanceMatrix.needsUpdate=true;
+  clouds.frustumCulled=false;
+  clouds.renderOrder=3;
+  scene.add(clouds);
+}
+
+criarNeblinaDeCopas();
 
 // ============================================================================
 // 3. PONTOS

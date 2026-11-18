@@ -3,9 +3,9 @@
  // ============================================================================
 function criarPinheiroGeo(seed,tipo='adulto'){
   const rand=(a,b)=>a+Math.random()*(b-a),sapling=tipo==='sub-bosque';
-  const altura=sapling?rand(30,48):rand(78,90);
-  const raioBase=sapling?rand(.78,1.28):rand(3.1,3.65);
-  const topoRaio=sapling ? .07 : .17;
+  const altura=sapling?rand(90,144):rand(225,270);
+  const raioBase=sapling?rand(2.1,3.2):rand(5.2,6.2);
+  const topoRaio=sapling ? .14 : .30;
   const crownStart=altura*(sapling?rand(.38,.46):rand(.49,.57));
   const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
@@ -170,7 +170,7 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
     const scale=.98+Math.random()*.20,scaleY=scale*1.06;dummy.scale.set(scale*1.16,scaleY,scale*1.16);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
     imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.42+Math.random()*.16,.37+Math.random()*.11));
-    colisores.push({x:p.x,z:p.z,raio:variante.raioBase+.7});
+    colisores.push({x:p.x,z:p.z,raio:variante.raioBase*scale*1.16+.9});
     if(Math.hypot(p.x,p.z)<700){
       const cs=Math.cos(rotation),sn=Math.sin(rotation);
       for(let ri=0;ri<variante.raizes.length;ri+=6){
@@ -215,7 +215,7 @@ VARIANTES_SEC.forEach((variante, vi) => {
     const scale=.92+Math.random()*.18,scaleY=scale*1.05;dummy.scale.set(scale*1.18,scaleY,scale*1.18);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
     imC.setColorAt(i,new THREE.Color().setHSL(.255+Math.random()*.055,.38+Math.random()*.16,.34+Math.random()*.11));
-    colisores.push({x:s.x,z:s.z,raio:variante.raioBase+.35});
+    colisores.push({x:s.x,z:s.z,raio:variante.raioBase*scale*1.18+.65});
     if(Math.hypot(s.x,s.z)<700){
       const cs=Math.cos(rotation),sn=Math.sin(rotation);
       for(let ri=0;ri<variante.raizes.length;ri+=6){
@@ -310,8 +310,8 @@ function distribuirRasteira(geo,material,count,minH,maxH,raioColisao=0){
   lista.forEach((o,i)=>{dummy.position.set(o.x,alturaTerreno(o.x,o.z),o.z);dummy.rotation.y=o.r;dummy.scale.setScalar(o.s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);if(raioColisao>0)colisores.push({x:o.x,z:o.z,raio:raioColisao});});
   im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 2000, 0.8, 2.25);
-distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 1100, 0.7, 1.9, 0.8);
+distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 2800, 0.9, 2.65);
+distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 1750, 0.8, 2.25, 0.8);
 distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 200, 0.6, 1.6, 0.7);
 
 // Capins de sub-bosque em touceiras: lâminas longas, finas e arqueadas.
@@ -329,7 +329,7 @@ function criarGramaGeo(){
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),2400,.62,1.25);
+distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),4600,1.0,2.1);
 
 // CAMADA EXTRA DE FLORESTA — vegetação de transição, troncos caídos e musgo.
 function criarLogGeo(){
@@ -368,7 +368,7 @@ const mossGeo=new THREE.BufferGeometry();
 }
 const mossMat=new THREE.MeshStandardMaterial({color:0x465b2e,roughness:1,side:THREE.DoubleSide});
 const moss=[];
-for(let patch=0;patch<400;patch++){
+for(let patch=0;patch<650;patch++){
   const cx=(Math.random()-.5)*2850,cz=(Math.random()-.5)*2850;
   if(emClareira(cx,cz,2)||distanciaCaminhos(cx,cz)<2||Math.hypot(cx+380,cz-520)<150)continue;
   const count=3+Math.floor(Math.random()*7),radius=2+Math.random()*7;
@@ -412,8 +412,8 @@ function scatterInstanced(geo,mat,count,scaleMin,scaleMax,excludeClearings=true)
   list.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.03,o.z);d.rotation.set((Math.random()-.5)*.18,o.r,(Math.random()-.5)*.18);d.scale.setScalar(o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);if(im.instanceColor){} });
   im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-scatterInstanced(leafGeo,leafMatA,2400,0.65,1.8);
-scatterInstanced(leafGeo,leafMatB,1400,0.45,1.35);
+scatterInstanced(leafGeo,leafMatA,3100,0.65,1.8);
+scatterInstanced(leafGeo,leafMatB,2200,0.45,1.35);
 
 // Raízes estruturais já fazem parte do tronco e se projetam pelo terreno.
 
