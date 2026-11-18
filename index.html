@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ellesméra — Floresta Viva + Arquitetura v19</title>
+<title>Ellesméra — V21 · cidade viva e circulação nas copas</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0f0a; font-family: monospace; }
   #hud { position: fixed; top: 10px; left: 10px; color: #cfe8cf; background: rgba(10,25,15,0.75);
@@ -1985,7 +1985,7 @@ function alturaChao(x,z,referenceY=null){
       const y=root?centerY+(root.r0*(1-t)+root.r1*t)*.78:centerY;
       const vertical=referenceY===null?0:Math.abs(y-referenceY);
       // Não "teleporta" o jogador para uma ponte sobre a cabeça; só aceita o piso no nível atual.
-      if(referenceY!==null&&vertical>2.6)continue;
+      if(referenceY!==null&&vertical>(root?4.2:2.6))continue;
       const score=d*d+vertical*vertical*.32;
       if(score<bestScore){bestScore=score;specialY=y;}
     }
