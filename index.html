@@ -551,10 +551,10 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   // Tronco contínuo com conicidade forte, leve sinuosidade e casca irregular.
   const trunk=[];
   for(let s=0;s<=12;s++){const t=s/12;trunk.push([cx+Math.sin(t*2.4+seed)*(.25+t*.8),t*altura,cz+Math.cos(t*1.9+seed*.4)*(.22+t*.55)]);}
-  addTube(posT,idxT,trunk,raioBase,topoRaio,20,48,.055);
+  addTube(posT,idxT,trunk,raioBase,topoRaio,16,40,.055);
 
   // Raízes expostas, ligadas ao colo do tronco e apoiadas sobre o solo.
-  const rootCount=sapling?6:11;
+  const rootCount=sapling?5:8;
   for(let r=0;r<rootCount;r++){
     const a=r/rootCount*Math.PI*2+rand(-.18,.18),len=sapling?rand(2.8,5.8):rand(8,16),side=Math.sin(a*2+seed)*.8;
     const root=[
@@ -563,13 +563,13 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side*1.8,.22,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side*1.8],
       [cx+Math.cos(a)*len,.07,cz+Math.sin(a)*len]
     ];
-    addTube(posT,idxT,root,raioBase*rand(.24,.38),.035,8,20,.20);
-    if(r%2===0){const fork=root[2],fa=a+rand(-.65,.65),fl=len*rand(.35,.58);addTube(posT,idxT,[fork,[fork[0]+Math.cos(fa)*fl*.45,.18,fork[2]+Math.sin(fa)*fl*.45],[fork[0]+Math.cos(fa)*fl,.05,fork[2]+Math.sin(fa)*fl]],.22,.025,7,12,.16);}
+    addTube(posT,idxT,root,raioBase*rand(.24,.38),.035,6,14,.20);
+    if(r%2===0){const fork=root[2],fa=a+rand(-.65,.65),fl=len*rand(.35,.58);addTube(posT,idxT,[fork,[fork[0]+Math.cos(fa)*fl*.45,.18,fork[2]+Math.sin(fa)*fl*.45],[fork[0]+Math.cos(fa)*fl,.05,fork[2]+Math.sin(fa)*fl]],.22,.025,6,9,.16);}
   }
 
   // Andares de galhos, mais longos na parte inferior da copa e progressivamente
   // menores no alto, com pequenos ramos alternados e agulhas finas individuais.
-  const levels=sapling?5:7,arms=sapling?6:8,baseReach=sapling?rand(6.5,10):rand(21,30);
+  const levels=sapling?4:6,arms=sapling?5:6,baseReach=sapling?rand(6.5,10):rand(21,30);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.92,reach=baseReach*(1-t*.86)+1.8,count=arms+(level%2);
     for(let arm=0;arm<count;arm++){
@@ -578,22 +578,22 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       const p1=[cx+Math.cos(a)*len*.34,y+len*.045,cz+Math.sin(a)*len*.34];
       const p2=[cx+Math.cos(a)*len*.70,y+len*.025-droop*.28,cz+Math.sin(a)*len*.70];
       const tip=[cx+Math.cos(a)*len,y+len*.015-droop,cz+Math.sin(a)*len];
-      addTube(posB,idxB,[root,p1,p2,tip],sapling ? .20 : .48,sapling ? .025 : .055,7,18,.13);
+      addTube(posB,idxB,[root,p1,p2,tip],sapling ? .20 : .48,sapling ? .025 : .055,5,10,.13);
 
       // Pequenos sprays distribuídos ao longo do galho principal.
-      for(let s=1;s<=5;s++){
+      for(let s=1;s<=3;s++){
         const q=s/6,px=cx+Math.cos(a)*len*q,py=y+len*.025*q-droop*q*.65,pz=cz+Math.sin(a)*len*q;
-        for(let n=0;n<4;n++){const aa=a+n*Math.PI*.5+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .28 : .72,sapling ? .62 : 1.55),sapling ? .035 : .075);}
+        for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .28 : .72,sapling ? .62 : 1.55),sapling ? .035 : .075);}
       }
 
       // Ramificações secundárias alternadas que quebram a silhueta em fios vegetais.
-      const twigN=sapling?4:6;
+      const twigN=sapling?2:4;
       for(let twig=0;twig<twigN;twig++){
-        const q=.18+twig*.125,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
+        const q=.16+twig*.17,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
         const aa=a+side*rand(.52,.92),tl=len*rand(.14,.22)*(1-t*.25);
         const mid=[bx+Math.cos(aa)*tl*.52,by+tl*.13,bz+Math.sin(aa)*tl*.52],end=[bx+Math.cos(aa)*tl,by+tl*.16+rand(.2,1.1),bz+Math.sin(aa)*tl];
-        addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,6,9,.16);
-        for(let n=0;n<7;n++){
+        addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,5,6,.16);
+        for(let n=0;n<5;n++){
           const a2=aa+n*Math.PI*2/7+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .32 : .7,sapling ? .66 : 1.6),sapling ? .035 : .085);
         }
@@ -612,7 +612,7 @@ function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 // ============================================================================
 const colisores = [];
 const PINHEIROS = [];
-const N_TENT = 12500;
+const N_TENT = 8500;
 for (let i = 0; i < N_TENT; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
@@ -650,7 +650,7 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
 });
 
 const SECUNDARIAS = [];
-for (let i = 0; i < 4800; i++) {
+for (let i = 0; i < 3100; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
   if (Math.abs(x) > 1450 || Math.abs(z) > 1450) continue;
