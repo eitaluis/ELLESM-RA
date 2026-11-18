@@ -5,13 +5,13 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xaec5d0);
 scene.fog = new THREE.FogExp2(0xc5d8c2, 0.00076);
 
-const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 2800);
+const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 2200);
 camera.position.set(0, 1.7, 34);
 camera.rotation.order = 'YXZ';
 
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.0));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 0.84));
 renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 document.body.appendChild(renderer.domElement);
