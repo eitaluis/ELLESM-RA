@@ -1273,8 +1273,12 @@ function buildForge(parent,x,y,z){
   // Cabana aberta: cobertura de galhos e seis apoios, sem paredes retas.
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2;addLivingTrunk(parent,x+Math.cos(a)*6,y,z+Math.sin(a)*5,8,.45,Math.cos(a),Math.sin(a));}
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2;addOrganicTube(parent,[[x+Math.cos(a)*6,y+7,z+Math.sin(a)*5],[x+Math.cos(a)*3,y+10,z+Math.sin(a)*3],[x,y+11,z]],.32,.08,woodMat,7,14,.12);}
-  // Entrada pelo túnel vegetal e chão de trabalho acessível no átrio.
+  // Túnel vegetal e piso do átrio formam a entrada acessível.
   registerWalkablePath([[x,y+.15,z+25],[x,y+.15,z+17],[x,y+.15,z+8],[x,y+.15,z]],3.2);
+  addOval(parent,x-5,y+.72,z+1,2.3,.55,.85,woodMat,16);
+  addOval(parent,x+4,y+.55,z-2,1.35,.40,.95,paleWood,14);
+  for(let i=0;i<3;i++){const xx=x-5+i*1.8;
+    addOrganicTube(parent,[[xx,y+.7,z+2],[xx+.25,y+2.2,z+2.3],[xx+.85,y+2.6,z+2.1]],.10,.04,stoneMat,5,10,.05);}
   // Forja de carvão, foles, bigorna e ferramentas.
   const hearth=addOval(parent,x,y+.35,z,4,.45,3.2,darkMat,20);
   addOval(parent,x,y+1,z,2.2,.4,1.8,new THREE.MeshStandardMaterial({color:0x332a20,roughness:1}),16);
@@ -1304,9 +1308,33 @@ function buildTialdari(parent,x,y,z){
   // Salões de troncos polidos, ligados por passagens cobertas.
   addLivingTrunk(parent,x-18,y,z-21,16,1.35,1.4,-.6);
   addLivingTrunk(parent,x+18,y,z-20,16,1.35,-1.2,-.5);
-  addOvoidPod(parent,x-18,y+7,z-21,7,4.2,6, paleWood);
-  addOvoidPod(parent,x+18,y+7,z-20,7.5,4.3,6.4, woodMat);
-  addOrganicTube(parent,[[x-12,y+9,z-22],[x-7,y+12,z-22],[x,y+12,z-18],[x+7,y+12,z-20],[x+12,y+9,z-20]],.55,.25,woodMat,8,20,.12);
+  addOpenOvoidPod(parent,x-18,y+7,z-21,7,4.2,6,paleWood,Math.PI/2);
+  addOpenOvoidPod(parent,x+18,y+7,z-20,7.5,4.3,6.4,woodMat,Math.PI/2);
+  const hallFloor=y+3.3;
+  addResidenceFloor(parent,x-18,hallFloor,z-21,5.8,4.8,mossFloorMat);
+  addResidenceFloor(parent,x+18,hallFloor,z-20,6.2,5.0,mossFloorMat);
+  addLivingDoorFrame(parent,x-18,hallFloor,z-15.3,2.4,3.4);
+  addLivingDoorFrame(parent,x+18,hallFloor,z-14.0,2.5,3.5);
+  const tialdariGlass=[0x9b8c56,0x4e7660,0x8a6950,0x627b83];
+  for(let i=0;i<4;i++){
+    const angle=i*Math.PI/2,gemMat=new THREE.MeshStandardMaterial({color:tialdariGlass[i],roughness:.18,metalness:.1,emissive:0x10190e});
+    addOval(parent,x-18+Math.cos(angle)*6.45,y+7,z-21+Math.sin(angle)*5.55,.42,1.05,.14,gemMat,12);
+    addOval(parent,x+18+Math.cos(angle)*6.8,y+7,z-20+Math.sin(angle)*5.9,.42,1.05,.14,gemMat,12);
+  }
+  addOrganicTube(parent,[[x-18,hallFloor+3,z-14],[x-10,hallFloor+6,z-6],[x,hallFloor+7,z-4],
+    [x+10,hallFloor+6,z-6],[x+18,hallFloor+3,z-13]],.30,.12,paleWood,7,36,.10);
+  buildLivingBridge(parent,[[x-18,hallFloor,z-15.3],[x-9,hallFloor+.5,z-7],[x,hallFloor+.7,z-4],
+    [x+9,hallFloor+.5,z-7],[x+18,hallFloor,z-14.0]],3.4);
+  registerWalkablePath([[x-18,hallFloor,z-15.3],[x-18,hallFloor,z-20],[x-18,hallFloor,z-21]],2.6);
+  registerWalkablePath([[x+18,hallFloor,z-14.0],[x+18,hallFloor,z-19],[x+18,hallFloor,z-20]],2.6);
+  for(let side of [-1,1]){
+    const hx=x+side*18,hz=z-21+(side===1?1:0);
+    addOval(parent,hx,hallFloor+.42,hz-1.2,2.4,.35,1.0,woodMat,16);
+    addOrganicTube(parent,[[hx-2,hallFloor+.25,hz-1.2],[hx-1,hallFloor+1.0,hz-1.5],
+      [hx+1,hallFloor+1.0,hz-1.5],[hx+2,hallFloor+.25,hz-1.2]],.20,.12,paleWood,7,14,.08);
+  }
+  addOrganicTube(parent,[[x-12,hallFloor+1,z-23],[x-8,hallFloor+2,z-22],[x-3,hallFloor+1,z-21]],.28,.08,paleWood,7,16,.10);
+  addOrganicTube(parent,[[x+12,hallFloor+1,z-22],[x+8,hallFloor+2,z-21],[x+3,hallFloor+1,z-20]],.28,.08,paleWood,7,16,.10);
   // Riacho prateado que desce uma parede viva e atravessa o piso.
   const silverWater=new THREE.MeshStandardMaterial({color:0x8babb1,metalness:.45,roughness:.18,transparent:true,opacity:.8});
   addOrganicTube(parent,[[x-18,y+12,z-14],[x-17,y+8,z-12],[x-15,y+3,z-8],[x-10,y+.15,z-4],[x,y+.12,z+10]],.22,.13,silverWater,7,30,.04);
@@ -1386,9 +1414,11 @@ function buildStable(parent,x,y,z){
     addLivingTrunk(parent,px,y,z-4,8,.6,i*.3,-.6);
     addLivingTrunk(parent,px,y,z+4,8,.6,-i*.3,.6);
     addOrganicTube(parent,[[px,y+7,z-4],[px,y+10,z],[px,y+7,z+4]],.38,.12,woodMat,7,18,.12);
-    // divisórias vivas e portas abertas.
+    // Divisórias vivas e portais abertos para cada baia.
     addOrganicTube(parent,[[px-2.2,y,z],[px-2.4,y+2.3,z+1],[px-2.1,y+3.5,z]],.13,.05,paleWood,6,9,.07);
     addOrganicTube(parent,[[px+2.2,y,z],[px+2.4,y+2.3,z+1],[px+2.1,y+3.5,z]],.13,.05,paleWood,6,9,.07);
+    addOrganicTube(parent,[[px-2.1,y,z+4.1],[px-1.2,y+3.0,z+4.2],[px,y+3.6,z+4.2],[px+1.2,y+3.0,z+4.2],[px+2.1,y,z+4.1]],.18,.10,paleWood,7,16,.08);
+    registerWalkablePath([[px,y+.05,z+6],[px,y+.05,z+2],[px,y+.05,z]],2.7);
   }
 }
 function buildTraining(parent,x,y,z){
@@ -1511,6 +1541,7 @@ const SITE_BUILDINGS=[
   ['Toco branco',-1050,1230,'stump']
 ];
 for(const [n,x,z,k] of SITE_BUILDINGS)buildSite(n,x,z,k);
+criarCaminho([[200,-160],[245,-167],[300,-170],[355,-174],[410,-177],[470,-180]],2.3);
 function buildCanopyTransit(){
   const g=new THREE.Group();scene.add(g);
   const ax=410,az=-110,aFloor=alturaTerreno(ax,az)+18;
@@ -1522,7 +1553,9 @@ function buildCanopyTransit(){
   const hexLow=alturaTerreno(350,-18)+4-3.17,hexUpper=alturaTerreno(350,-18)+8.2-1.85;
   const fiveLow=alturaTerreno(305,-92)+12-1.67;
   const riderFloor=alturaTerreno(0,0)+30-3.17;
-  const rampStart=[470,alturaTerreno(470,-180)+.2,-180];
+  const rampGround=alturaTerreno(470,-180);
+  addRootStair(g,470,rampGround,-184,9,4.6,1);
+  const rampStart=[470,rampGround+.2,-180];
   buildLivingBridge(g,[rampStart,[451,alturaTerreno(451,-160)+5,-160],[432,alturaTerreno(432,-136)+11,-136],[homeA.x,aFloor,homeA.z]],4.8);
   buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[390,aFloor+1,-88],[367,hexUpper+1,-46],[350,hexUpper,-14]],4.0);
   buildLivingBridge(g,[[350,hexUpper,-14],[334,hexUpper+1,-38],[320,fiveLow+1,-68],[305,fiveLow,-88]],4.0);
