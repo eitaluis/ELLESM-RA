@@ -153,7 +153,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         for(let n=0;n<2;n++){
           const aa=a+n*Math.PI*2/3+rand(-.32,.32);
           addNeedle([p.x,p.y,p.z],[Math.cos(aa)*.58+Math.cos(a)*.62,.34+rand(-.08,.40),Math.sin(aa)*.58+Math.sin(a)*.62],
-            rand(sapling?.55:1.25,sapling?1.0:2.5),sapling?.055:.12);
+            rand(sapling?.72:1.15,sapling?1.35:2.25),sapling?.10:.19);
         }
       }
       const twigN=sapling?3:4;
@@ -163,7 +163,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const mid=[base.x+Math.cos(aa)*tl*.48,base.y+tl*.19+2,base.z+Math.sin(aa)*tl*.48];
         const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
         addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,5,9,.18);
-        for(let n=0;n<7;n++){
+        for(let n=0;n<14;n++){
           const a2=aa+n*Math.PI*2/13+rand(-.18,.18);
           const p=[end[0]-Math.cos(aa)*rand(0,1.1),end[1]-rand(0,.5),end[2]-Math.sin(aa)*rand(0,1.1)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],
