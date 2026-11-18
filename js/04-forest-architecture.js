@@ -479,7 +479,7 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false,trunkHei
   const inner=[],outer=[];
   for(let i=0;i<=samples;i++){const t=i/samples,a=t*Math.PI*2*turns,y=floorY+1.05*scale+t*(upperY-floorY-.24*scale);inner.push([x+Math.cos(a)*(stairRadius-.78*scale),y,z+Math.sin(a)*(stairRadius-.78*scale)]);outer.push([x+Math.cos(a)*(stairRadius+.78*scale),y,z+Math.sin(a)*(stairRadius+.78*scale)]);}
   addOrganicTube(parent,inner,.22*scale,.15*scale,paleWood,7,96,.06);addOrganicTube(parent,outer,.26*scale,.18*scale,woodMat,8,96,.06);
-  return {x:x,y:floorY,z:z+lowerOuter+1.3*scale,floorY,upperY,outer:lowerOuter,upperOuter,door:[x,floorY+.18*scale,z+lowerOuter+1.3*scale]};
+  return {x:x,centerZ:z,y:floorY,z:z+lowerOuter+1.3*scale,floorY,upperY,outer:lowerOuter,upperOuter,scale,door:[x,floorY+.18*scale,z+lowerOuter+1.3*scale]};
 }
 
 function buildCanopyResidence(parent,x,z,floorY,seed=0){
@@ -926,7 +926,7 @@ function buildTialdari(parent,x,y,z){
 
   // Pequenos pórticos de entrada em galhos curvos e portas de correr em treliça.
   for(const h of [common,lounge,bedroom,study]){
-    const dx=h.x,dz=h.z,doorZ=dz+h.outer+1.3;
+    const dx=h.x,dz=h.centerZ,doorZ=dz+h.outer+1.3*h.scale;
     addOrganicTube(parent,[[dx-2.2,y+3.3,dz+h.outer+.4],
       [dx-1.5,y+5.0,doorZ],[dx,y+5.6,doorZ+.25],
       [dx+1.5,y+5.0,doorZ],[dx+2.2,y+3.3,dz+h.outer+.4]],.22,.07,paleWood,7,20,.07);
@@ -1048,6 +1048,13 @@ function buildFiveStoreyResidence(parent,x,y,z){
     path.push([stairX+Math.cos(a)*stairRadius,y+levels[0]+t*stairRise,stairZ+Math.sin(a)*stairRadius]);
   }
   registerWalkablePath(path,3.05,'stair');
+  const stairGround=alturaTerreno(stairX+stairRadius,stairZ+8);
+  addRootStair(parent,stairX+stairRadius,stairGround,stairZ+8,10,3.8,-.82);
+  const baseSteps=Array.from({length:10},(_,i)=>[
+    stairX+stairRadius,stairGround+i*.38,stairZ+8-i*.82
+  ]);
+  registerWalkablePath(baseSteps,3.8,'stair');
+  buildLivingBridge(parent,baseSteps[baseSteps.length-1],path[0],3.1,1);
   const outerRail=[],innerRail=[];
   for(let i=0;i<=samples;i++){
     const t=i/samples,a=t*Math.PI*2*turns,yy=y+levels[0]+t*stairRise;
@@ -1377,7 +1384,7 @@ const SITE_BUILDINGS=[
   ['Toco branco',-1050,1230,'stump'],
   ['Morada de raízes — oeste',-760,-640,'foresthome'],
   ['Morada de raízes — vale oriental',780,700,'foresthome'],
-  ['Morada de raízes — nordeste',940,-760,'foresthome'],
+  ['Casa entre três pinheiros — cinco níveis',940,-760,'fivehome'],
   ['Morada de raízes — sudoeste',-900,740,'foresthome'],
   ['Morada de raízes — leste',1080,420,'foresthome']
 ];
