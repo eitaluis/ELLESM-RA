@@ -960,7 +960,7 @@ function buildCanopyTransit(){
     [180,midFloor+1,-100],
     [260,midFloor+.8,-55],
     residences[1][0].door
-  ],3.9);
+  ],7.0);
   buildLivingBridge(g,[
     [stairHigh.x,stairHigh.y,stairHigh.z],
     [490,highFloor+1,-166],

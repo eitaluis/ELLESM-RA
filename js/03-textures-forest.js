@@ -277,13 +277,16 @@ VARIANTES_SEC.forEach((variante, vi) => {
     colisores.push({x:s.x,z:s.z,raio:variante.raioBase*scale*1.18+.65});
     if(Math.hypot(s.x,s.z)<700){
       const cs=Math.cos(rotation),sn=Math.sin(rotation);
-      for(let ri=0;ri<variante.raizes.length;ri+=6){
+      for(let ri=0;ri<variante.raizes.length;ri+=3){
         const root=variante.raizes[ri],points=root.points.map(v=>[
           s.x+(v[0]*cs+v[2]*sn)*scale,
           baseY+v[1]*scaleY,
           s.z+(-v[0]*sn+v[2]*cs)*scale
         ]);
-        ROOT_WALKS.push({points,r0:root.radius*scale,r1:.035*scale});
+        for(const k of [1,2]){
+          const q=points[k];
+          colisores.push({x:q[0],z:q[2],raio:Math.max(.42,root.radius*scale*.72)});
+        }
       }
     }
   });
