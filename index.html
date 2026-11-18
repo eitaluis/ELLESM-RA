@@ -1535,8 +1535,13 @@ function buildFiveStoreyResidence(parent,x,y,z){
   const offsets=[[-8,-5],[8,-5],[0,9]];offsets.forEach(([dx,dz])=>addLivingTrunk(parent,x+dx,y,z+dz,62,2.25,dx*.16,dz*.12));
   let firstFloor=null;
   for(let level=0;level<5;level++){const h=y+12+level*6.5,shrink=1-level*.115,podX=x+(level%2?1:-.8),rx=4.7*shrink,ry=1.9*shrink,rz=4.1*shrink;
-    addOpenOvoidPod(parent,podX,h,z,rx,ry,rz,level%2?woodMat:paleWood,Math.PI/2);
-    const floorY=h-ry*.88;addResidenceFloor(parent,podX,floorY,z,rx*.77,rz*.76,mossFloorMat);addLivingDoorFrame(parent,podX,floorY,z+rz*.94,1.75*shrink,2.65*shrink);
+    addHexagonalLivingShell(parent,podX,h,z,rx,ry,rz,level%2?woodMat:paleWood,true);
+    const floorY=h-ry*.88;addResidenceFloor(parent,podX,floorY,z,rx*.77,rz*.76,mossFloorMat);
+    addLivingDoorFrame(parent,podX,floorY,z+rz*.94,1.75*shrink,2.65*shrink);
+    const windowMat=new THREE.MeshStandardMaterial({color:0xf1cd8b,emissive:0xffb85b,emissiveIntensity:1.25,roughness:.2});
+    addOval(parent,podX-rx*.78,floorY+1.5*shrink,z+rz*.68,.36*shrink,.72*shrink,.16,windowMat,10);
+    addOval(parent,podX+rx*.78,floorY+1.5*shrink,z+rz*.68,.36*shrink,.72*shrink,.16,windowMat,10);
+    const levelGlow=new THREE.PointLight(0xffc878,1.7,18,1.8);levelGlow.position.set(podX,floorY+1.8,z);parent.add(levelGlow);
     if(level===0)firstFloor=floorY;
     offsets.forEach(([dx,dz],i)=>{const tx=x+dx,tz=z+dz,side=i%2?1:-1;
       addOrganicTube(parent,[[tx,y+17+level*6.5,tz],[tx+side*2,h+1,z+dz*.55],[podX,h,z]],.82*shrink,.19*shrink,woodMat,8,20,.12);});}
@@ -1979,6 +1984,8 @@ function alturaChao(x,z,referenceY=null){
       const centerY=a[1]+(b[1]-a[1])*t;
       const y=root?centerY+(root.r0*(1-t)+root.r1*t)*.78:centerY;
       const vertical=referenceY===null?0:Math.abs(y-referenceY);
+      // Não "teleporta" o jogador para uma ponte sobre a cabeça; só aceita o piso no nível atual.
+      if(referenceY!==null&&vertical>2.6)continue;
       const score=d*d+vertical*vertical*.32;
       if(score<bestScore){bestScore=score;specialY=y;}
     }
