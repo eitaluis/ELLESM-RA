@@ -49,7 +49,6 @@ function addOpenOvoidPod(parent,x,y,z,rx,ry,rz,mat=woodMat,frontAngle=Math.PI/2)
     }
   }
   panes.instanceMatrix.needsUpdate=true;bars.instanceMatrix.needsUpdate=true;parent.add(panes,bars);
-  const glow=new THREE.PointLight(0xffa94f,.85,Math.max(rx,rz)*5,1.7);glow.position.set(x,y,z);parent.add(glow);
   return shell;
 }
 
@@ -354,7 +353,6 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false,trunkHei
   const inner=[],outer=[];
   for(let i=0;i<=samples;i++){const t=i/samples,a=t*Math.PI*2*turns,y=floorY+1.05*scale+t*(upperY-floorY-.24*scale);inner.push([x+Math.cos(a)*(stairRadius-.78*scale),y,z+Math.sin(a)*(stairRadius-.78*scale)]);outer.push([x+Math.cos(a)*(stairRadius+.78*scale),y,z+Math.sin(a)*(stairRadius+.78*scale)]);}
   addOrganicTube(parent,inner,.22*scale,.15*scale,paleWood,7,96,.06);addOrganicTube(parent,outer,.26*scale,.18*scale,woodMat,8,96,.06);
-  const roomGlow=new THREE.PointLight(0xffb56a,2.5*scale,36*scale,1.8);roomGlow.position.set(0,floorY+3.1*scale,0);house.add(roomGlow);
   return {x:x,y:floorY,z:z+lowerOuter+1.3*scale,floorY,upperY,outer:lowerOuter,upperOuter,door:[x,floorY+.18*scale,z+lowerOuter+1.3*scale]};
 }
 
