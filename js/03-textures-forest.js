@@ -126,7 +126,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     }
   }
 
-  const levels=sapling?12:12,arms=sapling?13:14,baseReach=sapling?rand(29,37):rand(52,70);
+  const levels=sapling?10:9,arms=sapling?11:10,baseReach=sapling?rand(29,37):rand(52,70);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.94,ratio=y/altura;
     const reach=baseReach*(1-t*.78)+3.2,count=arms+(level%2);
@@ -153,7 +153,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       const branchCurve=new THREE.CatmullRomCurve3(branchPoints.map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
       // Folhagem distribuída por todo o galho principal: não deixar madeira exposta
       // entre o tronco e as pontas. As folhas se alternam em torno do eixo do ramo.
-      const foliageStations=sapling?13:11,leafRing=sapling?7:6;
+      const foliageStations=sapling?8:7,leafRing=4;
       for(let s=1;s<=foliageStations;s++){
         const q=s/(foliageStations+1),p=branchCurve.getPoint(q),tangent=branchCurve.getTangent(q);
         for(let n=0;n<leafRing;n++){
@@ -166,7 +166,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
       // Ramos secundários também recebem folhas ao longo do eixo inteiro,
       // e não somente um tufo concentrado na extremidade.
-      const twigN=sapling?8:6;
+      const twigN=sapling?5:4;
       for(let twig=0;twig<twigN;twig++){
         const q=sapling?.10+twig*.105:.13+twig*.12,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
         const aa=a+side*rand(.48,.98),tl=len*rand(sapling?.19:.15,sapling?.31:.24)*(1-t*.2);
@@ -174,7 +174,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
         addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.21:.58,.035,5,10,.18);
         const twigCurve=new THREE.CatmullRomCurve3([[base.x,base.y,base.z],mid,end].map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
-        const twigStations=sapling?5:4,twigLeaves=sapling?5:4;
+        const twigStations=sapling?3:2,twigLeaves=3;
         for(let st=1;st<=twigStations;st++){
           const u=st/(twigStations+1),tp=twigCurve.getPoint(u);
           for(let n=0;n<twigLeaves;n++){
@@ -185,8 +185,8 @@ function criarPinheiroGeo(seed,tipo='adulto'){
           }
         }
         // Pontas cheias, com folhas de vários comprimentos e orientações.
-        for(let n=0;n<(sapling?22:18);n++){
-          const a2=aa+n*Math.PI*2/(sapling?17:15)+rand(-.22,.22);
+        for(let n=0;n<(sapling?11:9);n++){
+          const a2=aa+n*Math.PI*2/(sapling?11:9)+rand(-.22,.22);
           const p=[end[0]-Math.cos(aa)*rand(0,sapling?1.8:1.2)+(Math.random()-.5)*(sapling?2.2:.9),end[1]-rand(0,sapling?1.0:.6),end[2]-Math.sin(aa)*rand(0,sapling?1.8:1.2)+(Math.random()-.5)*(sapling?2.2:.9)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.50),Math.sin(a2)*.68+Math.sin(aa)*.35],
             rand(sapling?.85:1.0,sapling?1.65:2.05),sapling?.15:.16);
@@ -197,8 +197,8 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
-  for(let n=0;n<(sapling?42:24);n++){
-    const a=n/(sapling?42:24)*Math.PI*2;
+  for(let n=0;n<(sapling?22:16);n++){
+    const a=n/(sapling?22:16)*Math.PI*2;
     addNeedle([cx+Math.cos(a)*rand(.18,.72),altura*(sapling?rand(.84,.96):rand(.88,.97)),cz+Math.sin(a)*rand(.18,.72)],
       [Math.cos(a)*rand(.20,.52),.78+rand(.05,.35),Math.sin(a)*rand(.20,.52)],
       sapling?rand(1.0,1.8):rand(1.1,1.9),sapling?.16:.14);
@@ -250,7 +250,7 @@ function pertoDaArquitetura(x,z,extra=0){
   return false;
 }
 const PINHEIROS = [], PINHEIROS_COPA_ALTA = [];
-const N_TENT = 5200;
+const N_TENT = 4100;
 for (let i = 0; i < N_TENT; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
@@ -352,7 +352,7 @@ VARIANTES_COPA_ALTA.forEach((variante,vi)=>{
 });
 
 const SECUNDARIAS = [];
-for (let i = 0; i < 1500; i++) {
+for (let i = 0; i < 950; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
   if (Math.abs(x) > 1450 || Math.abs(z) > 1450) continue;
@@ -478,9 +478,9 @@ function distribuirRasteira(geo,material,count,minH,maxH,raioColisao=0){
   lista.forEach((o,i)=>{dummy.position.set(o.x,alturaTerreno(o.x,o.z),o.z);dummy.rotation.y=o.r;dummy.scale.setScalar(o.s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);if(raioColisao>0)colisores.push({x:o.x,z:o.z,raio:raioColisao});});
   im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 1900, 0.9, 2.65);
-distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 1200, 0.8, 2.25, 0.8);
-distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 200, 0.6, 1.6, 0.7);
+distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 1100, 0.9, 2.65);
+distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 650, 0.8, 2.25, 0.8);
+distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 100, 0.6, 1.6, 0.7);
 
 // Capins de sub-bosque em touceiras: lâminas longas, finas e arqueadas.
 function criarGramaGeo(){
@@ -497,7 +497,7 @@ function criarGramaGeo(){
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),2500,1.0,2.1);
+distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),1450,1.0,2.1);
 
 // CAMADA EXTRA DE FLORESTA — vegetação de transição, troncos caídos e musgo.
 function criarLogGeo(){
@@ -506,7 +506,7 @@ function criarLogGeo(){
 }
 const logGeo=criarLogGeo(), logMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x5a4938,roughness:1});
 const logs=[];
-for(let i=0;i<320;i++){
+for(let i=0;i<180;i++){
   const x=(Math.random()-0.5)*2850,z=(Math.random()-0.5)*2850;
   if(emClareira(x,z,4)||distanciaCaminhos(x,z)<3||Math.hypot(x+380,z-520)<155)continue;
   logs.push({x,z,len:5+Math.random()*15,rot:Math.random()*Math.PI,thick:.75+Math.random()*.8});
@@ -536,7 +536,7 @@ const mossGeo=new THREE.BufferGeometry();
 }
 const mossMat=new THREE.MeshStandardMaterial({color:0x465b2e,roughness:1,side:THREE.DoubleSide});
 const moss=[];
-for(let patch=0;patch<500;patch++){
+for(let patch=0;patch<260;patch++){
   const cx=(Math.random()-.5)*2850,cz=(Math.random()-.5)*2850;
   if(emClareira(cx,cz,2)||distanciaCaminhos(cx,cz)<2||Math.hypot(cx+380,cz-520)<150)continue;
   const count=3+Math.floor(Math.random()*7),radius=2+Math.random()*7;
@@ -580,8 +580,8 @@ function scatterInstanced(geo,mat,count,scaleMin,scaleMax,excludeClearings=true)
   list.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.03,o.z);d.rotation.set((Math.random()-.5)*.18,o.r,(Math.random()-.5)*.18);d.scale.setScalar(o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);if(im.instanceColor){} });
   im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-scatterInstanced(leafGeo,leafMatA,2200,0.65,1.8);
-scatterInstanced(leafGeo,leafMatB,1500,0.45,1.35);
+scatterInstanced(leafGeo,leafMatA,1200,0.65,1.8);
+scatterInstanced(leafGeo,leafMatB,850,0.45,1.35);
 
 // Raízes estruturais já fazem parte do tronco e se projetam pelo terreno.
 
@@ -596,7 +596,7 @@ litterGeo.setAttribute('position',new THREE.Float32BufferAttribute(litterPos,3))
 const litterMats=[0x55452f,0x756142,0x39452d,0x8a7650].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
 for(let m=0;m<litterMats.length;m++){
   const bits=[];
-  for(let patch=0;patch<150;patch++){
+  for(let patch=0;patch<80;patch++){
     const cx=(Math.random()-.5)*2900,cz=(Math.random()-.5)*2900;
     if(emClareira(cx,cz,2)||distanciaCaminhos(cx,cz)<1.5)continue;
     const amount=13+Math.floor(Math.random()*24),radius=3+Math.random()*12;
