@@ -747,10 +747,7 @@ function buildTreeDwelling(parent,x,y,z){
     walk.push([px,sy,pz]);
     railOuter.push([x+Math.cos(q)*(radius+2.1),sy+2.1,z+Math.sin(q)*(radius+2.1)]);
     railInner.push([x+Math.cos(q)*(radius-2),sy+1.7,z+Math.sin(q)*(radius-2)]);
-    if(i<steps){
-      // Degraus e frisos em instâncias: mantém a escada detalhada sem 144 draw calls.
-      // As matrizes são preenchidas abaixo, depois de criar as malhas compartilhadas.
-    }
+
   }
   const knightStepCount=steps;
   const knightStepGeo=new THREE.BoxGeometry(4.2,.42,1.45);
