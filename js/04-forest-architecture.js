@@ -717,8 +717,10 @@ function buildTreeDwelling(parent,x,y,z){
       [x+1+dx*4.2,lower+6.35,z+1+dz*3.5]],.32,.075,paleWood,7,22,.09);
   }
   for(const side of [-1,1]){
-    const a=side===1?Math.PI/3:Math.PI*5/3;
-    const wx=x+1+Math.sin(a)*10.05,wz=z+1+Math.cos(a)*7.88,wy=lower+4.1;
+    const faceStart=side===1?Math.PI/6:Math.PI*3/2,a=side===1?Math.PI/3:Math.PI*5/3;
+    const wy=lower+4.1,tWindow=(wy-(lower+2.8))/3.25,profile=.84+.16*(1-Math.pow(Math.abs(tWindow),1.6));
+    const faceEnd=faceStart+Math.PI/3,nx=(Math.sin(faceStart)+Math.sin(faceEnd))*.5,nz=(Math.cos(faceStart)+Math.cos(faceEnd))*.5;
+    const wx=x+1+nx*10.5*profile,wz=z+1+nz*8.2*profile;
     const pane=addOval(parent,wx,wy,wz,1.45,2.0,.18,darkMat,16);pane.rotation.y=a;
     const frame=[];for(let i=0;i<=18;i++){
       const q=-Math.PI*.82+i/18*Math.PI*1.64,off=Math.cos(q)*1.65;
@@ -738,8 +740,10 @@ function buildTreeDwelling(parent,x,y,z){
       [x-2+dx*2.8,upper+5.1,z-4+dz*2.4]],.25,.06,woodMat,7,18,.08);
   }
   for(const side of [-1,1]){
-    const a=side===1?Math.PI/3:Math.PI*5/3;
-    const wx=x-2+Math.sin(a)*7.12,wz=z-4+Math.cos(a)*5.92,wy=upper+3.1;
+    const faceStart=side===1?Math.PI/6:Math.PI*3/2,a=side===1?Math.PI/3:Math.PI*5/3;
+    const wy=upper+3.1,tWindow=(wy-(upper+2.2))/2.55,profile=.84+.16*(1-Math.pow(Math.abs(tWindow),1.6));
+    const faceEnd=faceStart+Math.PI/3,nx=(Math.sin(faceStart)+Math.sin(faceEnd))*.5,nz=(Math.cos(faceStart)+Math.cos(faceEnd))*.5;
+    const wx=x-2+nx*7.4*profile,wz=z-4+nz*6.2*profile;
     const pane=addOval(parent,wx,wy,wz,1.0,1.45,.14,darkMat,14);pane.rotation.y=a;
     const frame=[];for(let i=0;i<=16;i++){
       const q=-Math.PI*.82+i/16*Math.PI*1.64,off=Math.cos(q)*1.15;
@@ -1144,16 +1148,18 @@ function buildFiveStoreyResidence(parent,x,y,z){
 
     // Janelas pequenas em vidro colorido, uma por face que não contém a porta.
     for(let face=1;face<6;face++){
-      const a=-Math.PI/6+(face+.5)*Math.PI/3;
-      const wx=x+Math.sin(a)*(radius-.12),wz=z+Math.cos(a)*(depth-.12);
+      const a0=-Math.PI/6+face*Math.PI/3,a1=a0+Math.PI/3,a=a0+Math.PI/6;
+      const tWindow=(3.25-2.85)/3.15,profile=.84+.16*(1-Math.pow(Math.abs(tWindow),1.6));
+      const nx=(Math.sin(a0)+Math.sin(a1))*.5,nz=(Math.cos(a0)+Math.cos(a1))*.5;
+      const wx=x+nx*radius*profile,wz=z+nz*depth*profile;
       const pane=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),
         RESIDENCE_WINDOW_MAT);
       pane.position.set(wx,floorY+3.25,wz);
       pane.scale.set(.72,1.05,.14);pane.rotation.y=a;parent.add(pane);
       const frame=[];
       for(let k=0;k<=14;k++){
-        const q=-Math.PI*.82+k/14*Math.PI*1.64;
-        frame.push([wx+Math.cos(q)*.82,floorY+3.25+Math.sin(q)*1.18,wz+Math.cos(a)*.10]);
+        const q=-Math.PI*.82+k/14*Math.PI*1.64,off=Math.cos(q)*.82;
+        frame.push([wx+Math.cos(a)*off,floorY+3.25+Math.sin(q)*1.18,wz-Math.sin(a)*off]);
       }
       addOrganicTube(parent,frame,.105,.065,paleWood,6,18,.04);
     }
@@ -1455,7 +1461,8 @@ function buildCabin(parent,x,y,z){
   // Janelas profundas encaixadas nos painéis laterais.
   for(const side of [-1,1]){
     const a=side===1?Math.PI*2/3:Math.PI*4/3;
-    const wx=x+Math.sin(a)*6.63,wz=z+Math.cos(a)*6.03,wy=floorY+2.55;
+    const wy=floorY+2.55,tWindow=(wy-(floorY+2.62))/2.72,profile=.84+.16*(1-Math.pow(Math.abs(tWindow),1.6));
+    const wx=x+side*.75*6.65*profile,wz=z-.4330127019*6.05*profile;
     const windowGroup=new THREE.Group();windowGroup.position.set(wx,wy,wz);windowGroup.rotation.y=a;
     const pane=new THREE.Mesh(new THREE.BoxGeometry(1.58,1.48,.14),RESIDENCE_WINDOW_MAT);
     pane.position.z=.04;windowGroup.add(pane);
