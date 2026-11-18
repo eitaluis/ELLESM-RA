@@ -1327,7 +1327,7 @@ function buildStable(parent,x,y,z){
   }
 
   // Fechamentos baixos de ripas entre baias; a frente permanece aberta para os cavalos.
-  for(const dividerX of [-7.0,0,7.0]){
+  for(const dividerX of [-3.5,3.5]){
     for(let level=0;level<3;level++){
       const yy=y+1.15+level*.92;
       addOrganicTube(parent,[[x+dividerX,yy,z-5.6],[x+dividerX+.12,yy+.12,z-1.2],
