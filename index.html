@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ellesméra — Floresta Viva + Arquitetura v16</title>
+<title>Ellesméra — Floresta Viva + Arquitetura v17</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0f0a; font-family: monospace; }
   #hud { position: fixed; top: 10px; left: 10px; color: #cfe8cf; background: rgba(10,25,15,0.75);
@@ -38,9 +38,9 @@
 </style>
 </head>
 <body>
-<div id="fase">FASE 2 — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V16</div>
+<div id="fase">FASE 2 — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V17</div>
 <div id="hud">
-  <b>Ellesméra — Floresta viva v16</b><br>
+  <b>Ellesméra — Floresta viva v17</b><br>
   WASD mover · Mouse olhar · Shift correr · Espaço pular<br>
   <b>M</b>/<b>N</b> teletransporte · <b>G</b> inspecionar Menoa · <b>TAB</b> minimapa<br>
   <span style="color:#8ab98a">Roda sobre o minimapa: zoom local ↔ visão geral</span>
@@ -52,7 +52,7 @@
 <div id="minimapa-container"><canvas id="minimapa" width="220" height="220"></canvas></div>
 <div id="aviso-layout">Layout provisório de produção — não canônico</div>
 <div id="start"><div>
-  <b>ELLESMÉRA — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V16</b><br><br>
+  <b>ELLESMÉRA — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V17</b><br><br>
   Floresta procedural em camadas, Menoa monumental e estruturas construídas nos locais de Ellesméra.<br><br>
   Clique para entrar.<br>
   <span style="color:#8ab98a">WASD · mouse · Shift · Espaço · M/N · G · TAB</span>
@@ -156,14 +156,15 @@ function alturaTerreno(x, z) {
   let y = 0;
   y += (fbm(x*0.004, z*0.004, 5) - 0.5) * 4.5;
   y += (fbm(x*0.02, z*0.02, 3) - 0.5) * 1.2;
-  y += (fbm(x*0.09, z*0.09, 2) - 0.5) * 0.3;
+  y += (fbm(x*0.09, z*0.09, 2) - 0.5) * 0.55;
+  y += (fbm(x*0.22, z*0.22, 2) - 0.5) * 0.16;
   return y;
 }
 
 // ============================================================================
 // 5. TERRENO
 // ============================================================================
-const TERR_W = 3200, TERR_H = 3200, segs = 220;
+const TERR_W = 3200, TERR_H = 3200, segs = 320;
 const terrenoGeo = new THREE.PlaneGeometry(TERR_W, TERR_H, segs, segs);
 terrenoGeo.rotateX(-Math.PI/2);
 
@@ -179,7 +180,9 @@ const cores = new Float32Array(posAttr.count * 3);
 for (let i = 0; i < posAttr.count; i++) {
   const x = posAttr.getX(i), z = posAttr.getZ(i);
   const n = fbm(x*0.03, z*0.03, 3);
-  corTerreno.setHSL(0.27 + n*0.05, 0.30, 0.13 + n*0.06);
+  const damp = fbm(x*0.008+71, z*0.008-29, 4);
+  const soil = fbm(x*0.075, z*0.075, 3);
+  corTerreno.setHSL(0.245 + n*0.045 + damp*0.012, 0.24 + soil*0.12, 0.105 + n*0.045 + damp*0.035);
   cores[i*3] = corTerreno.r; cores[i*3+1] = corTerreno.g; cores[i*3+2] = corTerreno.b;
 }
 terrenoGeo.setAttribute('color', new THREE.BufferAttribute(cores, 3));
@@ -192,15 +195,21 @@ scene.add(terreno);
 // ============================================================================
 // 6. CLAREIRAS
 // ============================================================================
-const clareiraMat = new THREE.MeshStandardMaterial({ color: 0x3a4a28, roughness: 1.0, transparent: true, opacity: 0.55 });
+// Clareiras orgânicas: bordas assimétricas e superfície acompanhando o relevo.
+const clareiraMat = new THREE.MeshStandardMaterial({ color: 0x465238, roughness: 1.0, transparent: true, opacity: 0.20, side: THREE.DoubleSide });
 for (const p of PONTOS) {
-  if (p.raio === 0) continue;
-  const geo = new THREE.CircleGeometry(p.raio, 48);
-  geo.rotateX(-Math.PI/2);
-  const m = new THREE.Mesh(geo, clareiraMat);
-  m.position.set(p.x, alturaTerreno(p.x, p.z) + 0.05, p.z);
-  m.receiveShadow = true;
-  scene.add(m);
+  if (p.raio === 0 || p.raio < 8) continue;
+  const radial=72, positions=[p.x,alturaTerreno(p.x,p.z)+0.035,p.z], indices=[];
+  const phase=hash2(p.x+19,p.z-31)*Math.PI*2;
+  for(let i=0;i<radial;i++){
+    const a=i/radial*Math.PI*2,wobble=0.88+0.09*Math.sin(a*3+phase)+0.055*Math.sin(a*7-phase*1.7)+0.035*Math.sin(a*11+phase);
+    const rr=p.raio*wobble,x=p.x+Math.cos(a)*rr,z=p.z+Math.sin(a)*rr;
+    positions.push(x,alturaTerreno(x,z)+0.04,z);
+    if(i<radial-1)indices.push(0,i+1,i+2);
+  }
+  indices.push(0,radial,1);
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+  const m=new THREE.Mesh(geo,clareiraMat);m.receiveShadow=true;scene.add(m);
 }
 
 // ============================================================================
@@ -589,7 +598,7 @@ function criarSecundariaGeo(seed) {
 // ============================================================================
 const colisores = [];
 const PINHEIROS = [];
-const N_TENT = 7200;
+const N_TENT = 12500;
 for (let i = 0; i < N_TENT; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
@@ -630,7 +639,7 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
 });
 
 const SECUNDARIAS = [];
-for (let i = 0; i < 2600; i++) {
+for (let i = 0; i < 4800; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
   if (Math.abs(x) > 1450 || Math.abs(z) > 1450) continue;
@@ -736,8 +745,8 @@ function distribuirRasteira(geo, material, count, minH, maxH, raioColisao = 0) {
   scene.add(im);
 }
 
-distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 2400, 0.8, 2.0);
-distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 1250, 0.7, 1.7, 0.8);
+distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 3600, 0.8, 2.25);
+distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 2100, 0.7, 1.9, 0.8);
 distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 350, 0.6, 1.6, 0.7);
 
 // CAMADA EXTRA DE FLORESTA — vegetação de transição, troncos caídos e musgo.
@@ -816,6 +825,49 @@ for(let m=0;m<litterMats.length;m++){
 }
 
 // ============================================================================
+// ============================================================================
+ // MICRO-HABITATS: touceiras, pedras parcialmente enterradas e plantas em manchas.
+ // ============================================================================
+const grassGeo=new THREE.BufferGeometry();
+{
+  const v=[],idx=[];
+  for(let blade=0;blade<3;blade++){
+    const a=blade*Math.PI/3,dx=Math.cos(a),dz=Math.sin(a),w=0.075+blade*0.012,h=0.48+blade*0.16,b=v.length/3;
+    v.push(-dx*w,0,-dz*w,dx*w,0,dz*w,dx*w*0.28,h,dz*w*0.28);idx.push(b,b+1,b+2);
+  }
+  grassGeo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));grassGeo.setIndex(idx);grassGeo.computeVertexNormals();
+}
+const grassMats=[0x52663a,0x71804a,0x3e5834].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
+for(let variant=0;variant<grassMats.length;variant++){
+  const patches=[];
+  for(let cluster=0;cluster<210;cluster++){
+    const cx=(Math.random()-.5)*2850,cz=(Math.random()-.5)*2850;
+    if(emClareira(cx,cz,4)||distanciaCaminhos(cx,cz)<3||Math.hypot(cx+380,cz-520)<155)continue;
+    const amount=18+Math.floor(Math.random()*28);
+    for(let j=0;j<amount;j++){
+      const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*(5+Math.random()*8),x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+      if(emClareira(x,z,1)||distanciaCaminhos(x,z)<1.5)continue;
+      patches.push({x,z,s:.65+Math.random()*1.65,rot:Math.random()*Math.PI*2});
+    }
+  }
+  const im=new THREE.InstancedMesh(grassGeo,grassMats[variant],patches.length),d=new THREE.Object3D();
+  patches.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.025,o.z);d.rotation.set((Math.random()-.5)*.16,o.rot,(Math.random()-.5)*.16);d.scale.setScalar(o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
+  im.instanceMatrix.needsUpdate=true;im.receiveShadow=true;scene.add(im);
+}
+const pebbleGeo=new THREE.DodecahedronGeometry(.42,1);
+const pebbleMat=new THREE.MeshStandardMaterial({map:TEX_PEDRA,color:0x77796d,roughness:1});
+const pebbles=[];
+for(let i=0;i<2100;i++){
+  const x=(Math.random()-.5)*2850,z=(Math.random()-.5)*2850;
+  if(emClareira(x,z,2)||distanciaCaminhos(x,z)<2||Math.hypot(x+380,z-520)<145)continue;
+  pebbles.push({x,z,s:.35+Math.random()*1.35,rot:Math.random()*6.28});
+}
+if(pebbles.length){
+  const im=new THREE.InstancedMesh(pebbleGeo,pebbleMat,pebbles.length),d=new THREE.Object3D();
+  pebbles.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.08,o.z);d.rotation.set(Math.random()*.5,o.rot,Math.random()*.5);d.scale.set(o.s,o.s*(.45+Math.random()*.4),o.s*.8);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
+  im.instanceMatrix.needsUpdate=true;im.castShadow=true;im.receiveShadow=true;scene.add(im);
+}
+
 // 17. ARQUITETURA DE ELLESMÉRA — estruturas exploráveis nos pontos do mapa
 // ============================================================================
 const woodMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x8b7657,roughness:.88});
