@@ -51,6 +51,23 @@ function construirMenoa(){
     tubeBuckets.clear();
   }
   function curve(points){return new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.4);}
+  function rootTube(points,r0,r1,mat=trunkMat,radial=14,segments=34,irregular=.16){
+    const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.4);
+    const frames=curve.computeFrenetFrames(segments,false),bucket=tubeBuckets.get(mat),base=bucket.pos.length/3;
+    for(let j=0;j<=segments;j++){
+      const t=j/segments,p=curve.getPointAt(t),r=r0*(1-t)+r1*t;
+      const tangent=frames.tangents[j],lateral=new THREE.Vector3(-tangent.z,0,tangent.x).normalize();
+      for(let k=0;k<radial;k++){
+        const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+t*8)*irregular;
+        const side=r*Math.cos(a)*w,vertical=r*.18*Math.sin(a)*w;
+        bucket.pos.push(p.x+lateral.x*side,p.y+vertical,p.z+lateral.z*side);bucket.uv.push(k/radial,t*2.7);
+      }
+    }
+    for(let j=0;j<segments;j++)for(let k=0;k<radial;k++){
+      const a=base+j*radial+k,b=base+j*radial+(k+1)%radial,d=base+(j+1)*radial+(k+1)%radial,e=base+(j+1)*radial+k;
+      bucket.idx.push(a,b,e,b,d,e);
+    }
+  }
   const needleGeo=new THREE.ConeGeometry(.04,1.05,6,1);needleGeo.translate(0,.4,0);
   const needleCapacity=180000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
   needles.castShadow=false;needles.receiveShadow=true;
@@ -79,8 +96,8 @@ function construirMenoa(){
   const trunkPath=[];
   for(let i=0;i<=14;i++){
     const t=i/14;
-    trunkPath.push([cx+Math.sin(t*2.3)*2.0+Math.sin(t*5.1)*.65,
-      yBase+t*altura,cz+Math.cos(t*1.8)*1.6+Math.sin(t*4.2)*.55]);
+    trunkPath.push([cx+Math.sin(t*4.8)*10.5+Math.sin(t*12.4)*2.8,
+      yBase+t*altura,cz+Math.cos(t*4.1)*8.0+Math.sin(t*9.2)*2.5]);
   }
   tube(trunkPath,raioBase,raioTopo,trunkMat,64,100,.075);
 
@@ -102,25 +119,23 @@ function construirMenoa(){
     const raised=i===0,side=Math.sin(i*1.3)*2.2,pts=[];
     for(let j=0;j<=8;j++){
       const t=j/8,d=length*t;
-      let lift=raised?(t<.30?(t/.30)*3.7:(1-(t-.30)/.70)*3.7):.35+Math.sin(t*Math.PI)*(.45+Math.random()*.65);
-      lift=Math.max(.12,lift);
+      let lift=.07+Math.sin(t*Math.PI)*.12+Math.random()*.025;
       const lateral=Math.sin(t*3.8+i)*side*t;
       const rx=cx+Math.cos(a)*d+Math.cos(a+Math.PI/2)*lateral;
       const rz=cz+Math.sin(a)*d+Math.sin(a+Math.PI/2)*lateral;
       pts.push([rx,alturaTerreno(rx,rz)+lift,rz]);
     }
     const rootRadius=2.35+Math.random()*.65;
-    tube(pts,rootRadius,.18,trunkMat,14,34,.18);
-    ROOT_WALKS.push({points:pts,r0:rootRadius,r1:.18});
-    if(raised)raizElevadaPontos=pts.map((p,j)=>({x:p[0],y:p[1]+(rootRadius*(1-j/8)+.18*(j/8))*.78,z:p[2],r:rootRadius*(1-j/8)+.35}));
+    rootTube(pts,rootRadius,.18,trunkMat,14,34,.18);
+    for(const k of [2,4,6])colisores.push({x:pts[k][0],z:pts[k][2],raio:rootRadius*.78});
     // Veias laterais ramificam a raiz principal para os lados.
     for(let fork=0;fork<3;fork++){
       const t=.38+fork*.18,base=curve(pts).getPoint(t),turn=a+(fork%2?1:-1)*(.55+Math.random()*.28),len=18+Math.random()*24;
       const ex=base.x+Math.cos(turn)*len,ez=base.z+Math.sin(turn)*len;
       const mx=base.x+Math.cos(turn)*len*.55,mz=base.z+Math.sin(turn)*len*.55;
       const forkPoints=[[base.x,base.y,base.z],[mx,alturaTerreno(mx,mz)+.22,mz],[ex,alturaTerreno(ex,ez)+.12,ez]];
-      tube(forkPoints,.62,.10,trunkMat,8,18,.16);
-      ROOT_WALKS.push({points:forkPoints,r0:.62,r1:.10});
+      rootTube(forkPoints,.62,.10,trunkMat,8,18,.16);
+      colisores.push({x:mx,z:mz,raio:.55});
     }
   }
 
@@ -129,15 +144,15 @@ function construirMenoa(){
   const branchCount=28;
   for(let b=0;b<branchCount;b++){
     const a=b/branchCount*Math.PI*2+.17+(Math.random()-.5)*.12;
-    const startY=yBase+altura*(.48+(b%4)*.035),length=68+Math.random()*38,rise=9+Math.random()*18;
+    const startY=yBase+altura*(.48+(b%4)*.035),length=92+Math.random()*48,rise=15+Math.random()*24;
     const pts=[];
-    for(let j=0;j<=9;j++){
-      const t=j/9,d=length*t,sway=Math.sin(t*Math.PI*1.3+b)*3.2;
+    for(let j=0;j<=12;j++){
+      const t=j/12,d=length*t,sway=Math.sin(t*Math.PI*1.3+b)*8+Math.sin(t*5+b)*3*t;
       pts.push([cx+Math.cos(a)*d+Math.cos(a+Math.PI/2)*sway,
         startY+rise*t+Math.sin(t*Math.PI)*2.2,
         cz+Math.sin(a)*d+Math.sin(a+Math.PI/2)*sway]);
     }
-    tube(pts,3.25+Math.random()*.35,.58,branchMat,20,46,.16);
+    tube(pts,4.6+Math.random()*.7,.72,branchMat,22,58,.20);
     mainBranches.push({points:pts,angle:a,length});
 
     // Ramos secundários alternados, distribuídos ao longo de cada galho.

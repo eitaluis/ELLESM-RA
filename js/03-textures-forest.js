@@ -46,74 +46,130 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     g.setIndex(idx);g.computeVertexNormals();return g;
   }
 
-  // Tronco contínuo com conicidade forte, leve sinuosidade e casca irregular.
+  // Eixo principal onduloso: o tronco serpenteia antes de se dividir em quatro líderes.
+  const splitRatio=.54;
+  const trunkCenter=t=>({
+    x:cx+Math.sin(t*4.6+seed*.07)*14*t+Math.sin(t*11.2+seed)*2.8*t,
+    z:cz+Math.sin(t*3.9+seed*.11)*11*t+Math.cos(t*9.1+seed*.4)*2.4*t
+  });
   const trunk=[];
-  for(let s=0;s<=12;s++){
-    const y=s<=2?s*3.5:7+(s-2)/10*(altura-7),t=y/altura;
-    trunk.push([cx+Math.sin(t*2.4+seed)*(.25+t*.8),y,cz+Math.cos(t*1.9+seed*.4)*(.22+t*.55)]);
+  for(let s=0;s<=30;s++){
+    const t=s/30*splitRatio,c=trunkCenter(t);
+    trunk.push([c.x,t*altura,c.z]);
   }
-  // Root flare spreads the basal 7 m to approximately 1.6 times the trunk diameter.
-  addTube(posT,idxT,trunk.slice(0,3),raioBase*1.6,raioBase,16,16,.075);
-  addTube(posT,idxT,trunk.slice(2),raioBase,topoRaio,20,42,.095);
-  for(let rib=0;rib<12;rib++){
-    const a=rib/12*Math.PI*2+(seed%7)*.08,pts=[];
-    for(let j=0;j<=10;j++){
-      const t=j/10,y=7+t*(altura-7),r=raioBase*(1-t)+topoRaio*t;
-      const aa=a+Math.sin(t*5+rib)*.035;
-      pts.push([cx+Math.cos(aa)*(r+.08),y,cz+Math.sin(aa)*(r+.08)]);
+  addTube(posT,idxT,trunk,raioBase*1.62,raioBase*.52,26,76,.19);
+  const leaders=[],forkBase=trunkCenter(splitRatio);
+  for(let i=0;i<4;i++){
+    const angle=i/4*Math.PI*2+.23+(seed%9)*.07,reach=34+rand(8,19),sway=rand(5,11),pts=[];
+    for(let j=0;j<=14;j++){
+      const t=j/14,ratio=splitRatio+(1-splitRatio)*t;
+      const wave=Math.sin(t*4.1+i*1.7)*sway*t,second=Math.sin(t*8.5+i*2.3)*3.8*t;
+      const spread=reach*t+wave+second;
+      pts.push([forkBase.x+Math.cos(angle)*spread+Math.sin(t*2.9+i)*4.2*t,
+        altura*ratio,forkBase.z+Math.sin(angle)*spread+Math.cos(t*2.6+i)*4.0*t]);
     }
-    addTube(posT,idxT,pts,.16+raioBase*.025,.035,5,20,.16);
+    addTube(posT,idxT,pts,raioBase*.62,.26,20,60,.21);
+    leaders.push({angle,curve:new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)),false,'centripetal',.38)});
   }
-
-  // Raízes expostas, ligadas ao colo do tronco e apoiadas sobre o solo.
-  const rootCount=sapling?7:12;
-  for(let r=0;r<rootCount;r++){
-    const a=r/rootCount*Math.PI*2+rand(-.18,.18),len=sapling?rand(5,9):rand(18,30),side=Math.sin(a*2+seed)*.8;
-    const root=[
-      [cx+Math.cos(a)*raioBase*.42,.32,cz+Math.sin(a)*raioBase*.42],
-      [cx+Math.cos(a)*len*.28+Math.cos(a+Math.PI/2)*side,.72,cz+Math.sin(a)*len*.28+Math.sin(a+Math.PI/2)*side],
-      [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side*1.8,.38,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side*1.8],
-      [cx+Math.cos(a)*len,.18,cz+Math.sin(a)*len]
-    ];
-    const rootRadius=raioBase*rand(.12,.20);
-    addTube(posT,idxT,root,rootRadius,.035,7,14,.16);
-    rootPaths.push({points:root.map(p=>p.slice()),radius:rootRadius});
-    if(r%2===0){const fork=root[2],fa=a+rand(-.65,.65),fl=len*rand(.35,.58);addTube(posT,idxT,[fork,[fork[0]+Math.cos(fa)*fl*.45,.18,fork[2]+Math.sin(fa)*fl*.45],[fork[0]+Math.cos(fa)*fl,.05,fork[2]+Math.sin(fa)*fl]],.22,.025,6,9,.16);}
+  for(let rib=0;rib<18;rib++){
+    const a=rib/18*Math.PI*2+(seed%7)*.08,pts=[];
+    for(let j=0;j<=16;j++){
+      const t=j/16*splitRatio,c=trunkCenter(t),r=raioBase*1.5*(1-t*.72),aa=a+Math.sin(t*13+rib)*.11;
+      pts.push([c.x+Math.cos(aa)*(r+.12),t*altura,c.z+Math.sin(aa)*(r+.12)]);
+    }
+    addTube(posT,idxT,pts,.20+raioBase*.035,.055,6,28,.18);
   }
-
-  // Andares de galhos, mais longos na parte inferior da copa e progressivamente
-  // menores no alto, com pequenos ramos alternados e agulhas finas individuais.
-  const levels=sapling?6:9,arms=sapling?7:10,baseReach=sapling?rand(10,15):rand(29,39);
-  for(let level=0;level<levels;level++){
-    const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.92,reach=baseReach*(1-t*.86)+1.8,count=arms+(level%2);
-    for(let arm=0;arm<count;arm++){
-      const a=arm/count*Math.PI*2+level*.39+rand(-.16,.16),len=reach*rand(.82,1.17),droop=(1-t)*len*.13;
-      const root=[cx+Math.cos(a)*raioBase*.55,y,cz+Math.sin(a)*raioBase*.55];
-      const p1=[cx+Math.cos(a)*len*.34,y+len*.045,cz+Math.sin(a)*len*.34];
-      const p2=[cx+Math.cos(a)*len*.70,y+len*.025-droop*.28,cz+Math.sin(a)*len*.70];
-      const tip=[cx+Math.cos(a)*len,y+len*.015-droop,cz+Math.sin(a)*len];
-      addTube(posB,idxB,[root,p1,p2,tip],sapling ? .20 : .48,sapling ? .025 : .055,5,10,.13);
-
-      // Pequenos sprays distribuídos ao longo do galho principal.
-      for(let s=1;s<=4;s++){
-        const q=s/6,px=cx+Math.cos(a)*len*q,py=y+len*.025*q-droop*q*.65,pz=cz+Math.sin(a)*len*q;
-        for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .42 : 1.08,sapling ? .82 : 2.15),sapling ? .045 : .10);}
+  // Roots are broad and flattened against the terrain, never suspended arches.
+  function addGroundRoot(pos,idx,points,r0,r1,radial=10,segments=28,irregular=.14){
+    const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.38);
+    const frames=curve.computeFrenetFrames(segments,false),base=pos.length/3;
+    for(let s=0;s<=segments;s++){
+      const t=s/segments,center=curve.getPointAt(t),radius=r0*(1-t)+r1*t;
+      const tangent=frames.tangents[s],lateral=new THREE.Vector3(-tangent.z,0,tangent.x).normalize();
+      for(let k=0;k<radial;k++){
+        const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+seed+t*7)*irregular;
+        const side=radius*Math.cos(a)*w,vertical=radius*.18*Math.sin(a)*w;
+        pos.push(center.x+lateral.x*side,center.y+vertical,center.z+lateral.z*side);
       }
+    }
+    for(let s=0;s<segments;s++)for(let k=0;k<radial;k++){
+      const a=base+s*radial+k,b=base+s*radial+(k+1)%radial,c=base+(s+1)*radial+k,d=base+(s+1)*radial+(k+1)%radial;
+      idx.push(a,b,c,b,d,c);
+    }
+  }
 
-      // Ramificações secundárias alternadas que quebram a silhueta em fios vegetais.
-      const twigN=sapling?4:6;
+  const rootCount=sapling?8:16;
+  for(let r=0;r<rootCount;r++){
+    const a=r/rootCount*Math.PI*2+rand(-.22,.22),len=sapling?rand(8,14):rand(24,40);
+    const side=Math.sin(a*2+seed)*rand(1.6,3.8);
+    const root=[
+      [cx+Math.cos(a)*raioBase*.82,.10,cz+Math.sin(a)*raioBase*.82],
+      [cx+Math.cos(a)*len*.30+Math.cos(a+Math.PI/2)*side*.45,.11,cz+Math.sin(a)*len*.30+Math.sin(a+Math.PI/2)*side*.45],
+      [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side,.07,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side],
+      [cx+Math.cos(a)*len,.035,cz+Math.sin(a)*len]
+    ];
+    const rootRadius=raioBase*rand(.14,.20);
+    addGroundRoot(posT,idxT,root,rootRadius,.05,10,30,.18);
+    rootPaths.push({points:root.map(p=>p.slice()),radius:rootRadius});
+    if(r%2===0){
+      const fork=root[2],fa=a+rand(-.72,.72),fl=len*rand(.30,.48);
+      const forkPoints=[fork,[fork[0]+Math.cos(fa)*fl*.48,.075,fork[2]+Math.sin(fa)*fl*.48],
+        [fork[0]+Math.cos(fa)*fl,.035,fork[2]+Math.sin(fa)*fl]];
+      addGroundRoot(posT,idxT,forkPoints,rootRadius*.42,.035,8,18,.15);
+      rootPaths.push({points:forkPoints.map(p=>p.slice()),radius:rootRadius*.42});
+    }
+  }
+
+  const levels=sapling?7:10,arms=sapling?8:12,baseReach=sapling?rand(17,24):rand(48,66);
+  for(let level=0;level<levels;level++){
+    const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.94,ratio=y/altura;
+    const reach=baseReach*(1-t*.78)+3.2,count=arms+(level%2);
+    for(let arm=0;arm<count;arm++){
+      const a=arm/count*Math.PI*2+level*.41+rand(-.18,.18);
+      let anchor;
+      if(ratio<splitRatio)anchor=trunkCenter(ratio);
+      else{
+        let nearest=leaders[0],best=Infinity;
+        for(const leader of leaders){
+          const diff=Math.abs(Math.atan2(Math.sin(a-leader.angle),Math.cos(a-leader.angle)));
+          if(diff<best){best=diff;nearest=leader;}
+        }
+        const u=THREE.MathUtils.clamp((ratio-splitRatio)/(1-splitRatio),0,1);
+        const p=nearest.curve.getPointAt(u);anchor={x:p.x,z:p.z};
+      }
+      const len=reach*rand(.82,1.2),droop=(1-t)*len*.12;
+      const root=[anchor.x+Math.cos(a)*.55,y,anchor.z+Math.sin(a)*.55];
+      const p1=[anchor.x+Math.cos(a)*len*.30+Math.cos(a+1.2)*4,y+len*.10,anchor.z+Math.sin(a)*len*.30+Math.sin(a+1.2)*4];
+      const p2=[anchor.x+Math.cos(a)*len*.68+Math.sin(a*2+level)*4,y+len*.16-droop*.28,anchor.z+Math.sin(a)*len*.68+Math.cos(a*2+level)*4];
+      const tip=[anchor.x+Math.cos(a)*len,y+len*.08-droop,anchor.z+Math.sin(a)*len];
+      const branchPoints=[root,p1,p2,tip];
+      addTube(posB,idxB,branchPoints,sapling?.58:1.55,sapling?.045:.16,8,22,.18);
+      const branchCurve=new THREE.CatmullRomCurve3(branchPoints.map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
+      for(let s=1;s<=5;s++){
+        const q=s/6,p=branchCurve.getPoint(q);
+        for(let n=0;n<3;n++){
+          const aa=a+n*Math.PI*2/3+rand(-.32,.32);
+          addNeedle([p.x,p.y,p.z],[Math.cos(aa)*.58+Math.cos(a)*.62,.34+rand(-.08,.40),Math.sin(aa)*.58+Math.sin(a)*.62],
+            rand(sapling?.55:1.25,sapling?1.0:2.5),sapling?.055:.12);
+        }
+      }
+      const twigN=sapling?4:7;
       for(let twig=0;twig<twigN;twig++){
-        const q=.16+twig*.17,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
-        const aa=a+side*rand(.52,.92),tl=len*rand(.14,.22)*(1-t*.25);
-        const mid=[bx+Math.cos(aa)*tl*.52,by+tl*.13,bz+Math.sin(aa)*tl*.52],end=[bx+Math.cos(aa)*tl,by+tl*.16+rand(.2,1.1),bz+Math.sin(aa)*tl];
-        addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,5,6,.16);
-        for(let n=0;n<10;n++){
-          const a2=aa+n*Math.PI*2/11+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
-          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .42 : .95,sapling ? .82 : 2.2),sapling ? .045 : .105);
+        const q=.18+twig*.105,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
+        const aa=a+side*rand(.48,.98),tl=len*rand(.15,.24)*(1-t*.2);
+        const mid=[base.x+Math.cos(aa)*tl*.48,base.y+tl*.19+2,base.z+Math.sin(aa)*tl*.48];
+        const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
+        addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,6,12,.18);
+        for(let n=0;n<12;n++){
+          const a2=aa+n*Math.PI*2/13+rand(-.18,.18);
+          const p=[end[0]-Math.cos(aa)*rand(0,1.1),end[1]-rand(0,.5),end[2]-Math.sin(aa)*rand(0,1.1)];
+          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],
+            rand(sapling?.48:1.0,sapling?.92:2.3),sapling?.05:.11);
         }
       }
     }
   }
+
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
   for(let n=0;n<14;n++){const a=n/14*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
@@ -173,13 +229,16 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
     colisores.push({x:p.x,z:p.z,raio:variante.raioBase*scale*1.16+.9});
     if(Math.hypot(p.x,p.z)<700){
       const cs=Math.cos(rotation),sn=Math.sin(rotation);
-      for(let ri=0;ri<variante.raizes.length;ri+=6){
+      for(let ri=0;ri<variante.raizes.length;ri+=3){
         const root=variante.raizes[ri],points=root.points.map(v=>[
           p.x+(v[0]*cs+v[2]*sn)*scale,
           baseY+v[1]*scaleY,
           p.z+(-v[0]*sn+v[2]*cs)*scale
         ]);
-        ROOT_WALKS.push({points,r0:root.radius*scale,r1:.035*scale});
+        for(const k of [1,2]){
+          const q=points[k];
+          colisores.push({x:q[0],z:q[2],raio:Math.max(.55,root.radius*scale*.78)});
+        }
       }
     }
   });

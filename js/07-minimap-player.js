@@ -65,6 +65,7 @@ function animar() {
 
   colidir(jogador.pos);
   camera.position.copy(jogador.pos);
+  atualizarNeblinaPorAltitude(jogador.pos.y);
 
   sun.position.set(jogador.pos.x - 600, 400, jogador.pos.z + 300);
   sun.target.position.set(jogador.pos.x, 0, jogador.pos.z);

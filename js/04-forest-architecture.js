@@ -223,17 +223,17 @@ function buildLivingBridge(parent,points,width=3.8){
   const railL=[],railR=[],underL=[],underR=[];
   for(let i=0;i<samples.length;i++){railL.push([left[i][0],left[i][1]+1.15,left[i][2]]);railR.push([right[i][0],right[i][1]+1.15,right[i][2]]);
     underL.push([left[i][0],left[i][1]-.48,left[i][2]]);underR.push([right[i][0],right[i][1]-.48,right[i][2]]);}
-  addOrganicTube(parent,railL,.19,.12,paleWood,7,count,.10);addOrganicTube(parent,railR,.19,.12,paleWood,7,count,.10);
-  addOrganicTube(parent,underL,.34,.22,woodMat,8,count,.12);addOrganicTube(parent,underR,.34,.22,woodMat,8,count,.12);
-  for(let i=7;i<samples.length-7;i+=10)addOrganicTube(parent,[[left[i][0],left[i][1]-.25,left[i][2]],
-    [samples[i].x,samples[i].y-1.05,samples[i].z],[right[i][0],right[i][1]-.25,right[i][2]]],.15,.11,woodMat,6,12,.10);
+  addOrganicTube(parent,railL,.34,.23,paleWood,8,count,.12);addOrganicTube(parent,railR,.34,.23,paleWood,8,count,.12);
+  addOrganicTube(parent,underL,.62,.38,woodMat,10,count,.14);addOrganicTube(parent,underR,.62,.38,woodMat,10,count,.14);
+  for(let i=5;i<samples.length-5;i+=7)addOrganicTube(parent,[[left[i][0],left[i][1]-.30,left[i][2]],
+    [samples[i].x,samples[i].y-1.65,samples[i].z],[right[i][0],right[i][1]-.30,right[i][2]]],.28,.18,woodMat,7,14,.12);
   const path=samples.map(p=>[p.x,p.y,p.z]);registerWalkablePath(path,width*.72);return path;
 }
 function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   const house=new THREE.Group();house.position.set(x,0,z);parent.add(house);
-  const groundY=alturaTerreno(x,z),upperY=floorY+5.6*scale;
-  const lowerOuter=9.6*scale,lowerInner=5.0*scale;
-  const upperOuter=7.0*scale,upperInner=4.85*scale;
+  const groundY=alturaTerreno(x,z),upperY=floorY+7.2*scale;
+  const lowerOuter=13.8*scale,lowerInner=7.0*scale;
+  const upperOuter=10.4*scale,upperInner=7.0*scale;
   const floorMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x957c58,roughness:.96,side:THREE.DoubleSide});
   const roofMat=new THREE.MeshStandardMaterial({color:0x435c36,roughness:1,side:THREE.DoubleSide});
   const flameMat=new THREE.MeshBasicMaterial({color:0xffa23e});
@@ -241,7 +241,7 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   const branchDoorMat=new THREE.MeshStandardMaterial({color:0xa98f68,roughness:.94});
 
   // O tronco atravessa a residência; os dois pavimentos crescem em torno dele.
-  addLivingTrunk(parent,x,groundY,z,Math.max(250,upperY-groundY+78),6.4*scale,
+  addLivingTrunk(parent,x,groundY,z,Math.max(250,upperY-groundY+78),7.6*scale,
     .85,-.65,woodMat);
   for(let r=0;r<10;r++){
     const a=r/10*Math.PI*2+Math.sin(r*2.1)*.12,len=18+Math.random()*10;
@@ -290,8 +290,8 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   function buildOpenStory(baseY,outer,inner,height,segments){
     const sill=ringPoints(outer,baseY+1.05*scale);
     const lintel=ringPoints(outer-.18*scale,baseY+(height-.22)*scale);
-    addOrganicTube(parent,sill,.17*scale,.13*scale,paleWood,7,84,.07);
-    addOrganicTube(parent,lintel,.23*scale,.16*scale,woodMat,8,84,.09);
+    addOrganicTube(parent,sill,.24*scale,.18*scale,paleWood,8,84,.07);
+    addOrganicTube(parent,lintel,.38*scale,.25*scale,woodMat,9,84,.09);
     for(let i=0;i<segments;i++){
       const a=i/segments*Math.PI*2,delta=Math.atan2(Math.sin(a-Math.PI/2),Math.cos(a-Math.PI/2));
       // A entrada frontal permanece ampla e sem obstruções.
@@ -304,13 +304,13 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
         [x+ca*(outer-.92*scale),baseY+(height-.12)*scale,z+sa*(outer-.92*scale)],
         [x+ca*(inner+.35*scale),baseY+(height+.18)*scale,z+sa*(inner+.35*scale)]
       ];
-      addOrganicTube(parent,pts,.34*scale,.13*scale,i%2?woodMat:paleWood,8,24,.10);
+      addOrganicTube(parent,pts,.58*scale,.22*scale,i%2?woodMat:paleWood,9,28,.12);
       const crossA=[
         [x+ca*(outer-.30*scale),baseY+2.05*scale,z+sa*(outer-.30*scale)],
         [x+ca*(outer-1.35*scale),baseY+2.65*scale,z+sa*(outer-1.35*scale)],
         [x+ca*(inner+.45*scale),baseY+3.05*scale,z+sa*(inner+.45*scale)]
       ];
-      addOrganicTube(parent,crossA,.16*scale,.08*scale,woodMat,6,14,.08);
+      addOrganicTube(parent,crossA,.27*scale,.13*scale,woodMat,7,18,.09);
     }
   }
   buildOpenStory(floorY,lowerOuter,lowerInner,4.8,16);
@@ -354,13 +354,13 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   }
 
   // Escada interna em espiral, contornando o tronco entre os dois pavimentos.
-  const stairPath=[],turns=1.18,stairRadius=4.95*scale,samples=56;
+  const stairPath=[],turns=1.28,stairRadius=5.35*scale,samples=72;
   for(let i=0;i<=samples;i++){
     const t=i/samples,a=t*Math.PI*2*turns,y=floorY+.18*scale+t*(upperY-floorY-.24*scale);
     stairPath.push([x+Math.cos(a)*stairRadius,y+.185*scale,z+Math.sin(a)*stairRadius]);
   }
   registerWalkablePath(stairPath,1.45*scale,'stair');
-  const stepCount=42,stepGeo=new THREE.BoxGeometry(1.25*scale,.17*scale,.88*scale);
+  const stepCount=54,stepGeo=new THREE.BoxGeometry(1.55*scale,.20*scale,1.02*scale);
   const steps=new THREE.InstancedMesh(stepGeo,new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x9b805a,roughness:.95}),stepCount);
   const dummy=new THREE.Object3D();
   for(let i=0;i<stepCount;i++){
@@ -375,8 +375,8 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
     stairInner.push([x+Math.cos(a)*(stairRadius-.78*scale),y,z+Math.sin(a)*(stairRadius-.78*scale)]);
     stairOuter.push([x+Math.cos(a)*(stairRadius+.78*scale),y,z+Math.sin(a)*(stairRadius+.78*scale)]);
   }
-  addOrganicTube(parent,stairInner,.14*scale,.10*scale,paleWood,6,100,.06);
-  addOrganicTube(parent,stairOuter,.17*scale,.12*scale,woodMat,7,100,.06);
+  addOrganicTube(parent,stairInner,.22*scale,.15*scale,paleWood,7,120,.06);
+  addOrganicTube(parent,stairOuter,.26*scale,.18*scale,woodMat,8,120,.06);
 
   // Três tochas pequenas, distribuídas entre os dois níveis. O interior fica vazio.
   const torchPlaces=[
@@ -404,7 +404,7 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   };
 }
 function buildCanopyResidence(parent,x,z,floorY,seed=0){
-  return buildReadableDwelling(parent,x,z,floorY,1,true);
+  return buildReadableDwelling(parent,x,z,floorY,1.32,true);
 }
 function addOrganicTube(parent,points,r0,r1,mat=woodMat,radial=9,segments=18,irregular=.12){
   let bucket=ARCH_TUBE_BUCKETS.get(mat);
@@ -548,7 +548,7 @@ function buildGilderien(parent,x,y,z){
   glow.rotation.x=-Math.PI/2;glow.position.set(x,y+.04,z);parent.add(glow);
 }
 function buildTreeDwelling(parent,x,y,z){
-  const h=260;addLivingTrunk(parent,x,y,z,h,5.4,1.2,-.8);
+  const h=260;addLivingTrunk(parent,x,y,z,h,7.0,10.5,-7.5);
   const helix=[];for(let i=0;i<=120;i++){const t=i/120,a=t*Math.PI*2*3.0,rr=4.2+t*5.0,yy=y+.3+t*26.5;helix.push([x+Math.cos(a)*rr,yy,z+Math.sin(a)*rr]);}
   addOrganicTube(parent,helix,.25,.14,paleWood,7,250,.08);registerWalkablePath(helix,1.55);
   for(let i=4;i<120;i+=4){const p=helix[i],tangent=new THREE.Vector3(helix[i+1][0]-helix[i-1][0],0,helix[i+1][2]-helix[i-1][2]).normalize();
@@ -938,7 +938,7 @@ function buildCanopyTransit(){
       [a.x+(midX-a.x)*.42,midY+1.1,a.door[2]+(midZ-a.door[2])*.28],
       [b.x+(midX-b.x)*.42,midY+.8,b.door[2]+(midZ-b.door[2])*.25],
       b.door
-    ],4.35);
+    ],7.8);
   }
 
   // Uma escada espiral protegida alcança cada faixa; as pontes completam a rede.
@@ -954,7 +954,7 @@ function buildCanopyTransit(){
     [-42,lowFloor+1,-150],
     [45,lowFloor+.7,-125],
     residences[0][1].door
-  ],3.9);
+  ],7.0);
   buildLivingBridge(g,[
     [stairMid.x,stairMid.y,stairMid.z],
     [180,midFloor+1,-100],

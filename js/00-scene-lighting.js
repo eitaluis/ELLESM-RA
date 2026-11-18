@@ -45,39 +45,51 @@ scene.add(fill);
 // Camadas de névoa suspensas entre os três níveis da floresta.
 // As copas superiores só se revelam gradualmente conforme o visitante sobe.
 function criarNeblinaDeCopas(){
-  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
+  const canvas=document.createElement('canvas');canvas.width=768;canvas.height=384;
   const ctx=canvas.getContext('2d');
-  const g=ctx.createRadialGradient(256,128,8,256,128,238);
-  g.addColorStop(0,'rgba(245,250,246,0.46)');
-  g.addColorStop(.34,'rgba(235,244,239,0.30)');
-  g.addColorStop(.72,'rgba(224,237,231,0.10)');
+  const g=ctx.createRadialGradient(384,192,8,384,192,360);
+  g.addColorStop(0,'rgba(250,253,251,0.82)');
+  g.addColorStop(.28,'rgba(244,250,247,0.68)');
+  g.addColorStop(.62,'rgba(231,242,237,0.34)');
   g.addColorStop(1,'rgba(224,237,231,0)');
-  ctx.fillStyle=g;ctx.fillRect(0,0,512,256);
-  for(let i=0;i<34;i++){
-    const x=20+Math.random()*472,y=40+Math.random()*176,rx=24+Math.random()*82,ry=8+Math.random()*25;
+  ctx.fillStyle=g;ctx.fillRect(0,0,768,384);
+  for(let i=0;i<64;i++){
+    const x=28+Math.random()*712,y=34+Math.random()*316,rx=35+Math.random()*112,ry=12+Math.random()*42;
     const puff=ctx.createRadialGradient(x,y,1,x,y,Math.max(rx,ry));
-    puff.addColorStop(0,'rgba(255,255,255,0.22)');
+    puff.addColorStop(0,'rgba(255,255,255,0.42)');
+    puff.addColorStop(.52,'rgba(248,252,250,0.20)');
     puff.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=puff;ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.random()*.6-.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=puff;ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.random()*.65-.32,0,Math.PI*2);ctx.fill();
   }
-  const texture=new THREE.CanvasTexture(canvas);
-  const material=new THREE.MeshBasicMaterial({map:texture,color:0xe0e9e3,transparent:true,opacity:.31,depthWrite:false,side:THREE.DoubleSide});
-  const geometry=new THREE.PlaneGeometry(210,76);
-  const count=32,clouds=new THREE.InstancedMesh(geometry,material,count),dummy=new THREE.Object3D();
-  const bands=[58,112,166,218];
-  let index=0;
-  for(let band=0;band<bands.length;band++)for(let j=0;j<8;j++){
-    const x=((j*347+band*191)%1900)-950;
-    const z=((j*563+band*277)%1900)-950;
-    dummy.position.set(x,bands[band]+(Math.random()-.5)*12,z);
-    dummy.rotation.set((Math.random()-.5)*.18,Math.random()*Math.PI,(Math.random()-.5)*.16);
-    dummy.scale.set(.72+Math.random()*.95,.72+Math.random()*.7,1);
-    dummy.updateMatrix();clouds.setMatrixAt(index++,dummy.matrix);
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  const geometry=new THREE.PlaneGeometry(420,142);
+  const bands=[
+    {y:42,opacity:.20,count:12},{y:94,opacity:.31,count:14},
+    {y:148,opacity:.46,count:16},{y:202,opacity:.61,count:18},
+    {y:256,opacity:.76,count:20},{y:310,opacity:.88,count:20}
+  ];
+  for(let band=0;band<bands.length;band++){
+    const spec=bands[band];
+    const material=new THREE.MeshBasicMaterial({map:texture,color:0xe8f0ed,transparent:true,
+      opacity:spec.opacity,depthWrite:false,side:THREE.DoubleSide});
+    const clouds=new THREE.InstancedMesh(geometry,material,spec.count),dummy=new THREE.Object3D();
+    for(let j=0;j<spec.count;j++){
+      const angle=j*2.399+band*.73,radius=160+((j*97+band*53)%980);
+      dummy.position.set(Math.cos(angle)*radius,spec.y+(Math.random()-.5)*18,Math.sin(angle)*radius);
+      dummy.rotation.set((Math.random()-.5)*.14,Math.random()*Math.PI,(Math.random()-.5)*.14);
+      dummy.scale.set(.78+Math.random()*.9,.78+Math.random()*.72,1);
+      dummy.updateMatrix();clouds.setMatrixAt(j,dummy.matrix);
+    }
+    clouds.instanceMatrix.needsUpdate=true;clouds.frustumCulled=false;clouds.renderOrder=3+band;scene.add(clouds);
   }
-  clouds.instanceMatrix.needsUpdate=true;
-  clouds.frustumCulled=false;
-  clouds.renderOrder=3;
-  scene.add(clouds);
+}
+const FOG_LOW_COLOR=new THREE.Color(0xc5d8c2),FOG_HIGH_COLOR=new THREE.Color(0xe8f0ee);
+const SKY_LOW_COLOR=new THREE.Color(0xaec5d0),SKY_HIGH_COLOR=new THREE.Color(0xe0e9e8);
+function atualizarNeblinaPorAltitude(alturaCamera){
+  const t=THREE.MathUtils.smoothstep(alturaCamera,18,280);
+  scene.fog.density=THREE.MathUtils.lerp(.00048,.00215,t);
+  scene.fog.color.copy(FOG_LOW_COLOR).lerp(FOG_HIGH_COLOR,t);
+  scene.background.copy(SKY_LOW_COLOR).lerp(SKY_HIGH_COLOR,t*.72);
 }
 
 criarNeblinaDeCopas();
