@@ -6,7 +6,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   const altura=sapling?rand(90,144):rand(225,270);
   const raioBase=sapling?rand(2.1,3.2):rand(5.2,6.2);
   const topoRaio=sapling ? .14 : .30;
-  const crownStart=altura*(highCanopy?.86:(sapling?rand(.38,.46):rand(.49,.57)));
+  const crownStart=altura*(highCanopy?.86:(sapling?rand(.27,.35):rand(.49,.57)));
   const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[],rootMaskT=[],rootOffsetT=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
@@ -126,7 +126,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     }
   }
 
-  const levels=sapling?6:10,arms=sapling?7:12,baseReach=sapling?rand(17,24):rand(48,66);
+  const levels=sapling?9:10,arms=sapling?10:12,baseReach=sapling?rand(25,32):rand(48,66);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.94,ratio=y/altura;
     const reach=baseReach*(1-t*.78)+3.2,count=arms+(level%2);
@@ -143,7 +143,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const u=THREE.MathUtils.clamp((ratio-splitRatio)/(1-splitRatio),0,1);
         const p=nearest.curve.getPointAt(u);anchor={x:p.x,z:p.z};
       }
-      const len=reach*rand(.82,1.2),droop=(1-t)*len*.12;
+      const len=reach*rand(sapling?.92:.82,sapling?1.16:1.2),droop=(1-t)*len*(sapling?.055:.12);
       const root=[anchor.x+Math.cos(a)*.55,y,anchor.z+Math.sin(a)*.55];
       const p1=[anchor.x+Math.cos(a)*len*.30+Math.cos(a+1.2)*4,y+len*.06,anchor.z+Math.sin(a)*len*.30+Math.sin(a+1.2)*4];
       const p2=[anchor.x+Math.cos(a)*len*.68+Math.sin(a*2+level)*4,y+len*.10-droop*.28,anchor.z+Math.sin(a)*len*.68+Math.cos(a*2+level)*4];
@@ -151,26 +151,26 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       const branchPoints=[root,p1,p2,tip];
       addTube(posB,idxB,branchPoints,sapling?.58:1.55,sapling?.045:.16,6,16,.18);
       const branchCurve=new THREE.CatmullRomCurve3(branchPoints.map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
-      for(let s=1;s<=3;s++){
-        const q=s/6,p=branchCurve.getPoint(q);
-        for(let n=0;n<2;n++){
+      for(let s=1;s<=(sapling?6:3);s++){
+        const q=s/(sapling?7:6),p=branchCurve.getPoint(q);
+        for(let n=0;n<(sapling?4:2);n++){
           const aa=a+n*Math.PI*2/3+rand(-.32,.32);
           addNeedle([p.x,p.y,p.z],[Math.cos(aa)*.58+Math.cos(a)*.62,.34+rand(-.08,.40),Math.sin(aa)*.58+Math.sin(a)*.62],
-            rand(sapling?.72:1.15,sapling?1.35:2.25),sapling?.10:.19);
+            rand(sapling?.85:1.15,sapling?1.65:2.25),sapling?.16:.19);
         }
       }
-      const twigN=sapling?3:4;
+      const twigN=sapling?5:4;
       for(let twig=0;twig<twigN;twig++){
-        const q=.18+twig*.105,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
+        const q=sapling?.14+twig*.145:.18+twig*.105,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
         const aa=a+side*rand(.48,.98),tl=len*rand(.15,.24)*(1-t*.2);
         const mid=[base.x+Math.cos(aa)*tl*.48,base.y+tl*.19+2,base.z+Math.sin(aa)*tl*.48];
         const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
         addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,5,9,.18);
-        for(let n=0;n<18;n++){
-          const a2=aa+n*Math.PI*2/13+rand(-.18,.18);
+        for(let n=0;n<(sapling?28:18);n++){
+          const a2=aa+n*Math.PI*2/(sapling?19:13)+rand(-.18,.18);
           const p=[end[0]-Math.cos(aa)*rand(0,1.1),end[1]-rand(0,.5),end[2]-Math.sin(aa)*rand(0,1.1)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],
-            rand(sapling?.48:1.0,sapling?.92:2.3),sapling?.05:.11);
+            rand(sapling?.62:1.0,sapling?1.28:2.3),sapling?.105:.11);
         }
       }
     }
@@ -178,7 +178,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
-  for(let n=0;n<14;n++){const a=n/14*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
+  for(let n=0;n<(sapling?28:14);n++){const a=n/(sapling?28:14)*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*(sapling?.87:.91),cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling?rand(.8,1.35):1.2,sapling?.12:.08);}
   return {tronco:toGeo(posT,idxT,rootMaskT,rootOffsetT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase,raizes:rootPaths};
 }
 function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
