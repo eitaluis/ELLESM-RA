@@ -70,7 +70,7 @@ function construirMenoa(){
     }
   }
   const needleGeo=new THREE.ConeGeometry(.04,1.05,6,1);needleGeo.translate(0,.4,0);
-  const needleCapacity=90000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
+  const needleCapacity=36000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
   needles.castShadow=false;needles.receiveShadow=true;
   const needleDummy=new THREE.Object3D();let needleIndex=0;
   // Recursos de agulhas são criados antes dos galhos que os preenchem.
@@ -142,7 +142,7 @@ function construirMenoa(){
 
   // Galhos principais: 6 m de diâmetro junto ao tronco, abrindo-se por até 100 m.
   const mainBranches=[];
-  const branchCount=28;
+  const branchCount=24;
   for(let b=0;b<branchCount;b++){
     const a=b/branchCount*Math.PI*2+.17+(Math.random()-.5)*.12;
     const startY=yBase+altura*(.48+(b%4)*.035),length=92+Math.random()*48,rise=15+Math.random()*24;
@@ -158,7 +158,7 @@ function construirMenoa(){
 
     // Ramos secundários alternados, distribuídos ao longo de cada galho.
     const mainCurve=curve(pts);
-    for(let r=0;r<8;r++){
+    for(let r=0;r<6;r++){
       const t=.22+r*.115,base=mainCurve.getPoint(t),side=r%2===0?1:-1;
       const aa=a+side*(.42+Math.random()*.45),len=18+Math.random()*21;
       const mid=[base.x+Math.cos(aa)*len*.48,base.y+5+Math.random()*4,base.z+Math.sin(aa)*len*.48];
@@ -167,24 +167,24 @@ function construirMenoa(){
       tube(secondary,1.35,.22,branchMat,11,24,.17);
       const secCurve=curve(secondary);
       // Ramificações terciárias curtas, com ponteiras voltadas para a luz.
-      for(let q=0;q<3;q++){
+      for(let q=0;q<2;q++){
         const tq=.32+q*.22,p=secCurve.getPoint(tq),a3=aa+(q%2?1:-1)*(.55+Math.random()*.35),l3=7+Math.random()*10;
         const t3=[p.x+Math.cos(a3)*l3,p.y+3+Math.random()*3,p.z+Math.sin(a3)*l3];
         tube([[p.x,p.y,p.z],[p.x+Math.cos(a3)*l3*.55,p.y+4,p.z+Math.sin(a3)*l3*.55],t3],.34,.06,branchMat,7,12,.12);
         for(let k=0;k<4;k++){
           const f=.25+k*.17,sp=curve([[p.x,p.y,p.z],t3]).getPoint(f);
-          needleSpray([sp.x,sp.y,sp.z],[Math.cos(a3)*.6,.55+Math.random()*.2,Math.sin(a3)*.6],1.0,18,b+r+q+k);
+          needleSpray([sp.x,sp.y,sp.z],[Math.cos(a3)*.6,.55+Math.random()*.2,Math.sin(a3)*.6],1.0,10,b+r+q+k);
         }
       }
-      for(let k=1;k<=5;k++){
+      for(let k=1;k<=4;k++){
         const sp=secCurve.getPoint(k/6);
-        needleSpray([sp.x,sp.y,sp.z],[Math.cos(aa)*.65,.38,Math.sin(aa)*.65],1.3,20,b+r+k);
+        needleSpray([sp.x,sp.y,sp.z],[Math.cos(aa)*.65,.38,Math.sin(aa)*.65],1.3,12,b+r+k);
       }
     }
     // Pequenos feixes ao longo do próprio galho, sem volumes elipsoidais.
-    for(let k=1;k<=8;k++){
+    for(let k=1;k<=6;k++){
       const sp=mainCurve.getPoint(k/9);
-      needleSpray([sp.x,sp.y,sp.z],[Math.cos(a)*.55,.55,Math.sin(a)*.55],2.0,24,b+k);
+      needleSpray([sp.x,sp.y,sp.z],[Math.cos(a)*.55,.55,Math.sin(a)*.55],2.0,14,b+k);
     }
   }
 
@@ -194,10 +194,10 @@ function construirMenoa(){
   // Agulhas finas em sprays discretos acompanhando os ramos, sem bolas ou cones.
   mainBranches.forEach((br,b)=>{
     const cv=curve(br.points);
-    for(let k=1;k<=13;k++){
+    for(let k=1;k<=9;k++){
       const p=cv.getPoint(k/14),a=br.angle+(k%2?1:-1)*(.4+Math.random()*.4),offset=1.4+Math.random()*2.8;
       const pos=[p.x+Math.cos(a)*offset,p.y+Math.random()*2,p.z+Math.sin(a)*offset];
-      needleSpray(pos,[Math.cos(br.angle)*.55+Math.cos(a)*.5,.35+Math.random()*.35,Math.sin(br.angle)*.55+Math.sin(a)*.5],2.0+Math.random()*1.6,26,b+k);
+      needleSpray(pos,[Math.cos(br.angle)*.55+Math.cos(a)*.5,.35+Math.random()*.35,Math.sin(br.angle)*.55+Math.sin(a)*.5],2.0+Math.random()*1.6,14,b+k);
     }
   });
 
