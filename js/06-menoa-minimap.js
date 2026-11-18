@@ -130,6 +130,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyG') posicionarNaMenoa();
   if (e.code === 'KeyH') posicionarNaCidade();
   if (e.code === 'KeyJ') posicionarNaEscadaPrincipal();
+  if (e.code === 'KeyK') posicionarNaMoradiaDaCopa();
   if (e.code === 'KeyO') alternarSomDaFloresta();
 });
 addEventListener('keyup', e => { teclas[e.code] = false; });
@@ -180,44 +181,52 @@ function posicionarNaEscadaPrincipal(){
   jogador.vel.set(0,0,0);camera.rotation.y=Math.PI;camera.rotation.x=-.04;
   document.getElementById('tp').textContent='Primeiro degrau — escada espiral protegida';
 }
+function posicionarNaMoradiaDaCopa(){
+  // Porta frontal (+Z) da casa no terceiro nível, a 158 m sobre o terreno.
+  const x=460,z=300,floorY=alturaTerreno(x,z)+158;
+  const doorZ=z+13.8*1.32+1.3*1.32;
+  const px=x,pz=doorZ+1.85;
+  const piso=alturaChao(px,pz,floorY);
+  jogador.pos.set(px,piso+jogador.alturaOlhos,pz);
+  jogador.vel.set(0,0,0);jogador.noChao=true;
+  camera.rotation.y=0;camera.rotation.x=-.045;
+  document.getElementById('tp').textContent='Moradia do terceiro nível — vista frontal';
+}
 function estaSobrePisoEspecial(x,z,footY){
-  // Degraus, pontes e raízes expostas substituem as colisões cilíndricas do tronco.
-  const check=(points,width,root=null)=>{
-    for(let i=0;i<points.length-1;i++){
-      const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
-      const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
-      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
-      if(d>width)continue;
-      let y=a[1]+(b[1]-a[1])*t;
-      if(root)y+=(root.r0*(1-t)+root.r1*t)*.78;
-      if(Math.abs(footY-y)<1.65)return true;
-    }
-    return false;
-  };
-  for(const walk of ELEVATED_WALKS)if(check(walk.points,walk.width*.5))return true;
+  // Só testa o pequeno conjunto de segmentos dentro da célula atual.
+  for(const segment of segmentosPisoPerto(x,z)){
+    const p=pontoNoSegmentoElevado(x,z,segment);
+    if(p.d<=segment.half&&Math.abs(footY-p.y)<1.65)return true;
+  }
   if(footY-alturaTerreno(x,z)>.12){
-    for(const root of rootsPerto(x,z))if(check(root.points,root.r0*.95+.28,root))return true;
+    for(const root of rootsPerto(x,z)){
+      const points=root.points;
+      for(let i=0;i<points.length-1;i++){
+        const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
+        const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
+        const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
+        if(d>root.r0*.95+.28)continue;
+        const y=a[1]+(b[1]-a[1])*t+(root.r0*(1-t)+root.r1*t)*.78;
+        if(Math.abs(footY-y)<1.65)return true;
+      }
+    }
   }
   return false;
 }
 function protegerJogadorNaEscada(novaPos){
   const footY=novaPos.y-jogador.alturaOlhos;
   let best=null;
-  for(const walk of ELEVATED_WALKS){
-    if(walk.kind!=='stair')continue;
-    const pts=walk.points;
-    for(let i=0;i<pts.length-1;i++){
-      const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
-      const t=den>1e-8?Math.max(0,Math.min(1,((novaPos.x-a[0])*dx+(novaPos.z-a[2])*dz)/den)):0;
-      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(novaPos.x-px,novaPos.z-pz);
-      if(d>2.25)continue;
-      const y=a[1]+(b[1]-a[1])*t,vertical=Math.abs(footY-y);
-      if(vertical>1.9)continue;
-      const progress=(i+t)/(pts.length-1),score=d*d+vertical*vertical*.55;
-      if(!best||score<best.score)best={px,pz,d,progress,score};
-    }
+  for(const segment of segmentosPisoPerto(novaPos.x,novaPos.z)){
+    if(segment.kind!=='stair')continue;
+    const p=pontoNoSegmentoElevado(novaPos.x,novaPos.z,segment);
+    if(p.d>2.25)continue;
+    const vertical=Math.abs(footY-p.y);
+    if(vertical>1.9)continue;
+    const progress=(segment.index+p.t)/(segment.walk.points.length-1);
+    const score=p.d*p.d+vertical*vertical*.55;
+    if(!best||score<best.score)best={px:p.px,pz:p.pz,d:p.d,progress,score};
   }
-  // A borda funciona como uma guarda física: mantém o jogador dentro dos balaústres.
+  // A borda funciona como guarda física e mantém o jogador dentro dos balaústres.
   if(best&&best.progress>.012&&best.progress<.988&&best.d>1.30&&best.d>1e-5){
     const factor=1.30/best.d;
     novaPos.x=best.px+(novaPos.x-best.px)*factor;
