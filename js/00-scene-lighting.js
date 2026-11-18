@@ -44,44 +44,31 @@ scene.add(fill);
 
 // Camadas de névoa suspensas entre os três níveis da floresta.
 // As copas superiores só se revelam gradualmente conforme o visitante sobe.
+// Névoa volumétrica em pequenos agrupamentos tridimensionais, sempre dentro da floresta.
+// Remove os grandes planos que pareciam véus soltos suspensos no céu.
 function criarNeblinaDeCopas(){
-  const canvas=document.createElement('canvas');canvas.width=768;canvas.height=384;
-  const ctx=canvas.getContext('2d');
-  const g=ctx.createRadialGradient(384,192,8,384,192,360);
-  g.addColorStop(0,'rgba(250,253,251,0.82)');
-  g.addColorStop(.28,'rgba(244,250,247,0.68)');
-  g.addColorStop(.62,'rgba(231,242,237,0.34)');
-  g.addColorStop(1,'rgba(224,237,231,0)');
-  ctx.fillStyle=g;ctx.fillRect(0,0,768,384);
-  for(let i=0;i<64;i++){
-    const x=28+Math.random()*712,y=34+Math.random()*316,rx=35+Math.random()*112,ry=12+Math.random()*42;
-    const puff=ctx.createRadialGradient(x,y,1,x,y,Math.max(rx,ry));
-    puff.addColorStop(0,'rgba(255,255,255,0.42)');
-    puff.addColorStop(.52,'rgba(248,252,250,0.20)');
-    puff.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=puff;ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.random()*.65-.32,0,Math.PI*2);ctx.fill();
-  }
-  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
-  const geometry=new THREE.PlaneGeometry(420,142);
-  const bands=[
-    {y:42,opacity:.20,count:12},{y:94,opacity:.31,count:14},
-    {y:148,opacity:.46,count:16},{y:202,opacity:.61,count:18},
-    {y:256,opacity:.76,count:20},{y:310,opacity:.88,count:20}
+  const puffGeo=new THREE.SphereGeometry(1,10,7);
+  const puffMat=new THREE.MeshBasicMaterial({color:0xeaf2ed,transparent:true,opacity:.026,depthWrite:false});
+  const zones=[
+    {x:0,z:0,r:210,y:36,n:22},{x:250,z:-40,r:190,y:52,n:20},
+    {x:400,z:-60,r:180,y:66,n:18},{x:-180,z:220,r:175,y:48,n:18},
+    {x:-380,z:520,r:205,y:72,n:24},{x:-600,z:60,r:190,y:58,n:20},
+    {x:200,z:-160,r:165,y:44,n:16},{x:-300,z:-200,r:175,y:42,n:16}
   ];
-  for(let band=0;band<bands.length;band++){
-    const spec=bands[band];
-    const material=new THREE.MeshBasicMaterial({map:texture,color:0xe8f0ed,transparent:true,
-      opacity:spec.opacity,depthWrite:false,side:THREE.DoubleSide});
-    const clouds=new THREE.InstancedMesh(geometry,material,spec.count),dummy=new THREE.Object3D();
-    for(let j=0;j<spec.count;j++){
-      const angle=j*2.399+band*.73,radius=160+((j*97+band*53)%980);
-      dummy.position.set(Math.cos(angle)*radius,spec.y+(Math.random()-.5)*18,Math.sin(angle)*radius);
-      dummy.rotation.set((Math.random()-.5)*.14,Math.random()*Math.PI,(Math.random()-.5)*.14);
-      dummy.scale.set(.78+Math.random()*.9,.78+Math.random()*.72,1);
-      dummy.updateMatrix();clouds.setMatrixAt(j,dummy.matrix);
+  const total=zones.reduce((n,z)=>n+z.n*5,0),mist=new THREE.InstancedMesh(puffGeo,puffMat,total);
+  const d=new THREE.Object3D();let index=0;
+  for(const zone of zones)for(let i=0;i<zone.n;i++){
+    const a=Math.random()*Math.PI*2,rad=Math.sqrt(Math.random())*zone.r;
+    const cx=zone.x+Math.cos(a)*rad,cz=zone.z+Math.sin(a)*rad,baseY=alturaTerreno(cx,cz);
+    for(let k=0;k<5;k++){
+      const spread=5+Math.random()*13;
+      d.position.set(cx+(Math.random()-.5)*spread,baseY+zone.y+(Math.random()-.5)*13,cz+(Math.random()-.5)*spread);
+      const size=3.5+Math.random()*8.5;d.scale.set(size*1.45,size*.38,size*.9);
+      d.rotation.set((Math.random()-.5)*.18,Math.random()*Math.PI,(Math.random()-.5)*.18);
+      d.updateMatrix();mist.setMatrixAt(index++,d.matrix);
     }
-    clouds.instanceMatrix.needsUpdate=true;clouds.frustumCulled=false;clouds.renderOrder=3+band;scene.add(clouds);
   }
+  mist.count=index;mist.instanceMatrix.needsUpdate=true;mist.frustumCulled=false;mist.renderOrder=2;scene.add(mist);
 }
 const FOG_LOW_COLOR=new THREE.Color(0xc5d8c2),FOG_HIGH_COLOR=new THREE.Color(0xe8f0ee);
 const SKY_LOW_COLOR=new THREE.Color(0xaec5d0),SKY_HIGH_COLOR=new THREE.Color(0xe0e9e8);
