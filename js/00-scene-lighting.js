@@ -85,7 +85,6 @@ criarNeblinaDeCopas();
 // 3. PONTOS
 // ============================================================================
 const PONTOS = [
-  { nome: 'Gilderien (feixe de luz)',    x:  850, z:  -60, raio:   6, cor: 0xfff2b0 },
   { nome: 'Arco natural',                 x:  450, z:  -60, raio:  12, cor: 0xc8a878 },
   { nome: 'Clareira de flores',           x:  400, z:  -60, raio:  45, cor: 0xd88fb0 },
   { nome: 'Salão do Trono',               x:  250, z:  -40, raio:  40, cor: 0xd0c090 },
