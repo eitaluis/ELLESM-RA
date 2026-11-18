@@ -6,7 +6,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   const altura=sapling?rand(90,144):rand(225,270);
   const raioBase=sapling?rand(2.1,3.2):rand(5.2,6.2);
   const topoRaio=sapling ? .14 : .30;
-  const crownStart=altura*(highCanopy?.86:(sapling?rand(.27,.35):rand(.49,.57)));
+  const crownStart=altura*(highCanopy?.86:(sapling?rand(.15,.22):rand(.38,.46)));
   const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[],rootMaskT=[],rootOffsetT=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
@@ -126,7 +126,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     }
   }
 
-  const levels=sapling?9:10,arms=sapling?10:12,baseReach=sapling?rand(25,32):rand(48,66);
+  const levels=sapling?12:12,arms=sapling?13:14,baseReach=sapling?rand(29,37):rand(52,70);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.94,ratio=y/altura;
     const reach=baseReach*(1-t*.78)+3.2,count=arms+(level%2);
@@ -151,26 +151,45 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       const branchPoints=[root,p1,p2,tip];
       addTube(posB,idxB,branchPoints,sapling?.58:1.55,sapling?.045:.16,6,16,.18);
       const branchCurve=new THREE.CatmullRomCurve3(branchPoints.map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
-      for(let s=1;s<=(sapling?6:3);s++){
-        const q=s/(sapling?7:6),p=branchCurve.getPoint(q);
-        for(let n=0;n<(sapling?4:2);n++){
-          const aa=a+n*Math.PI*2/3+rand(-.32,.32);
-          addNeedle([p.x,p.y,p.z],[Math.cos(aa)*.58+Math.cos(a)*.62,.34+rand(-.08,.40),Math.sin(aa)*.58+Math.sin(a)*.62],
-            rand(sapling?.85:1.15,sapling?1.65:2.25),sapling?.16:.19);
+      // Folhagem distribuída por todo o galho principal: não deixar madeira exposta
+      // entre o tronco e as pontas. As folhas se alternam em torno do eixo do ramo.
+      const foliageStations=sapling?13:11,leafRing=sapling?7:6;
+      for(let s=1;s<=foliageStations;s++){
+        const q=s/(foliageStations+1),p=branchCurve.getPoint(q),tangent=branchCurve.getTangent(q);
+        for(let n=0;n<leafRing;n++){
+          const aa=a+n*Math.PI*2/leafRing+(s%2)*.24+rand(-.22,.22);
+          const dir=[Math.cos(aa)*.72+tangent.x*.30,.25+rand(.08,.48)+Math.max(0,tangent.y)*.12,Math.sin(aa)*.72+tangent.z*.30];
+          addNeedle([p.x+Math.cos(aa)*rand(.12,.42),p.y+rand(-.24,.38),p.z+Math.sin(aa)*rand(.12,.42)],dir,
+            rand(sapling?1.25:1.45,sapling?2.15:2.55),sapling?.22:.24);
         }
       }
-      const twigN=sapling?5:4;
+
+      // Ramos secundários também recebem folhas ao longo do eixo inteiro,
+      // e não somente um tufo concentrado na extremidade.
+      const twigN=sapling?8:6;
       for(let twig=0;twig<twigN;twig++){
-        const q=sapling?.14+twig*.145:.18+twig*.105,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
+        const q=sapling?.10+twig*.105:.13+twig*.12,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
         const aa=a+side*rand(.48,.98),tl=len*rand(sapling?.19:.15,sapling?.31:.24)*(1-t*.2);
         const mid=[base.x+Math.cos(aa)*tl*.48,base.y+tl*.19+2,base.z+Math.sin(aa)*tl*.48];
         const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
-        addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,5,9,.18);
-        for(let n=0;n<(sapling?28:18);n++){
-          const a2=aa+n*Math.PI*2/(sapling?19:13)+rand(-.18,.18);
-          const p=[end[0]-Math.cos(aa)*rand(0,sapling?2.0:1.1)+(Math.random()-.5)*(sapling?1.8:.7),end[1]-rand(0,sapling?1.0:.5),end[2]-Math.sin(aa)*rand(0,sapling?2.0:1.1)+(Math.random()-.5)*(sapling?1.8:.7)];
-          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],
-            rand(sapling?.62:1.0,sapling?1.28:2.3),sapling?.105:.11);
+        addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.21:.58,.035,5,10,.18);
+        const twigCurve=new THREE.CatmullRomCurve3([[base.x,base.y,base.z],mid,end].map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
+        const twigStations=sapling?5:4,twigLeaves=sapling?5:4;
+        for(let st=1;st<=twigStations;st++){
+          const u=st/(twigStations+1),tp=twigCurve.getPoint(u);
+          for(let n=0;n<twigLeaves;n++){
+            const a2=aa+n*Math.PI*2/twigLeaves+(st%2)*.31+rand(-.24,.24);
+            addNeedle([tp.x+Math.cos(a2)*rand(.05,.28),tp.y+rand(-.16,.25),tp.z+Math.sin(a2)*rand(.05,.28)],
+              [Math.cos(a2)*.68+Math.cos(aa)*.38,.24+rand(.08,.52),Math.sin(a2)*.68+Math.sin(aa)*.38],
+              rand(sapling?1.0:1.2,sapling?1.85:2.1),sapling?.18:.20);
+          }
+        }
+        // Pontas cheias, com folhas de vários comprimentos e orientações.
+        for(let n=0;n<(sapling?22:18);n++){
+          const a2=aa+n*Math.PI*2/(sapling?17:15)+rand(-.22,.22);
+          const p=[end[0]-Math.cos(aa)*rand(0,sapling?1.8:1.2)+(Math.random()-.5)*(sapling?2.2:.9),end[1]-rand(0,sapling?1.0:.6),end[2]-Math.sin(aa)*rand(0,sapling?1.8:1.2)+(Math.random()-.5)*(sapling?2.2:.9)];
+          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.50),Math.sin(a2)*.68+Math.sin(aa)*.35],
+            rand(sapling?.85:1.0,sapling?1.65:2.05),sapling?.15:.16);
         }
       }
     }
@@ -178,7 +197,12 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
-  for(let n=0;n<(sapling?28:14);n++){const a=n/(sapling?28:14)*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*(sapling?.87:.91),cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling?rand(.8,1.35):1.2,sapling?.12:.08);}
+  for(let n=0;n<(sapling?42:24);n++){
+    const a=n/(sapling?42:24)*Math.PI*2;
+    addNeedle([cx+Math.cos(a)*rand(.18,.72),altura*(sapling?rand(.84,.96):rand(.88,.97)),cz+Math.sin(a)*rand(.18,.72)],
+      [Math.cos(a)*rand(.20,.52),.78+rand(.05,.35),Math.sin(a)*rand(.20,.52)],
+      sapling?rand(1.0,1.8):rand(1.1,1.9),sapling?.16:.14);
+  }
   return {tronco:toGeo(posT,idxT,rootMaskT,rootOffsetT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase,raizes:rootPaths};
 }
 function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
