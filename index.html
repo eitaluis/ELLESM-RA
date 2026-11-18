@@ -1217,7 +1217,7 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   addBox(w+.25*scale,.3*scale,.35*scale,paleWood,0,floorY+h*.58,-halfD-.08*scale);
 
   // Portal escuro, ombreiras e folha da porta aberta.
-  addBox(doorW*.94,doorH*.96,.07*scale,dwellingDarkMat,0,floorY+doorH*.48,halfD+.06*scale);
+  // O vão central permanece aberto; a folha girada não bloqueia a entrada.
   addBox(.22*scale,doorH+.25*scale,.24*scale,paleWood,-doorW/2-.15*scale,floorY+doorH/2,halfD+.18*scale);
   addBox(.22*scale,doorH+.25*scale,.24*scale,paleWood,doorW/2+.15*scale,floorY+doorH/2,halfD+.18*scale);
   addBox(doorW+.55*scale,.24*scale,.30*scale,paleWood,0,floorY+doorH+.08*scale,halfD+.18*scale);
@@ -2254,7 +2254,7 @@ function posicionarNaMenoa() {
 function posicionarNaCidade(){
   const px=300,pz=-190;
   jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos,pz);
-  jogador.vel.set(0,0,0);camera.rotation.y=-2.39;camera.rotation.x=.12;
+  jogador.vel.set(0,0,0);camera.rotation.y=-2.39;camera.rotation.x=.27;
   document.getElementById('tp').textContent='Núcleo da cidade — casas nas copas';
 }
 function posicionarNaEscadaPrincipal(){
