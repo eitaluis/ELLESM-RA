@@ -16,7 +16,8 @@ Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literár
 - **Cânone de Ellesméra:** a cidade é uma floresta habitada, não uma cidade de castelos de pedra. Os edifícios nascem dos pinheiros e das plantas, moldados por canções na língua antiga.
 - **Casa de dois andares:** volume hexagonal, pavimento superior menor, seis nervuras estruturais, paredes e cobertura de madeira entrelaçada, janelas coloridas e porta recuada sob arco simbólico.
 - **Casa alta:** edifício leve de cinco níveis entre três pinheiros, unidos por ramos curvos que funcionam como contrafortes.
-- **Tialdarí:** residência ancestral da família real, concebida aqui como um conjunto de madeira viva e jardins; a forma detalhada é uma interpretação arquitetônica, não uma descrição literal completa.
+- **Tialdarí Hall:** conjunto ancestral da família de Arya, reinterpretado em madeira viva como sala comum, sala de estar coberta de trepadeiras, quarto, escritório e jardins. O texto nomeia os ambientes, mas não fixa uma fachada externa única.
+- **Casa de cinco níveis:** construída em outro setor, entre três pinheiros unidos por contrafortes de ramos curvos; não é identificada como Tialdarí Hall.
 - **Sala do Trono:** salão de árvores, teto de ramos em colmeia, vinte e quatro assentos e pavilhão branco sobre um trono de raízes nodosas.
 - **Pontes:** arcos em planta e elevação, tabuleiro contínuo, guarda-corpos laterais e elementos estruturais abaixo da passagem — nunca atravessando o piso livre.
 - **Regra visual:** nenhum edifício genérico, esfera decorativa ou castelo de pedra deve ser usado para preencher um ponto do mapa. Cada local precisa ter uma silhueta identificável e uma função legível.
@@ -32,7 +33,8 @@ Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literár
 - [x] Praça comunitária suspensa no nível superior da floresta
 - [x] Moradias hexagonais e cobertura com seis nervuras estruturais
 - [x] Sala do Trono refeita como salão de árvores, com pavilhão e trono de raízes
-- [x] Tialdarí reconstruída como residência ancestral de cinco níveis, ligada por escadas e passarelas
+- [x] Tialdarí reconstruída como conjunto ancestral com sala comum, sala de estar, quarto, escritório e jardins
+- [x] Casa de cinco níveis separada, sustentada por três pinheiros e contrafortes vivos
 - [x] Crags reconstruídos como penhasco rochoso com clareira no topo
 - [x] Mobiliário interno nas moradias: mesas, bancos, estantes, camas, baús e peças de uso cotidiano
 - [x] Áreas coletivas ampliadas: refeição comunal, alvos e armas de treino, cochos, feno e arreios nos estábulos
@@ -56,7 +58,7 @@ A tecla **O** liga e desliga a gravação de campo [“20090610 0 ambience.ogg�
 
 ## Desempenho
 
-A V29 reduz a quantidade de folhas geométricas por árvore sem deixar os ramos principais sem cobertura, diminui as instâncias de vegetação rasteira e simplifica a malha do terreno. O renderer usa escala de pixel limitada a 0,84. Os segmentos de pontes e escadas são indexados espacialmente, evitando percorrer toda a rede a cada quadro.
+A V29 reduz a quantidade de folhas geométricas por árvore sem deixar os ramos principais sem cobertura, diminui as instâncias de vegetação rasteira e simplifica a malha do terreno. O renderer usa escala de pixel limitada a 0,84. As árvores são agrupadas em setores de 620 m para permitir descarte por câmera; os segmentos de pontes e escadas também são indexados espacialmente, evitando percorrer toda a rede a cada quadro.
 
 ## Desenvolvimento
 
