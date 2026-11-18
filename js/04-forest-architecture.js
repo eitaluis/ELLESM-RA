@@ -891,150 +891,192 @@ function buildForge(parent,x,y,z){
   const windowGlow=new THREE.PointLight(0xffd6a0,.45,18);windowGlow.position.set(x+1,wallY+5,z+7);parent.add(windowGlow);
 }
 function buildTialdari(parent,x,y,z){
-  // Tialdarí Hall: morada ancestral da família real, crescida em pinheiros vivos.
-  // A silhueta escalonada de cinco níveis toma como referência as casas altas
-  // descritas em Eldest; não há muralhas, torres ou alvenaria de castelo.
-  const trunkPositions=[[-19,-10],[0,-13],[19,-10],[-18,13],[18,13]];
-  for(let i=0;i<trunkPositions.length;i++){
-    const [dx,dz]=trunkPositions[i],height=92+(i%2)*9;
-    addLivingTrunk(parent,x+dx,y,z+dz,height,i===1?3.6:2.15,
-      -dx*.15,-dz*.10,woodMat);
+  // Tialdarí Hall: edifícios ancestrais da família de Arya, com sala comum,
+  // aposentos privados e jardins. O livro não fixa uma fachada única: a forma
+  // é uma interpretação em madeira viva, seguindo a linguagem de Ellesméra.
+
+  // Sala comum ampla: casa de pinheiro com dois níveis, integrada ao tronco.
+  const common=buildReadableDwelling(parent,x,z,y+.18,1.18,true,112);
+
+  // Sala de estar de Arya, descrita como ampla e coberta por trepadeiras.
+  const loungeX=x-31,loungeZ=z-5;
+  const lounge=buildReadableDwelling(parent,loungeX,loungeZ,y+.18,.78,false,86);
+  for(let vine=0;vine<16;vine++){
+    const a=vine/16*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a),radius=lounge.outer-.35;
+    addOrganicTube(parent,[[loungeX+ca*radius,y+.2,loungeZ+sa*radius],
+      [loungeX+ca*(radius+.5),y+2.8,loungeZ+sa*(radius+.5)],
+      [loungeX+ca*(radius-.2),y+5.1,loungeZ+sa*(radius-.2)],
+      [loungeX+ca*(radius*.62),y+7.0,loungeZ+sa*(radius*.62)]],
+      .12,.035,vine%3===0?mossFloorMat:paleWood,5,20,.14);
   }
-  addLivingTrunk(parent,x,y,z,102,7.2,1.4,-1.0,woodMat);
+  // Trepadeiras e ramos cruzados formam um dossel vivo sobre a entrada da sala.
+  addOrganicTube(parent,[[loungeX-7,y+6,loungeZ+11],[loungeX-4,y+10,loungeZ+13],
+    [loungeX,y+11.5,loungeZ+10],[loungeX+4,y+10,loungeZ+13],
+    [loungeX+7,y+6,loungeZ+11]],.34,.09,woodMat,8,26,.1);
 
-  const floorLevels=[3.2,10.0,16.8,23.6,30.4];
-  const radii=[18.0,15.7,13.5,11.2,9.0];
-  const storyMat=[dwellingWallMat,paleWood,dwellingWallMat,paleWood,whiteBarkMat];
-  for(let level=0;level<floorLevels.length;level++){
-    const floorY=y+floorLevels[level],radius=radii[level],depth=radius*.86;
-    addResidenceFloor(parent,x,floorY,z,radius*.92,depth*.92,mossFloorMat);
-    addHexagonalLivingShell(parent,x,floorY+2.85,z,radius,3.15,depth,storyMat[level],true);
+  // Quarto pequeno e escritório particular, em volumes menores conectados à sala.
+  const bedroomX=x-48,bedroomZ=z+13,studyX=x-48,studyZ=z-23;
+  const bedroom=buildReadableDwelling(parent,bedroomX,bedroomZ,y+.18,.52,false,72);
+  const study=buildReadableDwelling(parent,studyX,studyZ,y+.18,.52,false,72);
 
-    // Seis nervuras grossas definem os cantos do volume e seguem até o beiral.
-    for(let side=0;side<6;side++){
-      const a=-Math.PI/6+side*Math.PI/3,ca=Math.sin(a),sa=Math.cos(a);
-      addOrganicTube(parent,[[x+ca*radius*.98,floorY+.15,z+sa*depth*.98],
-        [x+ca*radius*1.02,floorY+2.8,z+sa*depth*1.02],
-        [x+ca*radius*.86,floorY+5.5,z+sa*depth*.86],
-        [x+ca*radius*.45,floorY+6.5,z+sa*depth*.45],
-        [x+ca*.8,floorY+6.95,z+sa*.8]],.42,.085,level%2?woodMat:paleWood,8,26,.08);
-    }
-    // Janelas lapidadas em cada face habitada, com caixilho de madeira viva.
-    for(let face=1;face<6;face++){
-      const a=face*Math.PI/3,wx=x+Math.sin(a)*(radius-.18),wz=z+Math.cos(a)*(depth-.18);
-      const pane=new THREE.MeshStandardMaterial({color:0xffd08b,emissive:0xffa84a,
-        emissiveIntensity:.75,roughness:.22,side:THREE.DoubleSide});
-      addOval(parent,wx,floorY+3.15,wz,.86,1.28,.20,pane,14);
-      const frame=[];
-      for(let k=0;k<=16;k++){
-        const q=-Math.PI*.82+k/16*Math.PI*1.64;
-        frame.push([wx+Math.cos(q)*1.02,floorY+3.15+Math.sin(q)*1.48,wz+Math.cos(a)*.12]);
-      }
-      addOrganicTube(parent,frame,.12,.075,paleWood,6,20,.05);
-    }
-    // Varanda viva com guarda-corpo, sem balcões soltos.
-    const rail=[];
-    for(let i=0;i<=72;i++){
-      const a=i/72*Math.PI*2,rad=radius*.97;
-      rail.push([x+Math.sin(a)*rad,floorY+1.05,z+Math.cos(a)*depth*.97]);
-    }
-    addOrganicTube(parent,rail,.20,.14,woodMat,7,72,.055);
-    for(let i=0;i<24;i++){
-      const a=i/24*Math.PI*2;
-      addOrganicTube(parent,[[x+Math.sin(a)*radius*.97,floorY+.12,z+Math.cos(a)*depth*.97],
-        [x+Math.sin(a)*radius*.97,floorY+1.00,z+Math.cos(a)*depth*.97]],.085,.07,paleWood,5,5,.03);
-    }
-    // Vão frontal recuado com arco simbólico.
-    addLivingDoorFrame(parent,x,floorY,z+depth*.92,3.1,3.5);
-    registerWalkablePath([[x,floorY+.16,z+depth+2],[x,floorY+.16,z+depth*.72],
-      [x,floorY+.16,z+depth*.38],[x,floorY+.16,z]],4.0);
-  }
+  // Passagens cobertas e rampas no nível do jardim conectam as quatro construções.
+  buildLivingBridge(parent,common.door,lounge.door,3.8,1);
+  buildLivingBridge(parent,lounge.door,bedroom.door,3.0,-1);
+  buildLivingBridge(parent,lounge.door,study.door,3.0,1);
 
-  // Contrafortes vivos unem os pinheiros exteriores à casa em todos os níveis.
-  for(const [dx,dz] of trunkPositions){
-    for(let level=0;level<5;level++){
-      const fy=y+floorLevels[level]+5.5,rx=radii[level]*.82;
-      addOrganicTube(parent,[[x+dx,fy+7,z+dz],
-        [x+dx*.72,fy+5,z+dz*.72],
-        [x+Math.sign(dx||1)*rx*.8,fy+1.2,z+Math.sign(dz||1)*rx*.55],
-        [x+Math.sign(dx||1)*rx*.62,fy,z+Math.sign(dz||1)*rx*.48]],.62,.13,woodMat,8,24,.11);
+  // Pequenos pórticos de entrada em galhos curvos e portas de correr em treliça.
+  for(const h of [common,lounge,bedroom,study]){
+    const dx=h.x,dz=h.z,doorZ=dz+h.outer+1.3;
+    addOrganicTube(parent,[[dx-2.2,y+3.3,dz+h.outer+.4],
+      [dx-1.5,y+5.0,doorZ],[dx,y+5.6,doorZ+.25],
+      [dx+1.5,y+5.0,doorZ],[dx+2.2,y+3.3,dz+h.outer+.4]],.22,.07,paleWood,7,20,.07);
+    for(let bar=0;bar<7;bar++){
+      const bx=dx-1.25+bar*.42;
+      addOrganicTube(parent,[[bx,y+.25,doorZ+.05],[bx,y+2.75,doorZ+.05]],.045,.025,woodMat,5,8,.03);
     }
   }
 
-  // Escada helicoidal contorna um dos troncos, com degraus instanciados.
-  const stairX=x+24,stairZ=z-2,stairHeight=37,turns=2.7,radius=5.2,samples=180,path=[];
-  for(let i=0;i<=samples;i++){
-    const t=i/samples,a=t*Math.PI*2*turns;
-    path.push([stairX+Math.cos(a)*radius,y+.2+t*stairHeight,stairZ+Math.sin(a)*radius]);
+  // Aposentos de Arya: escrivaninha, rolos, globos botânicos e lembranças em vidro.
+  const desk=new THREE.Mesh(new THREE.BoxGeometry(2.7,.18,1.25),woodMat);
+  desk.position.set(studyX, y+1.35, studyZ-5.2);parent.add(desk);
+  for(let i=0;i<5;i++){
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.9,8),HOME_LINEN_MAT);
+    roll.rotation.z=Math.PI/2;roll.position.set(studyX-1+i*.48,y+1.58,studyZ-5.2);parent.add(roll);
   }
-  registerWalkablePath(path,3.1,'stair');
-  const stairRail=[];
-  for(let i=0;i<=samples;i++){
-    const t=i/samples,a=t*Math.PI*2*turns;
-    stairRail.push([stairX+Math.cos(a)*(radius+1.65),y+1.35+t*stairHeight,stairZ+Math.sin(a)*(radius+1.65)]);
-  }
-  addOrganicTube(parent,stairRail,.20,.15,paleWood,7,samples,.04);
-  const innerStairRail=[];
-  for(let i=0;i<=samples;i++){
-    const t=i/samples,a=t*Math.PI*2*turns;
-    innerStairRail.push([stairX+Math.cos(a)*(radius-1.65),y+1.15+t*stairHeight,stairZ+Math.sin(a)*(radius-1.65)]);
-  }
-  addOrganicTube(parent,innerStairRail,.16,.12,woodMat,6,samples,.035);
-  const stairGeo=new THREE.BoxGeometry(3.15,.20,.94);
-  const stairCount=150,stairs=new THREE.InstancedMesh(stairGeo,woodMat,stairCount),dummy=new THREE.Object3D();
-  for(let i=0;i<stairCount;i++){
-    const t=(i+.5)/stairCount,a=t*Math.PI*2*turns;
-    dummy.position.set(stairX+Math.cos(a)*radius,y+.2+t*stairHeight,stairZ+Math.sin(a)*radius);
-    dummy.rotation.y=-a;dummy.updateMatrix();stairs.setMatrixAt(i,dummy.matrix);
-  }
-  stairs.instanceMatrix.needsUpdate=true;parent.add(stairs);
+  const glassMemory=new THREE.Mesh(new THREE.SphereGeometry(.52,16,12),new THREE.MeshPhysicalMaterial({
+    color:0x94a99b,roughness:.12,transmission:.72,transparent:true,opacity:.74
+  }));
+  glassMemory.position.set(bedroomX+2,y+1.3,bedroomZ-3.8);parent.add(glassMemory);
 
-  // Passarelas curtas unem a escada a cada nível habitado.
-  for(let level=0;level<floorLevels.length;level++){
-    const floorY=y+floorLevels[level],t=(floorLevels[level]-.2)/stairHeight;
-    const stairPoint=path[Math.max(0,Math.min(samples,Math.round(t*samples)))];
-    const doorPoint=[x,floorY+.16,z+radii[level]*.86+1.0];
-    buildLivingBridge(parent,stairPoint,doorPoint,3.6,level%2===0?1:-1);
+  // Jardins da família: canteiros em torno das casas, conectados por caminhos sinuosos.
+  buildFlowerGrove(parent,x+25,y,z+25,28,150);
+  buildFlowerGrove(parent,x-18,y,z+42,24,115);
+  buildFlowerGrove(parent,x-62,y,z-4,20,95);
+  addOrganicTube(parent,[[x+30,y+.12,z+38],[x+18,y+.14,z+32],
+    [x+2,y+.12,z+31],[x-18,y+.12,z+35],[x-38,y+.12,z+33]],.24,.12,woodMat,6,48,.08);
+  // Árvores de sombra e raízes unem as moradas ao jardim, sem formar muralhas.
+  for(let i=0;i<9;i++){
+    const a=i/9*Math.PI*2,px=x+Math.cos(a)*61,pz=z+Math.sin(a)*42;
+    addLivingTrunk(parent,px,y,pz,38+Math.random()*10,.78+Math.random()*.22,
+      Math.cos(a)*1.6,Math.sin(a)*1.4,woodMat);
   }
-  // Escada de raízes até a entrada inferior da residência.
-  addRootStair(parent,x,y,z+27,8,7,-.82);
-  const entranceSteps=Array.from({length:9},(_,i)=>[x,y+.15+i*.38,z+27-i*.82]);
-  registerWalkablePath(entranceSteps,3.4,'stair');
-  buildLivingBridge(parent,entranceSteps[8], [x,y+3.36,z+radii[0]*.86+1.0],3.2,1);
-
-  // Jardins da residência real e caminho de pedra com pequenos veios verdes.
-  buildFlowerGrove(parent,x,y,z,42,420);
-  for(let i=0;i<18;i++){
-    const a=i/18*Math.PI*2,px=x+Math.cos(a)*29,pz=z+Math.sin(a)*24;
-    addLivingTrunk(parent,px,y,pz,20+Math.random()*6,.46,Math.cos(a)*1.4,Math.sin(a)*1.2,woodMat);
-  }
-  registerWalkablePath([[x,y+.15,z+42],[x,y+.15,z+32],[x,y+.15,z+22],
-    [x,y+3.4,z+15],[x,y+3.4,z+8],[x,y+3.4,z]],5.0);
 }
 function buildHexagonalResidence(parent,x,y,z,scale=1){
   return buildReadableDwelling(parent,x,z,y+.35*scale,.88*scale,false);
 }
 function buildFiveStoreyResidence(parent,x,y,z){
-  const groundY=y-10,levels=5,homes=[];
-  for(const [dx,dz] of [[-8,-5],[8,-5],[0,9]]){
-    const base=alturaTerreno(x+dx,z+dz),height=Math.max(58,y+48-base);
-    const supportGroup=new THREE.Group();supportGroup.position.y=groundY;
-    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.85,height,10,5),woodMat);
-    trunk.position.set(dx,base+height/2-groundY,dz);trunk.castShadow=true;trunk.receiveShadow=true;
-    supportGroup.add(trunk);parent.add(supportGroup);
+  // Casa de cinco pavimentos entre três pinheiros, como o exemplo descrito em Eldest.
+  // Três troncos sustentam uma estrutura leve, hexagonal e escalonada por ramos curvos.
+  const treePositions=[[-9,-6],[9,-6],[0,12]];
+  for(let i=0;i<treePositions.length;i++){
+    const [dx,dz]=treePositions[i],leanX=(i-1)*1.25,leanZ=i===2?-1.3:.8;
+    addLivingTrunk(parent,x+dx,y,z+dz,68, i===2?2.15:1.85,leanX,leanZ,woodMat);
   }
-  const firstFloor=y+8;
-  for(let level=0;level<levels;level++){
-    const floorY=firstFloor+level*6.6,shrink=.56-level*.035,podX=x+(level%2?1.2:-1.2);
-    const home=buildReadableDwelling(parent,podX,z,floorY,shrink,false);
-    homes.push({x:podX,y:floorY,z:home.z});
+
+  const levels=[3.6,10.1,16.6,23.1,29.6];
+  const radii=[13.4,12.0,10.6,9.2,7.8];
+  const depthFactor=.84;
+  const storyMaterials=[dwellingWallMat,woodMat,paleWood,woodMat,whiteBarkMat];
+
+  for(let level=0;level<levels.length;level++){
+    const floorY=y+levels[level],radius=radii[level],depth=radius*depthFactor;
+    addResidenceFloor(parent,x,floorY,z,radius*1.08,depth*1.08,mossFloorMat);
+    addHexagonalLivingShell(parent,x,floorY+2.85,z,radius,3.15,depth,storyMaterials[level],true);
+
+    // Seis nervuras de madeira viva sustentam cada pavimento e se afunilam no beiral.
+    for(let side=0;side<6;side++){
+      const a=-Math.PI/6+side*Math.PI/3,dx=Math.sin(a),dz=Math.cos(a)*depthFactor;
+      addOrganicTube(parent,[[x+dx*radius*.98,floorY+.15,z+dz*radius*.98],
+        [x+dx*radius*1.05,floorY+2.4,z+dz*radius*1.05],
+        [x+dx*radius*.82,floorY+5.4,z+dz*radius*.82],
+        [x+dx*radius*.42,floorY+6.45,z+dz*radius*.42],
+        [x+dx*.65,floorY+6.85,z+dz*.65]],.34,.075,level%2?woodMat:paleWood,7,22,.08);
+    }
+
+    // Janelas pequenas em vidro colorido, uma por face que não contém a porta.
+    for(let face=1;face<6;face++){
+      const a=-Math.PI/6+(face+.5)*Math.PI/3;
+      const wx=x+Math.sin(a)*(radius-.12),wz=z+Math.cos(a)*(depth-.12);
+      const pane=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),
+        RESIDENCE_WINDOW_MAT);
+      pane.position.set(wx,floorY+3.25,wz);
+      pane.scale.set(.72,1.05,.14);pane.rotation.y=a;parent.add(pane);
+      const frame=[];
+      for(let k=0;k<=14;k++){
+        const q=-Math.PI*.82+k/14*Math.PI*1.64;
+        frame.push([wx+Math.cos(q)*.82,floorY+3.25+Math.sin(q)*1.18,wz+Math.cos(a)*.10]);
+      }
+      addOrganicTube(parent,frame,.105,.065,paleWood,6,18,.04);
+    }
+
+    // Beiral leve de madeira entrelaçada e guarda-corpo contínuo.
+    const rail=[];
+    for(let i=0;i<=72;i++){
+      const a=i/72*Math.PI*2;
+      rail.push([x+Math.sin(a)*radius*1.02,floorY+1.08,z+Math.cos(a)*depth*1.02]);
+    }
+    addOrganicTube(parent,rail,.19,.14,paleWood,7,72,.055);
+    for(let i=0;i<24;i++){
+      const a=i/24*Math.PI*2;
+      addOrganicTube(parent,[[x+Math.sin(a)*radius*1.02,floorY+.15,z+Math.cos(a)*depth*1.02],
+        [x+Math.sin(a)*radius*1.02,floorY+1.02,z+Math.cos(a)*depth*1.02]],.07,.055,woodMat,5,5,.03);
+    }
+    addLivingDoorFrame(parent,x,floorY,z+depth*.96,2.9,3.55);
+    const ring=[];for(let i=0;i<=72;i++){
+      const a=i/72*Math.PI*2;
+      ring.push([x+Math.sin(a)*radius*.56,floorY+.16,z+Math.cos(a)*depth*.56]);
+    }
+    registerWalkablePath(ring,Math.max(3.0,radius*.36),'house');
   }
-  const topFloor=firstFloor+(levels-1)*6.6;
-  const stair=buildCanopyStairTower(parent,x+14,z+2,groundY,topFloor+1.0,4);
-  for(const home of homes){
-    const t=Math.max(0,Math.min(1,(home.y-groundY)/(topFloor+1-groundY)));
-    const p=stair.path[Math.round(t*(stair.path.length-1))];
-    buildLivingBridge(parent,[[p[0],p[1],p[2]],[x+9,home.y,z+1],[home.x,home.y,home.z]],1.75);
+
+  // Contrafortes voadores: os três pinheiros são unidos à casa por grandes ramos curvos.
+  for(let tree=0;tree<treePositions.length;tree++){
+    const [dx,dz]=treePositions[tree];
+    for(let level=0;level<levels.length;level++){
+      const floorY=y+levels[level],radius=radii[level],side=tree===0?-1:tree===1?1:0;
+      addOrganicTube(parent,[[x+dx,y+37+tree*2,z+dz],
+        [x+dx*.72+side*4,floorY+6.8,z+dz*.72-2],
+        [x+side*radius*.88,floorY+4.8,z+radius*.30],
+        [x+side*radius*.72,floorY+.4,z+radius*.42]],.62,.12,woodMat,8,26,.12);
+    }
+  }
+
+  // Escada helicoidal externa, com degraus próprios, corrimão e ligação a cada nível.
+  const stairX=x+21,stairZ=z-2,stairRise=levels[4]-levels[0],turns=3.3,stairRadius=5.25,samples=220,path=[];
+  for(let i=0;i<=samples;i++){
+    const t=i/samples,a=t*Math.PI*2*turns;
+    path.push([stairX+Math.cos(a)*stairRadius,y+levels[0]+t*stairRise,stairZ+Math.sin(a)*stairRadius]);
+  }
+  registerWalkablePath(path,3.05,'stair');
+  const outerRail=[],innerRail=[];
+  for(let i=0;i<=samples;i++){
+    const t=i/samples,a=t*Math.PI*2*turns,yy=y+levels[0]+t*stairRise;
+    outerRail.push([stairX+Math.cos(a)*(stairRadius+1.65),yy+1.2,stairZ+Math.sin(a)*(stairRadius+1.65)]);
+    innerRail.push([stairX+Math.cos(a)*(stairRadius-1.65),yy+1.05,stairZ+Math.sin(a)*(stairRadius-1.65)]);
+  }
+  addOrganicTube(parent,outerRail,.20,.14,paleWood,7,samples,.04);
+  addOrganicTube(parent,innerRail,.16,.11,woodMat,6,samples,.04);
+  const stepCount=156,stepGeo=new THREE.BoxGeometry(3.1,.20,.94);
+  const stairs=new THREE.InstancedMesh(stepGeo,woodMat,stepCount),dummy=new THREE.Object3D();
+  for(let i=0;i<stepCount;i++){
+    const t=(i+.5)/stepCount,a=t*Math.PI*2*turns;
+    dummy.position.set(stairX+Math.cos(a)*stairRadius,y+levels[0]+t*stairRise,stairZ+Math.sin(a)*stairRadius);
+    dummy.rotation.y=-a;dummy.updateMatrix();stairs.setMatrixAt(i,dummy.matrix);
+  }
+  stairs.instanceMatrix.needsUpdate=true;stairs.castShadow=false;stairs.receiveShadow=true;parent.add(stairs);
+  for(let level=0;level<levels.length;level++){
+    const t=(levels[level]-levels[0])/stairRise;
+    const stairPoint=path[Math.round(t*samples)],door=[x,y+levels[level]+.16,z+radii[level]*depthFactor*.96+1.0];
+    buildLivingBridge(parent,stairPoint,door,3.7,level%2===0?1:-1);
+  }
+
+  // Cobertura de ramos e fibras no último pavimento; os níveis inferiores permanecem abertos ao ar.
+  addWovenCanopy(parent,x,y+levels[4]+6.2,z,radii[4]*1.05,2.0,3.9,[0,4],.82);
+  // Raízes que abrem o caminho para a floresta na base das três árvores.
+  for(let i=0;i<3;i++){
+    const [dx,dz]=treePositions[i];
+    addOrganicTube(parent,[[x+dx,y+.22,z+dz],[x+dx*1.35,y+.35,z+dz*1.2],
+      [x+dx*1.85,y+.12,z+dz*1.65]],.46,.06,woodMat,7,18,.13);
   }
 }
 function buildWillowBower(parent,x,y,z){
