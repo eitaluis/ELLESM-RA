@@ -1,7 +1,7 @@
 // ============================================================================
 // 5. TERRENO
 // ============================================================================
-const TERR_W = 3200, TERR_H = 3200, segs = 512;
+const TERR_W = 3200, TERR_H = 3200, segs = 320;
 const terrenoGeo = new THREE.PlaneGeometry(TERR_W, TERR_H, segs, segs);
 terrenoGeo.rotateX(-Math.PI/2);
 
