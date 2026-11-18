@@ -1341,50 +1341,65 @@ function buildTreeDwelling(parent,x,y,z){
     addOrganicTube(parent,[[x+s*2,y+33,z-1],[x+s*10,officeY-1,z-4],[x+s*7,officeY,z-5]],.95,.22,woodMat,8,22,.12);}
 }
 function buildHall(parent,x,y,z){
-  const length=40,width=15,height=14;
-  // Salão de árvores vivas: troncos e raízes substituem pilares e paredes.
-  for(let side of [-1,1])for(let i=0;i<7;i++){
-    const px=x-18+i*6,pz=z+side*6.5;
-    addLivingTrunk(parent,px,y,pz,height+2,1.05,Math.sin(i)*.8,side*.6);
-    addOrganicTube(parent,[[px,y+height*.45,pz],[px+Math.sin(i)*1.5,y+height+2,pz+side*1.2],[px+2,y+height+5,z]],.48,.16,paleWood,7,16,.1);
+  const length=58,width=26,height=20;
+  // Salão de árvores vivas: uma nave ampla envolvida por troncos e raízes entrelaçados.
+  for(let side of [-1,1])for(let i=0;i<9;i++){
+    const px=x-24+i*6,pz=z+side*10.5;
+    addLivingTrunk(parent,px,y,pz,height+5,1.55,Math.sin(i*.7)*1.2,side*.8,woodMat);
+    addOrganicTube(parent,[[px,y+height*.35,pz],[px+Math.sin(i)*2.0,y+height+3,pz+side*2.0],
+      [px+Math.sin(i*.45)*2.2,y+height+8,z+side*4.0]],.62,.16,paleWood,8,24,.14);
+  }
+  for(let side of [-1,1])for(let i=0;i<8;i++){
+    const px=x-21+i*6,baseZ=z+side*12;
+    addOrganicTube(parent,[[px,y+2,baseZ],[px+side*2,y+10,baseZ-side*2],
+      [px+side*1.5,y+height+4,z+side*4],[x+(px-x)*.72,y+height+7,z]],.52,.12,woodMat,8,28,.13);
   }
   addHoneycombRoof(parent,x,y+height+3,z,length,width);
-  const floor=new THREE.Mesh(new THREE.CircleGeometry(1,64),mossFloorMat);
-  floor.rotation.x=-Math.PI/2;floor.position.set(x,y+.035,z);floor.scale.set(length*.55,width*.85,1);parent.add(floor);
-  // 24 cadeiras de madeira viva, doze em cada parede.
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(1,72),mossFloorMat);
+  floor.rotation.x=-Math.PI/2;floor.position.set(x,y+.04,z);floor.scale.set(length*.56,width*.80,1);
+  floor.receiveShadow=true;parent.add(floor);
+  const aisleMat=new THREE.MeshStandardMaterial({color:0x596b3c,roughness:1,side:THREE.DoubleSide});
+  const aisle=new THREE.Mesh(new THREE.PlaneGeometry(5.8,34),aisleMat);
+  aisle.rotation.x=-Math.PI/2;aisle.position.set(x,y+.08,z+1);parent.add(aisle);
+  registerWalkablePath([[x,y+.15,z+22],[x,y+.15,z+10],[x,y+.15,z],[x,y+.15,z-10],[x,y+3.3,z-17]],4.2);
+  // 24 assentos, doze em cada parede, voltados para o trono branco.
   for(let side of [-1,1])for(let i=0;i<12;i++){
-    const px=x-17+i*3.1,pz=z+side*4.7,cy=y+.75;
-    addOrganicTube(parent,[[px-0.75,cy,pz],[px,cy+.25,pz+side*.2],[px+.75,cy,pz]],.22,.18,woodMat,7,8,.1);
-    addOrganicTube(parent,[[px-.65,cy,pz],[px-.7,cy+1.7,pz-side*.3],[px,cy+2.2,pz-side*.45],[px+.7,cy+1.7,pz-side*.3],[px+.65,cy,pz]],.17,.12,paleWood,7,12,.1);
-    for(let k=-1;k<=1;k+=2)addOrganicTube(parent,[[px+k*.65,cy,pz],[px+k*.9,cy+.8,pz+side*.1]],.11,.07,woodMat,6,7,.08);
+    const px=x-17+i*3.1,pz=z+side*7.2,cy=y+.78;
+    addOrganicTube(parent,[[px-.85,cy,pz],[px,cy+.30,pz+side*.2],[px+.85,cy,pz]],.25,.20,woodMat,8,10,.1);
+    addOrganicTube(parent,[[px-.72,cy,pz],[px-.78,cy+1.9,pz-side*.35],[px,cy+2.35,pz-side*.52],
+      [px+.78,cy+1.9,pz-side*.35],[px+.72,cy,pz]],.21,.13,paleWood,8,14,.1);
+    for(let k=-1;k<=1;k+=2)addOrganicTube(parent,[[px+k*.72,cy,pz],[px+k*.95,cy+.9,pz+side*.12]],.12,.07,woodMat,6,8,.08);
   }
-  // Pavilhão branco, trono feito de raízes e apoio curvo de Blagden.
-  addOpenOvoidPod(parent,x,y+7,z-17,6.2,4.2,3.4,whiteBarkMat,Math.PI/2);
-  addResidenceFloor(parent,x,y+3.3,z-17,4.9,2.5,mossFloorMat);
-  addLivingDoorFrame(parent,x,y+3.3,z-13.8,2.8,4.0);
-  // Trono branco construído em raízes entrelaçadas; pavilhão com interior acessível.
-  addOrganicTube(parent,[[x-2.3,y+3.6,z-17],[x-1.5,y+4.1,z-16.7],[x,y+4.3,z-17],[x+1.5,y+4.1,z-16.7],[x+2.3,y+3.6,z-17]],.48,.24,paleWood,9,24,.12);
-  addOrganicTube(parent,[[x-1.5,y+4.0,z-17],[x-1.2,y+6.4,z-18],[x,y+7.2,z-18.5],[x+1.2,y+6.4,z-18],[x+1.5,y+4.0,z-17]],.36,.18,whiteBarkMat,8,24,.10);
-  addOrganicTube(parent,[[x-2.3,y+3.2,z-17],[x-3.2,y+4.2,z-16],[x-3.0,y+5.1,z-17]],.3,.09,paleWood,7,16,.1);
-  addOrganicTube(parent,[[x+2.3,y+3.2,z-17],[x+3.2,y+4.2,z-16],[x+3.0,y+5.1,z-17]],.3,.09,paleWood,7,16,.1);
-  // Cortinas de raízes e ramagem fazem as paredes crescerem a partir do chão.
-  for(let i=0;i<18;i++){const xx=x-18+i*2.1,side=i%2?1:-1;
-    addOrganicTube(parent,[[xx,y+.2,z+side*7.2],[xx+Math.sin(i)*1.1,y+5,z+side*7.5],[xx+Math.cos(i*.7)*1.2,y+10+Math.random()*2,z+side*6.2]],.25,.07,woodMat,6,18,.12);}
-  // Piso e aproximação da porta do pavilhão.
-  registerWalkablePath([[x,y+3.3,z-13.8],[x,y+3.3,z-18],[x,y+3.3,z-21]],3.0);
-  // haste curva e travessa para o corvo branco.
-  addOrganicTube(parent,[[x+8,y+3,z-15],[x+8.8,y+5,z-16],[x+9,y+7,z-17]],.18,.09,woodMat,6,12,.08);
-  addOrganicTube(parent,[[x+8.5,y+6.7,z-17],[x+10,y+6.7,z-17]],.09,.06,woodMat,6,7,.04);
-  // Degraus de raízes diante da parede de mudas e entrada larga, sem porta convencional.
-  for(let i=0;i<8;i++)addRootStair(parent,x,y+i*.04,z+13+i*.75,1,9,1);
-  registerWalkablePath(Array.from({length:9},(_,i)=>[x,y+.25+i*.03,z+13+i*.75]),3.8);
-  // Raízes altas e verticais criam a fachada viva do salão.
-  for(let i=0;i<16;i++){const xx=x-20+i*2.65;
-    addOrganicTube(parent,[[xx,y-.2,z+19],[xx+Math.sin(i)*1.4,y+4,z+21],[xx+Math.cos(i*.8)*1.8,y+11,z+18],[xx+Math.sin(i*.5)*1.2,y+17,z+11]],.34,.08,woodMat,7,22,.16);}
-  for(let i=0;i<23;i++){
-    const dx=-12+i*1.1;
-    addOrganicTube(parent,[[x+dx,y,z+19],[x+dx+Math.sin(i)*.5,y+4+Math.random()*2,z+20],[x+dx*.9,y+9,z+18]],.16,.045,woodMat,5,12,.12);
+  // Pavilhão real: casca branca, piso próprio, entrada alta e trono feito de raízes.
+  addOpenOvoidPod(parent,x,y+7,z-20,7.2,4.6,4.2,whiteBarkMat,Math.PI/2);
+  addResidenceFloor(parent,x,y+3.35,z-20,5.8,3.2,mossFloorMat);
+  addLivingDoorFrame(parent,x,y+3.35,z-15.9,3.0,4.1);
+  addOrganicTube(parent,[[x-2.6,y+3.65,z-20],[x-1.6,y+4.2,z-19.8],[x,y+4.4,z-20],
+    [x+1.6,y+4.2,z-19.8],[x+2.6,y+3.65,z-20]],.55,.26,paleWood,9,26,.12);
+  addOrganicTube(parent,[[x-1.7,y+4.0,z-20],[x-1.35,y+6.7,z-21],[x,y+7.8,z-21.5],
+    [x+1.35,y+6.7,z-21],[x+1.7,y+4.0,z-20]],.42,.18,whiteBarkMat,9,26,.11);
+  const velvet=new THREE.MeshStandardMaterial({color:0x542a3b,roughness:.96,side:THREE.DoubleSide});
+  addOval(parent,x,y+5.2,z-23.6,3.0,2.8,.18,velvet,18);
+  for(let i=0;i<11;i++){
+    const xx=x-3.6+i*.72;
+    addOrganicTube(parent,[[xx,y+1,z-23.0],[xx+Math.sin(i)*.35,y+4.5,z-23.4],
+      [xx+Math.cos(i*.6)*.3,y+8.5,z-22.2]],.15,.045,whiteBarkMat,6,18,.1);
   }
+  // Poleiro curvo para Blagden.
+  addOrganicTube(parent,[[x+9,y+3,z-18],[x+10.2,y+5.5,z-20],[x+10.8,y+8,z-21]],.2,.1,woodMat,7,18,.08);
+  addOrganicTube(parent,[[x+10.2,y+7.7,z-21],[x+12,y+7.7,z-21]],.10,.07,paleWood,6,8,.04);
+  // Fachada de mudas, arco vivo e degraus de raízes na entrada.
+  for(let side of [-1,1])for(let i=0;i<9;i++){
+    const px=x+side*(7+i*2.2);
+    addOrganicTube(parent,[[px,y-.2,z+22],[px+side*.6,y+5,z+23],[px+Math.sin(i)*.8,y+11,z+19],
+      [px*.98,y+17+Math.random()*2,z+12]],.28,.07,woodMat,7,22,.14);
+  }
+  addOrganicTube(parent,[[x-8,y+2,z+22],[x-6,y+12,z+24],[x,y+19,z+23],
+    [x+6,y+12,z+24],[x+8,y+2,z+22]],1.2,.28,paleWood,12,40,.12);
+  for(let i=0;i<12;i++)addRootStair(parent,x,y+i*.06,z+17+i*.72,1,12,1);
+  registerWalkablePath(Array.from({length:13},(_,i)=>[x,y+.25+i*.05,z+17+i*.72]),4.2);
+  const hallGlow=new THREE.PointLight(0xffd18a,2.4,52,1.8);hallGlow.position.set(x,y+8,z);parent.add(hallGlow);
+  const throneGlow=new THREE.PointLight(0xffd69a,1.8,26,1.8);throneGlow.position.set(x,y+5,z-20);parent.add(throneGlow);
 }
 function buildForge(parent,x,y,z){
   // Anel de árvores vivas, túnel de corniso e cabana central sem paredes.
@@ -1489,13 +1504,22 @@ function buildHexagonalResidence(parent,x,y,z,scale=1){
     addOrganicTube(parent,[[x+Math.cos(a)*7.0*scale,y+1.5*scale,z+Math.sin(a)*6.5*scale],[x+Math.cos(a)*7.6*scale,y+5*scale,z+Math.sin(a)*7.0*scale],
       [x+Math.cos(a)*4.0*scale,y+10*scale,z+Math.sin(a)*3.8*scale],[x+Math.cos(a)*.4*scale,y+11*scale,z+Math.sin(a)*.4*scale]],.38*scale,.11*scale,paleWood,8,20,.12);
     const jewelColors=[0x367f72,0x586caa,0x9b7050,0x547d52,0x926e9c,0x9b8751];
-    const gem=new THREE.MeshStandardMaterial({color:jewelColors[i],roughness:.22,metalness:.12,side:THREE.DoubleSide});
-    addOval(parent,x+Math.cos(a)*6.5*scale,y+4.4*scale,z+Math.sin(a)*6.0*scale,.50*scale,.9*scale,.18*scale,gem,10);}
+    const gem=new THREE.MeshStandardMaterial({color:jewelColors[i],roughness:.22,metalness:.12,
+      emissive:0x8d5e2a,emissiveIntensity:.42,side:THREE.DoubleSide});
+    addOval(parent,x+Math.cos(a)*6.5*scale,y+4.4*scale,z+Math.sin(a)*6.0*scale,.58*scale,1.02*scale,.22*scale,gem,10);}
   for(let glyph=0;glyph<3;glyph++){
     const gx=x+(glyph-1)*.55*scale;
     addOrganicTube(parent,[[gx,lowFloor+2.55*scale,z+6.28*scale],[gx+.18*scale,lowFloor+2.78*scale,z+6.34*scale],
       [gx,lowFloor+2.98*scale,z+6.28*scale]],.055*scale,.035*scale,paleWood,5,8,.04);
   }
+  const roomGlow=new THREE.PointLight(0xffc777,2.8*scale,30*scale,1.7);
+  roomGlow.position.set(x,lowFloor+2.4*scale,z);parent.add(roomGlow);
+  const upperGlow=new THREE.PointLight(0xffd08a,1.8*scale,20*scale,1.8);
+  upperGlow.position.set(x,upperFloor+1.0*scale,z);parent.add(upperGlow);
+  // Mobiliário no térreo: mesa baixa, leito e banco integrados à casca.
+  addOval(parent,x-1.8*scale,lowFloor+.5*scale,z-1.4*scale,1.55*scale,.38*scale,1.35*scale,paleWood,14);
+  addOval(parent,x-1.8*scale,lowFloor+.78*scale,z-1.4*scale,1.34*scale,.13*scale,1.12*scale,mossFloorMat,14);
+  addOval(parent,x+2.0*scale,lowFloor+.56*scale,z-1.2*scale,.95*scale,.48*scale,.72*scale,woodMat,14);
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2,px=x+Math.cos(a)*7.3*scale,pz=z+Math.sin(a)*6.8*scale;
     addOrganicTube(parent,[[px,y+6.7*scale,pz],[x+Math.cos(a)*6.3*scale,y+7.3*scale,pz-Math.sin(a)*.3],[x+Math.cos(a)*4.3*scale,y+8.3*scale,z+Math.sin(a)*4.0*scale]],.23*scale,.08*scale,woodMat,6,11,.1);}
   const spiral=[];for(let i=0;i<=64;i++){const t=i/64,a=t*Math.PI*2*2.0,rr=1.2+t*2.7;spiral.push([x+Math.cos(a)*rr*scale,lowFloor+t*(upperFloor-lowFloor),z+Math.sin(a)*rr*scale]);}
