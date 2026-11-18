@@ -1465,7 +1465,7 @@ function buildTialdari(parent,x,y,z){
   addLivingDoorFrame(parent,x+18,hallFloor,z-14.0,2.5,3.5);
   const tialdariGlass=[0x9b8c56,0x4e7660,0x8a6950,0x627b83];
   for(let i=0;i<4;i++){
-    const angle=i*Math.PI/2,gemMat=new THREE.MeshStandardMaterial({color:tialdariGlass[i],roughness:.18,metalness:.1,emissive:0x10190e});
+    const angle=i*Math.PI/2,gemMat=new THREE.MeshStandardMaterial({color:tialdariGlass[i],roughness:.18,metalness:.1,emissive:0x9e6e32,emissiveIntensity:.7});
     addOval(parent,x-18+Math.cos(angle)*6.45,y+7,z-21+Math.sin(angle)*5.55,.42,1.05,.14,gemMat,12);
     addOval(parent,x+18+Math.cos(angle)*6.8,y+7,z-20+Math.sin(angle)*5.9,.42,1.05,.14,gemMat,12);
   }
@@ -1483,6 +1483,16 @@ function buildTialdari(parent,x,y,z){
   }
   addOrganicTube(parent,[[x-12,hallFloor+1,z-23],[x-8,hallFloor+2,z-22],[x-3,hallFloor+1,z-21]],.28,.08,paleWood,7,16,.10);
   addOrganicTube(parent,[[x+12,hallFloor+1,z-22],[x+8,hallFloor+2,z-21],[x+3,hallFloor+1,z-20]],.28,.08,paleWood,7,16,.10);
+  // Mobiliário e luz interna quente nas duas salas de Tialdarí.
+  addOval(parent,x-18,hallFloor+.62,z-22,1.7,.42,1.15,paleWood,16);
+  addOval(parent,x-18,hallFloor+.88,z-22,1.45,.13,.92,woodMat,14);
+  addOval(parent,x+18,hallFloor+.55,z-21,1.6,.38,1.05,paleWood,16);
+  addOrganicTube(parent,[[x+14,hallFloor+.25,z-19],[x+15,hallFloor+1.2,z-19.5],[x+18,hallFloor+1.35,z-19],
+    [x+21,hallFloor+1.2,z-19.5],[x+22,hallFloor+.25,z-19]],.18,.10,woodMat,7,16,.08);
+  const tialdariGlowA=new THREE.PointLight(0xffc77e,2.2,30,1.8);
+  tialdariGlowA.position.set(x-18,hallFloor+2.6,z-21);parent.add(tialdariGlowA);
+  const tialdariGlowB=new THREE.PointLight(0xffd18e,2.2,32,1.8);
+  tialdariGlowB.position.set(x+18,hallFloor+2.5,z-20);parent.add(tialdariGlowB);
   // Riacho prateado que desce uma parede viva e atravessa o piso.
   const silverWater=new THREE.MeshStandardMaterial({color:0x8babb1,metalness:.45,roughness:.18,transparent:true,opacity:.8});
   addOrganicTube(parent,[[x-18,y+12,z-14],[x-17,y+8,z-12],[x-15,y+3,z-8],[x-10,y+.15,z-4],[x,y+.12,z+10]],.22,.13,silverWater,7,30,.04);
