@@ -243,30 +243,66 @@ function rootsPerto(x,z){
   return ROOT_WALK_GRID.get(Math.floor(x/ROOT_GRID_CELL)+','+Math.floor(z/ROOT_GRID_CELL))||[];
 }
 
+// Índice espacial de cada segmento elevado. Antes, a altura do piso percorria
+// todas as amostras de todas as pontes e escadas a cada quadro. Agora só consulta
+// os segmentos da célula de 18 m onde o jogador está.
+const WALK_GRID_CELL=18,WALK_SEGMENT_GRID=new Map();
+function walkGridKey(x,z){return Math.floor(x/WALK_GRID_CELL)+','+Math.floor(z/WALK_GRID_CELL);}
+for(const walk of ELEVATED_WALKS){
+  const half=walk.width*.5+1.2;
+  for(let i=0;i<walk.points.length-1;i++){
+    const a=walk.points[i],b=walk.points[i+1];
+    const segment={a,b,half:walk.width*.5,kind:walk.kind,walk,index:i};
+    const minX=Math.min(a[0],b[0])-half,maxX=Math.max(a[0],b[0])+half;
+    const minZ=Math.min(a[2],b[2])-half,maxZ=Math.max(a[2],b[2])+half;
+    for(let gx=Math.floor(minX/WALK_GRID_CELL);gx<=Math.floor(maxX/WALK_GRID_CELL);gx++){
+      for(let gz=Math.floor(minZ/WALK_GRID_CELL);gz<=Math.floor(maxZ/WALK_GRID_CELL);gz++){
+        const key=gx+','+gz;
+        if(!WALK_SEGMENT_GRID.has(key))WALK_SEGMENT_GRID.set(key,[]);
+        WALK_SEGMENT_GRID.get(key).push(segment);
+      }
+    }
+  }
+}
+function segmentosPisoPerto(x,z){
+  return WALK_SEGMENT_GRID.get(walkGridKey(x,z))||[];
+}
+function pontoNoSegmentoElevado(x,z,segment){
+  const a=segment.a,b=segment.b,dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
+  const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
+  const px=a[0]+dx*t,pz=a[2]+dz*t;
+  return {t,px,pz,d:Math.hypot(x-px,z-pz),y:a[1]+(b[1]-a[1])*t};
+}
+
 function alturaChao(x,z,referenceY=null){
   let h=alturaTerreno(x,z);
   if(raizElevadaPontos)for(const p of raizElevadaPontos){
     const d=Math.hypot(x-p.x,z-p.z);if(d<p.r*.9)h=Math.max(h,p.y);
   }
   let bestScore=Infinity,specialY=null;
-  const choose=(points,width,root=null,kind='bridge')=>{
+  for(const segment of segmentosPisoPerto(x,z)){
+    const p=pontoNoSegmentoElevado(x,z,segment);
+    if(p.d>segment.half)continue;
+    const vertical=referenceY===null?0:Math.abs(p.y-referenceY);
+    // Evita capturar uma passarela em outro nível acima ou abaixo do jogador.
+    if(referenceY!==null&&vertical>(segment.kind==='stair'?3.35:2.6))continue;
+    const score=p.d*p.d+vertical*vertical*.32;
+    if(score<bestScore){bestScore=score;specialY=p.y;}
+  }
+  for(const root of rootsPerto(x,z)){
+    const points=root.points;
     for(let i=0;i<points.length-1;i++){
       const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
       const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
-      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
-      if(d>width)continue;
-      const centerY=a[1]+(b[1]-a[1])*t;
-      const y=root?centerY+(root.r0*(1-t)+root.r1*t)*.78:centerY;
+      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz),half=root.r0*.95+.28;
+      if(d>half)continue;
+      const y=a[1]+(b[1]-a[1])*t+(root.r0*(1-t)+root.r1*t)*.78;
       const vertical=referenceY===null?0:Math.abs(y-referenceY);
-      // Não "teleporta" o jogador para uma ponte sobre a cabeça; só aceita o piso no nível atual.
-      if(referenceY!==null&&vertical>(root?4.2:(kind==='stair'?3.35:2.6)))continue;
+      if(referenceY!==null&&vertical>4.2)continue;
       const score=d*d+vertical*vertical*.32;
       if(score<bestScore){bestScore=score;specialY=y;}
     }
-  };
-  for(const walk of ELEVATED_WALKS)choose(walk.points,walk.width*.5,null,walk.kind);
-  for(const root of rootsPerto(x,z))choose(root.points,root.r0*.95+.28,root,'root');
+  }
   if(specialY!==null)h=Math.max(h,specialY);
   return h;
 }
-
