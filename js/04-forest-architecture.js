@@ -364,7 +364,7 @@ function buildCanopyResidence(parent,x,z,floorY,seed=0){
 function buildForestHome(parent,x,y,z){
   const floorY=y+.16,home=buildReadableDwelling(parent,x,z,floorY,.72,false,72);
   const porch=new THREE.Mesh(new THREE.BoxGeometry(4.4,.18,3.4),new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x8b7654,roughness:.96}));
-  porch.position.set(0,floorY+.06,home.outer+2.25);porch.receiveShadow=true;parent.add(porch);
+  porch.position.set(x,floorY+.06,z+home.outer+2.25);porch.receiveShadow=true;parent.add(porch);
   registerWalkablePath([[x,floorY+.16,z+home.outer+6],[x,floorY+.16,z+home.outer+3],home.door],2.8);
   return home;
 }
