@@ -153,23 +153,27 @@ function fbm(x, z, oct=4) {
   return v;
 }
 function alturaTerreno(x,z){
-  // Relevo de floresta antiga: lombas de raízes, depressões de árvores tombadas,
-  // pequenas ondulações de húmus e microvariação, sem padrão de terreno liso.
-  const broad=fbm(x*.006+13,z*.006-7,4);
-  const hummock=fbm(x*.032-41,z*.032+23,3);
-  const pitMound=fbm(x*.095+8,z*.095-61,3);
-  const fine=fbm(x*.24-17,z*.24+31,2);
-  const micro=fbm(x*.48+63,z*.48-11,2);
-  const mound=Math.pow(Math.max(0,hummock-.39),1.18)*3.6;
-  const hollow=-Math.pow(Math.max(0,.34-pitMound),1.25)*1.15;
-  return (broad-.5)*3.2 + (hummock-.5)*1.15 + mound + hollow
-       + (pitMound-.5)*.55 + (fine-.5)*.34 + (micro-.5)*.12;
+  // Relevo profundo de floresta antiga: colinas largas, baixios, lombas de raízes,
+  // depressões de árvores tombadas e ondulações menores de húmus.
+  const broad=fbm(x*.0028+13,z*.0028-7,5);
+  const ridge=fbm(x*.0075-41,z*.0075+23,4);
+  const basin=fbm(x*.021+8,z*.021-61,4);
+  const hummock=fbm(x*.061-17,z*.061+31,3);
+  const fine=fbm(x*.16+63,z*.16-11,2);
+  const micro=fbm(x*.34-91,z*.34+57,2);
+  const broadRise=(broad-.5)*15.5;
+  const longRidges=Math.pow(Math.max(0,ridge-.42),1.22)*11.5;
+  const deepHollows=-Math.pow(Math.max(0,.36-basin),1.16)*10.5;
+  const rootMounds=Math.pow(Math.max(0,hummock-.49),1.3)*6.8;
+  const smallPits=-Math.pow(Math.max(0,.31-hummock),1.35)*2.7;
+  const rolling=(basin-.5)*4.4+(fine-.5)*1.35+(micro-.5)*.42;
+  return broadRise+longRidges+deepHollows+rootMounds+smallPits+rolling;
 }
 
 // ============================================================================
 // 5. TERRENO
 // ============================================================================
-const TERR_W = 3200, TERR_H = 3200, segs = 600;
+const TERR_W = 3200, TERR_H = 3200, segs = 800;
 const terrenoGeo = new THREE.PlaneGeometry(TERR_W, TERR_H, segs, segs);
 terrenoGeo.rotateX(-Math.PI/2);
 
@@ -225,7 +229,7 @@ function criarTexturaSolo(){
     ctx.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);ctx.stroke();
   }
   const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
-  tex.repeat.set(72,72);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;return tex;
+  tex.repeat.set(44,44);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;return tex;
 }
 const TEX_SOLO=criarTexturaSolo();
 const terrenoMat = new THREE.MeshStandardMaterial({ map:TEX_SOLO, vertexColors:true, roughness:1.0 });
@@ -545,10 +549,10 @@ function emClareira(x, z, margemExtra = 0) {
  // ============================================================================
 function criarPinheiroGeo(seed,tipo='adulto'){
   const rand=(a,b)=>a+Math.random()*(b-a),sapling=tipo==='sub-bosque';
-  const altura=sapling?rand(22,42):rand(76,90);
-  const raioBase=sapling?rand(.48,.95):rand(3.0,3.6);
+  const altura=sapling?rand(30,48):rand(78,90);
+  const raioBase=sapling?rand(.78,1.28):rand(3.1,3.65);
   const topoRaio=sapling ? .07 : .17;
-  const crownStart=altura*(sapling?rand(.38,.48):rand(.56,.64));
+  const crownStart=altura*(sapling?rand(.38,.46):rand(.49,.57));
   const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
@@ -596,12 +600,21 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   }
   // Root flare spreads the basal 7 m to approximately 1.6 times the trunk diameter.
   addTube(posT,idxT,trunk.slice(0,3),raioBase*1.6,raioBase,16,16,.075);
-  addTube(posT,idxT,trunk.slice(2),raioBase,topoRaio,16,38,.055);
+  addTube(posT,idxT,trunk.slice(2),raioBase,topoRaio,20,42,.095);
+  for(let rib=0;rib<12;rib++){
+    const a=rib/12*Math.PI*2+(seed%7)*.08,pts=[];
+    for(let j=0;j<=10;j++){
+      const t=j/10,y=7+t*(altura-7),r=raioBase*(1-t)+topoRaio*t;
+      const aa=a+Math.sin(t*5+rib)*.035;
+      pts.push([cx+Math.cos(aa)*(r+.08),y,cz+Math.sin(aa)*(r+.08)]);
+    }
+    addTube(posT,idxT,pts,.16+raioBase*.025,.035,5,20,.16);
+  }
 
   // Raízes expostas, ligadas ao colo do tronco e apoiadas sobre o solo.
-  const rootCount=sapling?5:8;
+  const rootCount=sapling?7:12;
   for(let r=0;r<rootCount;r++){
-    const a=r/rootCount*Math.PI*2+rand(-.18,.18),len=sapling?rand(2.8,5.8):rand(8,16),side=Math.sin(a*2+seed)*.8;
+    const a=r/rootCount*Math.PI*2+rand(-.18,.18),len=sapling?rand(5,9):rand(18,30),side=Math.sin(a*2+seed)*.8;
     const root=[
       [cx+Math.cos(a)*raioBase*.42,.32,cz+Math.sin(a)*raioBase*.42],
       [cx+Math.cos(a)*len*.28+Math.cos(a+Math.PI/2)*side,.72,cz+Math.sin(a)*len*.28+Math.sin(a+Math.PI/2)*side],
@@ -614,7 +627,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
   // Andares de galhos, mais longos na parte inferior da copa e progressivamente
   // menores no alto, com pequenos ramos alternados e agulhas finas individuais.
-  const levels=sapling?4:6,arms=sapling?5:6,baseReach=sapling?rand(6.5,10):rand(21,30);
+  const levels=sapling?5:8,arms=sapling?6:9,baseReach=sapling?rand(9,13):rand(26,36);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.92,reach=baseReach*(1-t*.86)+1.8,count=arms+(level%2);
     for(let arm=0;arm<count;arm++){
@@ -626,28 +639,28 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       addTube(posB,idxB,[root,p1,p2,tip],sapling ? .20 : .48,sapling ? .025 : .055,5,10,.13);
 
       // Pequenos sprays distribuídos ao longo do galho principal.
-      for(let s=1;s<=3;s++){
+      for(let s=1;s<=4;s++){
         const q=s/6,px=cx+Math.cos(a)*len*q,py=y+len*.025*q-droop*q*.65,pz=cz+Math.sin(a)*len*q;
         for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .28 : .72,sapling ? .62 : 1.55),sapling ? .035 : .075);}
       }
 
       // Ramificações secundárias alternadas que quebram a silhueta em fios vegetais.
-      const twigN=sapling?2:4;
+      const twigN=sapling?3:6;
       for(let twig=0;twig<twigN;twig++){
         const q=.16+twig*.17,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
         const aa=a+side*rand(.52,.92),tl=len*rand(.14,.22)*(1-t*.25);
         const mid=[bx+Math.cos(aa)*tl*.52,by+tl*.13,bz+Math.sin(aa)*tl*.52],end=[bx+Math.cos(aa)*tl,by+tl*.16+rand(.2,1.1),bz+Math.sin(aa)*tl];
         addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,5,6,.16);
-        for(let n=0;n<5;n++){
-          const a2=aa+n*Math.PI*2/7+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
-          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .32 : .7,sapling ? .66 : 1.6),sapling ? .035 : .085);
+        for(let n=0;n<8;n++){
+          const a2=aa+n*Math.PI*2/9+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
+          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .42 : .95,sapling ? .82 : 2.2),sapling ? .045 : .105);
         }
       }
     }
   }
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
-  for(let n=0;n<10;n++){const a=n/10*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
+  for(let n=0;n<14;n++){const a=n/14*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
   return {tronco:toGeo(posT,idxT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase};
 }
 function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
@@ -685,7 +698,7 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
   const dummy=new THREE.Object3D();
   lista.forEach((p,i)=>{
     dummy.position.set(p.x,alturaTerreno(p.x,p.z),p.z);dummy.rotation.y=Math.random()*Math.PI*2;
-    const scale=.78+Math.random()*.68;dummy.scale.set(scale,scale*(.92+Math.random()*.18),scale);dummy.updateMatrix();
+    const scale=1.05+Math.random()*.48;dummy.scale.set(scale*1.12,scale*1.18,scale*1.12);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
     imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.38+Math.random()*.18,.17+Math.random()*.12));
     colisores.push({x:p.x,z:p.z,raio:variante.raioBase+.7});
@@ -718,7 +731,7 @@ VARIANTES_SEC.forEach((variante, vi) => {
   const dummy=new THREE.Object3D();
   lista.forEach((s,i)=>{
     dummy.position.set(s.x,alturaTerreno(s.x,s.z),s.z);dummy.rotation.y=Math.random()*Math.PI*2;
-    const scale=.74+Math.random()*.68;dummy.scale.set(scale,scale*(.9+Math.random()*.2),scale);dummy.updateMatrix();
+    const scale=1.15+Math.random()*.42;dummy.scale.set(scale*1.18,scale*1.28,scale*1.18);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
     imC.setColorAt(i,new THREE.Color().setHSL(.25+Math.random()*.055,.34+Math.random()*.18,.18+Math.random()*.12));
     colisores.push({x:s.x,z:s.z,raio:variante.raioBase+.35});
