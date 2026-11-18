@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ellesméra — Floresta Viva + Arquitetura v19</title>
+<title>Ellesméra — V21 · cidade viva e circulação nas copas</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0f0a; font-family: monospace; }
   #hud { position: fixed; top: 10px; left: 10px; color: #cfe8cf; background: rgba(10,25,15,0.75);
@@ -38,12 +38,12 @@
 </style>
 </head>
 <body>
-<div id="fase">FASE 2 — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V19</div>
+<div id="fase">FASES 1–5 — FLORESTA, ARQUITETURA E CIRCULAÇÃO V21</div>
 <div id="hud">
-  <b>Ellesméra — Floresta viva v19</b><br>
+  <b>Ellesméra — cidade viva V21</b><br>
   WASD mover · Mouse olhar · Shift correr · Espaço pular<br>
-  <b>M</b>/<b>N</b> teletransporte · <b>G</b> inspecionar Menoa · <b>TAB</b> minimapa<br>
-  <span style="color:#8ab98a">Roda sobre o minimapa: zoom local ↔ visão geral</span>
+  <b>H</b> núcleo da cidade · <b>J</b> base da escada principal · <b>G</b> Menoa<br>
+  <b>M</b>/<b>N</b> teletransportar · <b>TAB</b> minimapa
 </div>
 <div id="coord">—</div>
 <div id="tp">—</div>
@@ -52,10 +52,10 @@
 <div id="minimapa-container"><canvas id="minimapa" width="220" height="220"></canvas></div>
 <div id="aviso-layout">Layout provisório de produção — não canônico</div>
 <div id="start"><div>
-  <b>ELLESMÉRA — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V19</b><br><br>
-  Floresta procedural em camadas, Menoa monumental e estruturas construídas nos locais de Ellesméra.<br><br>
+  <b>ELLESMÉRA — CIDADE VIVA V21</b><br><br>
+  Casas no solo e nas copas, pontes elevadas, escadas em espiral e caminhos sobre raízes expostas.<br><br>
   Clique para entrar.<br>
-  <span style="color:#8ab98a">WASD · mouse · Shift · Espaço · M/N · G · TAB</span>
+  <span style="color:#8ab98a">WASD · mouse · Shift · Espaço · H cidade · J escada · G Menoa</span>
 </div></div>
 
 <script type="importmap">
@@ -69,7 +69,7 @@ import * as THREE from 'three';
 // ============================================================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xaec5d0);
-scene.fog = new THREE.FogExp2(0x9eafa0, 0.00112);
+scene.fog = new THREE.FogExp2(0xc5d8c2, 0.00042);
 
 const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 8000);
 camera.position.set(0, 1.7, 34);
@@ -91,10 +91,10 @@ addEventListener('resize', () => {
 // ============================================================================
 // 2. ILUMINAÇÃO
 // ============================================================================
-const hemi = new THREE.HemisphereLight(0xdce9e0, 0x35452a, 1.18);
+const hemi = new THREE.HemisphereLight(0xf0f7e9, 0x596548, 1.78);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffe3b8, 1.48);
+const sun = new THREE.DirectionalLight(0xfff0d2, 2.15);
 sun.position.set(-600, 400, 300);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
@@ -104,7 +104,7 @@ sun.shadow.camera.left = -700; sun.shadow.camera.right = 700;
 sun.shadow.camera.top = 700; sun.shadow.camera.bottom = -700;
 scene.add(sun); scene.add(sun.target);
 
-const fill = new THREE.DirectionalLight(0xb9d3bf, 0.58);
+const fill = new THREE.DirectionalLight(0xd8ead5, 1.15);
 fill.position.set(400, 200, -400);
 scene.add(fill);
 
@@ -499,9 +499,9 @@ TEX_GALHO.repeat.set(2,5);
 TEX_PEDRA.repeat.set(2, 2);
 
 const MATERIAIS = {
-  tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0x927c62 }),
-  galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x806c52 }),
-  copa: new THREE.MeshStandardMaterial({ color:0x55764a, roughness:1.0, side:THREE.DoubleSide }),
+  tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0xb09b79 }),
+  galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x9b8767 }),
+  copa: new THREE.MeshStandardMaterial({ color:0xffffff, roughness:1.0, side:THREE.DoubleSide }),
   pedra: new THREE.MeshStandardMaterial({ map: TEX_PEDRA, roughness: 0.95, color: 0x8a8a80 }),
   musgo: new THREE.MeshStandardMaterial({ map: TEX_MUSGO, roughness: 1.0, color: 0x6a7a4a }),
   lanterna: new THREE.MeshStandardMaterial({ color: 0x7aff8a, emissive: 0x4aff6a, emissiveIntensity: 1.4, roughness: 0.3 }),
@@ -553,7 +553,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   const raioBase=sapling?rand(.78,1.28):rand(3.1,3.65);
   const topoRaio=sapling ? .07 : .17;
   const crownStart=altura*(sapling?rand(.38,.46):rand(.49,.57));
-  const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[];
+  const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
   function addTube(pos,idx,points,r0,r1,radial=8,segments=12,irregular=.10){
@@ -621,13 +621,15 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side*1.8,.38,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side*1.8],
       [cx+Math.cos(a)*len,.18,cz+Math.sin(a)*len]
     ];
-    addTube(posT,idxT,root,raioBase*rand(.24,.38),.035,6,14,.20);
+    const rootRadius=raioBase*rand(.12,.20);
+    addTube(posT,idxT,root,rootRadius,.035,7,14,.16);
+    rootPaths.push({points:root.map(p=>p.slice()),radius:rootRadius});
     if(r%2===0){const fork=root[2],fa=a+rand(-.65,.65),fl=len*rand(.35,.58);addTube(posT,idxT,[fork,[fork[0]+Math.cos(fa)*fl*.45,.18,fork[2]+Math.sin(fa)*fl*.45],[fork[0]+Math.cos(fa)*fl,.05,fork[2]+Math.sin(fa)*fl]],.22,.025,6,9,.16);}
   }
 
   // Andares de galhos, mais longos na parte inferior da copa e progressivamente
   // menores no alto, com pequenos ramos alternados e agulhas finas individuais.
-  const levels=sapling?5:8,arms=sapling?6:9,baseReach=sapling?rand(9,13):rand(26,36);
+  const levels=sapling?6:9,arms=sapling?7:10,baseReach=sapling?rand(10,15):rand(29,39);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.92,reach=baseReach*(1-t*.86)+1.8,count=arms+(level%2);
     for(let arm=0;arm<count;arm++){
@@ -641,18 +643,18 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       // Pequenos sprays distribuídos ao longo do galho principal.
       for(let s=1;s<=4;s++){
         const q=s/6,px=cx+Math.cos(a)*len*q,py=y+len*.025*q-droop*q*.65,pz=cz+Math.sin(a)*len*q;
-        for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .28 : .72,sapling ? .62 : 1.55),sapling ? .035 : .075);}
+        for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .42 : 1.08,sapling ? .82 : 2.15),sapling ? .045 : .10);}
       }
 
       // Ramificações secundárias alternadas que quebram a silhueta em fios vegetais.
-      const twigN=sapling?3:6;
+      const twigN=sapling?4:8;
       for(let twig=0;twig<twigN;twig++){
         const q=.16+twig*.17,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
         const aa=a+side*rand(.52,.92),tl=len*rand(.14,.22)*(1-t*.25);
         const mid=[bx+Math.cos(aa)*tl*.52,by+tl*.13,bz+Math.sin(aa)*tl*.52],end=[bx+Math.cos(aa)*tl,by+tl*.16+rand(.2,1.1),bz+Math.sin(aa)*tl];
         addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,5,6,.16);
-        for(let n=0;n<8;n++){
-          const a2=aa+n*Math.PI*2/9+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
+        for(let n=0;n<10;n++){
+          const a2=aa+n*Math.PI*2/11+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .42 : .95,sapling ? .82 : 2.2),sapling ? .045 : .105);
         }
       }
@@ -661,7 +663,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
   for(let n=0;n<14;n++){const a=n/14*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
-  return {tronco:toGeo(posT,idxT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase};
+  return {tronco:toGeo(posT,idxT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase,raizes:rootPaths};
 }
 function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 
@@ -669,6 +671,7 @@ function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 // 14. INSTANCIAMENTO — PINHEIROS E SECUNDÁRIAS
 // ============================================================================
 const colisores = [];
+const ROOT_WALKS = [];
 const PINHEIROS = [];
 const N_TENT = 8500;
 for (let i = 0; i < N_TENT; i++) {
@@ -694,14 +697,26 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
   const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
   const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
   const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=true;imT.receiveShadow=true;imB.castShadow=true;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
   const dummy=new THREE.Object3D();
   lista.forEach((p,i)=>{
-    dummy.position.set(p.x,alturaTerreno(p.x,p.z),p.z);dummy.rotation.y=Math.random()*Math.PI*2;
-    const scale=.98+Math.random()*.20;dummy.scale.set(scale*1.16,scale*1.06,scale*1.16);dummy.updateMatrix();
+    const baseY=alturaTerreno(p.x,p.z),rotation=Math.random()*Math.PI*2;
+    dummy.position.set(p.x,baseY,p.z);dummy.rotation.y=rotation;
+    const scale=.98+Math.random()*.20,scaleY=scale*1.06;dummy.scale.set(scale*1.16,scaleY,scale*1.16);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.38+Math.random()*.18,.17+Math.random()*.12));
+    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.42+Math.random()*.16,.37+Math.random()*.11));
     colisores.push({x:p.x,z:p.z,raio:variante.raioBase+.7});
+    if(Math.hypot(p.x,p.z)<900){
+      const cs=Math.cos(rotation),sn=Math.sin(rotation);
+      for(let ri=0;ri<variante.raizes.length;ri+=3){
+        const root=variante.raizes[ri],points=root.points.map(v=>[
+          p.x+(v[0]*cs+v[2]*sn)*scale,
+          baseY+v[1]*scaleY,
+          p.z+(-v[0]*sn+v[2]*cs)*scale
+        ]);
+        ROOT_WALKS.push({points,r0:root.radius*scale,r1:.035*scale});
+      }
+    }
   });
   imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
   if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
@@ -727,14 +742,26 @@ VARIANTES_SEC.forEach((variante, vi) => {
   const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
   const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
   const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=true;imT.receiveShadow=true;imB.castShadow=true;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
   const dummy=new THREE.Object3D();
   lista.forEach((s,i)=>{
-    dummy.position.set(s.x,alturaTerreno(s.x,s.z),s.z);dummy.rotation.y=Math.random()*Math.PI*2;
-    const scale=.92+Math.random()*.18;dummy.scale.set(scale*1.18,scale*1.05,scale*1.18);dummy.updateMatrix();
+    const baseY=alturaTerreno(s.x,s.z),rotation=Math.random()*Math.PI*2;
+    dummy.position.set(s.x,baseY,s.z);dummy.rotation.y=rotation;
+    const scale=.92+Math.random()*.18,scaleY=scale*1.05;dummy.scale.set(scale*1.18,scaleY,scale*1.18);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.25+Math.random()*.055,.34+Math.random()*.18,.18+Math.random()*.12));
+    imC.setColorAt(i,new THREE.Color().setHSL(.255+Math.random()*.055,.38+Math.random()*.16,.34+Math.random()*.11));
     colisores.push({x:s.x,z:s.z,raio:variante.raioBase+.35});
+    if(Math.hypot(s.x,s.z)<900){
+      const cs=Math.cos(rotation),sn=Math.sin(rotation);
+      for(let ri=0;ri<variante.raizes.length;ri+=3){
+        const root=variante.raizes[ri],points=root.points.map(v=>[
+          s.x+(v[0]*cs+v[2]*sn)*scale,
+          baseY+v[1]*scaleY,
+          s.z+(-v[0]*sn+v[2]*cs)*scale
+        ]);
+        ROOT_WALKS.push({points,r0:root.radius*scale,r1:.035*scale});
+      }
+    }
   });
   imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
   if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
@@ -1049,6 +1076,36 @@ function addHoneycombRoof(parent,cx,cy,cz,length,width){
         [hx+Math.cos(a)*rad*.48,cy+archCenter+.4,hz+Math.sin(a)*rad*.48]],.09,.05,woodMat,5,8,.08);}
   }
 }
+function buildCanopyStairTower(parent,x,z,groundY,targetY,seed=0){
+  const rise=targetY-groundY,turns=6.0,radius=7.3,samples=600;
+  addLivingTrunk(parent,x,groundY,z,rise+13,3.0,Math.sin(seed)*1.2,Math.cos(seed)*1.1,woodMat);
+  const path=[],outer=[],inner=[];
+  for(let i=0;i<=samples;i++){
+    const t=i/samples,a=t*Math.PI*2*turns,y=groundY+.18+t*(rise-.05);
+    path.push([x+Math.cos(a)*radius,y,z+Math.sin(a)*radius]);
+    outer.push([x+Math.cos(a)*(radius+2.0),y+1.15,z+Math.sin(a)*(radius+2.0)]);
+    inner.push([x+Math.cos(a)*(radius-1.9),y+.95,z+Math.sin(a)*(radius-1.9)]);
+  }
+  registerWalkablePath(path,2.2);
+  addOrganicTube(parent,outer,.24,.15,paleWood,7,560,.12);
+  addOrganicTube(parent,inner,.28,.16,woodMat,7,560,.12);
+  // Degraus instanciados mantêm a escada contínua sem criar centenas de meshes individuais.
+  const stepCount=Math.ceil(rise/.23),stepGeo=new THREE.BoxGeometry(4.5,.18,2.2);
+  const steps=new THREE.InstancedMesh(stepGeo,woodMat,stepCount),dummy=new THREE.Object3D();
+  for(let i=0;i<stepCount;i++){
+    const t=i/(stepCount-1),a=t*Math.PI*2*turns,y=groundY+.23+t*(rise-.10);
+    dummy.position.set(x+Math.cos(a)*radius,y,z+Math.sin(a)*radius);
+    dummy.rotation.set(0,-a-Math.PI/2,0);dummy.scale.set(1,1,1);dummy.updateMatrix();steps.setMatrixAt(i,dummy.matrix);
+  }
+  steps.instanceMatrix.needsUpdate=true;steps.castShadow=true;steps.receiveShadow=true;parent.add(steps);
+  // Galhos em arco sustentam a espiral e a unem ao tronco principal.
+  for(let i=0;i<12;i++){
+    const t=(i+.5)/12,a=t*Math.PI*2*turns,y=groundY+t*rise;
+    addOrganicTube(parent,[[x+Math.cos(a)*(radius+1),y,z+Math.sin(a)*(radius+1)],
+      [x+Math.cos(a)*3.2,y+2.2,z+Math.sin(a)*3.2],[x,y+4,z]],.40,.13,woodMat,7,22,.12);
+  }
+  return {x,y:targetY,z};
+}
 function buildLivingBridge(parent,points,width=3.8){
   const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.34);
   const count=Math.max(48,Math.ceil(curve.getLength()/2.2)),samples=curve.getPoints(count),left=[],right=[],indices=[],pos=[],uv=[];
@@ -1073,20 +1130,49 @@ function buildLivingBridge(parent,points,width=3.8){
   const path=samples.map(p=>[p.x,p.y,p.z]);registerWalkablePath(path,width*.72);return path;
 }
 function buildCanopyResidence(parent,x,z,floorY,seed=0){
-  const supports=[[-8,-5],[8,-5],[0,9]];
-  supports.forEach(([dx,dz],i)=>{const tx=x+dx,tz=z+dz,base=alturaTerreno(tx,tz),leanX=-dx*.12,leanZ=-dz*.10;
-    addLivingTrunk(parent,tx,base,tz,54+(i%2)*7,2.0,leanX,leanZ,woodMat);
-    addOrganicTube(parent,[[tx+leanX,base+35,tz+leanZ],[x+dx*.45,floorY+5,z+dz*.45],[x,floorY+2.8,z]],.8,.22,woodMat,8,30,.15);});
-  const rx=5.7,ry=3.25,rz=4.7,centerY=floorY+2.9;
-  addOpenOvoidPod(parent,x,centerY,z,rx,ry,rz,woodMat,Math.PI/2);
-  addResidenceFloor(parent,x,floorY,z,rx*.78,rz*.76,mossFloorMat);addLivingDoorFrame(parent,x,floorY,z+rz*.93,2.25,3.0);
-  addOval(parent,x-1.5,floorY+.55,z-1.1,1.25,.42,2.0,paleWood,16);addOval(parent,x-1.5,floorY+.88,z-1.1,1.08,.18,1.78,mossFloorMat,16);
-  addOval(parent,x+1.65,floorY+.68,z-.55,.72,.72,.72,woodMat,14);
-  for(let k=0;k<3;k++)addOrganicTube(parent,[[x+3.0,floorY+.4+k*.65,z-2.3],[x+3.5,floorY+.5+k*.65,z-2.1],[x+3.2,floorY+.55+k*.65,z-1.8]],.08,.05,paleWood,5,8,.05);
-  const gemMat=new THREE.MeshStandardMaterial({color:[0x3d8e7d,0x6879a8,0x98734d][seed%3],emissive:0x10231a,roughness:.2,metalness:.12});
-  addOval(parent,x+rx*.91,centerY+.15,z,.46,.82,.12,gemMat,12);addOval(parent,x-rx*.91,centerY+.15,z,.46,.82,.12,gemMat,12);
-  registerWalkablePath([[x,floorY,z+rz*.84],[x,floorY,z+1.5],[x,floorY,z-.8]],2.5);
-  return {x,y:floorY,z:z+rz*.92};
+  // Casa suspensa com silhueta hexagonal facetada, mais cúbica, mas crescida dos três pinheiros.
+  const supports=[[-10,-7],[10,-7],[0,11]];
+  supports.forEach(([dx,dz],i)=>{
+    const tx=x+dx,tz=z+dz,base=alturaTerreno(tx,tz),leanX=-dx*.13,leanZ=-dz*.09;
+    addLivingTrunk(parent,tx,base,tz,Math.max(76,floorY-base+28),2.6,leanX,leanZ,woodMat);
+    addOrganicTube(parent,[[tx+leanX,base+floorY-base-16,tz+leanZ],
+      [x+dx*.55,floorY+5,z+dz*.55],[x,floorY+3.6,z]],1.0,.22,woodMat,9,34,.14);
+  });
+  const rx=7.4,ry=4.35,rz=6.0,centerY=floorY+ry-.12;
+  addHexagonalLivingShell(parent,x,centerY,z,rx,ry,rz,woodMat,true);
+  addResidenceFloor(parent,x,floorY,z,rx*.88,rz*.82,mossFloorMat);
+  addLivingDoorFrame(parent,x,floorY,z+rz*.96,2.8,3.7);
+  // Nervuras grossas e cobertura abaulada de galhos entrelaçados.
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3,pts=[[x+Math.sin(a)*rx,floorY+.2,z+Math.cos(a)*rz],
+      [x+Math.sin(a)*rx*.92,centerY+ry*.55,z+Math.cos(a)*rz*.92],
+      [x+Math.sin(a)*rx*.56,centerY+ry*1.13,z+Math.cos(a)*rz*.56],
+      [x,centerY+ry*1.22,z]];
+    addOrganicTube(parent,pts,.34,.09,paleWood,8,24,.12);
+  }
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4,px=x+Math.sin(a)*rx*.88,pz=z+Math.cos(a)*rz*.88;
+    const windowMat=new THREE.MeshStandardMaterial({color:0xf0cb86,emissive:0xffb94d,emissiveIntensity:1.35,roughness:.22,metalness:.06});
+    const isFront=Math.abs(a)<.9;
+    addOval(parent,px,floorY+2.45,pz,isFront?.58:.16,1.02,isFront?.18:.72,windowMat,12);
+  }
+  // Entrada escura recessed sob o arco, com iluminação interior quente visível de fora.
+  addOval(parent,x,floorY+1.9,z+rz*.94,1.12,1.78,.08,darkMat,14);
+  const interiorLight=new THREE.PointLight(0xffc875,3.4,34,1.7);
+  interiorLight.position.set(x,floorY+2.6,z-1.0);parent.add(interiorLight);
+  const porchLight=new THREE.PointLight(0xffd18a,.85,11,2);
+  porchLight.position.set(x,floorY+3.2,z+rz*.93);parent.add(porchLight);
+  // Interior legível: leito, mesa baixa, banco e nichos de armazenamento.
+  addOval(parent,x-2.2,floorY+.42,z-1.8,1.5,.38,2.0,paleWood,16);
+  addOval(parent,x-2.2,floorY+.70,z-1.8,1.25,.14,1.72,mossFloorMat,16);
+  addOval(parent,x+2.0,floorY+.62,z-1.2,1.0,.56,.78,woodMat,14);
+  addOval(parent,x+2.0,floorY+.96,z-1.2,.82,.12,.62,paleWood,12);
+  for(let k=0;k<3;k++)addOrganicTube(parent,[[x+4.0,floorY+.35+k*.62,z-3.0],
+    [x+4.35,floorY+.48+k*.62,z-2.6],[x+4.05,floorY+.55+k*.62,z-2.2]],.11,.06,paleWood,6,10,.06);
+  // Pequena varanda de madeira viva na frente da porta.
+  buildLivingBridge(parent,[[x-5,floorY,z+rz+1],[x,floorY+.15,z+rz+2.1],[x+5,floorY,z+rz+1]],3.2);
+  registerWalkablePath([[x,floorY,z+rz+2],[x,floorY,z+rz*.72],[x,floorY,z]],2.9);
+  return {x,y:floorY,z:z+rz+2.0,door:[x,floorY,z+rz+1.4]};
 }
 function addOrganicTube(parent,points,r0,r1,mat=woodMat,radial=9,segments=18,irregular=.12){
   let bucket=ARCH_TUBE_BUCKETS.get(mat);
@@ -1255,50 +1341,65 @@ function buildTreeDwelling(parent,x,y,z){
     addOrganicTube(parent,[[x+s*2,y+33,z-1],[x+s*10,officeY-1,z-4],[x+s*7,officeY,z-5]],.95,.22,woodMat,8,22,.12);}
 }
 function buildHall(parent,x,y,z){
-  const length=40,width=15,height=14;
-  // Salão de árvores vivas: troncos e raízes substituem pilares e paredes.
-  for(let side of [-1,1])for(let i=0;i<7;i++){
-    const px=x-18+i*6,pz=z+side*6.5;
-    addLivingTrunk(parent,px,y,pz,height+2,1.05,Math.sin(i)*.8,side*.6);
-    addOrganicTube(parent,[[px,y+height*.45,pz],[px+Math.sin(i)*1.5,y+height+2,pz+side*1.2],[px+2,y+height+5,z]],.48,.16,paleWood,7,16,.1);
+  const length=58,width=26,height=20;
+  // Salão de árvores vivas: uma nave ampla envolvida por troncos e raízes entrelaçados.
+  for(let side of [-1,1])for(let i=0;i<9;i++){
+    const px=x-24+i*6,pz=z+side*10.5;
+    addLivingTrunk(parent,px,y,pz,height+5,1.55,Math.sin(i*.7)*1.2,side*.8,woodMat);
+    addOrganicTube(parent,[[px,y+height*.35,pz],[px+Math.sin(i)*2.0,y+height+3,pz+side*2.0],
+      [px+Math.sin(i*.45)*2.2,y+height+8,z+side*4.0]],.62,.16,paleWood,8,24,.14);
+  }
+  for(let side of [-1,1])for(let i=0;i<8;i++){
+    const px=x-21+i*6,baseZ=z+side*12;
+    addOrganicTube(parent,[[px,y+2,baseZ],[px+side*2,y+10,baseZ-side*2],
+      [px+side*1.5,y+height+4,z+side*4],[x+(px-x)*.72,y+height+7,z]],.52,.12,woodMat,8,28,.13);
   }
   addHoneycombRoof(parent,x,y+height+3,z,length,width);
-  const floor=new THREE.Mesh(new THREE.CircleGeometry(1,64),mossFloorMat);
-  floor.rotation.x=-Math.PI/2;floor.position.set(x,y+.035,z);floor.scale.set(length*.55,width*.85,1);parent.add(floor);
-  // 24 cadeiras de madeira viva, doze em cada parede.
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(1,72),mossFloorMat);
+  floor.rotation.x=-Math.PI/2;floor.position.set(x,y+.04,z);floor.scale.set(length*.56,width*.80,1);
+  floor.receiveShadow=true;parent.add(floor);
+  const aisleMat=new THREE.MeshStandardMaterial({color:0x596b3c,roughness:1,side:THREE.DoubleSide});
+  const aisle=new THREE.Mesh(new THREE.PlaneGeometry(5.8,34),aisleMat);
+  aisle.rotation.x=-Math.PI/2;aisle.position.set(x,y+.08,z+1);parent.add(aisle);
+  registerWalkablePath([[x,y+.15,z+22],[x,y+.15,z+10],[x,y+.15,z],[x,y+.15,z-10],[x,y+3.3,z-17]],4.2);
+  // 24 assentos, doze em cada parede, voltados para o trono branco.
   for(let side of [-1,1])for(let i=0;i<12;i++){
-    const px=x-17+i*3.1,pz=z+side*4.7,cy=y+.75;
-    addOrganicTube(parent,[[px-0.75,cy,pz],[px,cy+.25,pz+side*.2],[px+.75,cy,pz]],.22,.18,woodMat,7,8,.1);
-    addOrganicTube(parent,[[px-.65,cy,pz],[px-.7,cy+1.7,pz-side*.3],[px,cy+2.2,pz-side*.45],[px+.7,cy+1.7,pz-side*.3],[px+.65,cy,pz]],.17,.12,paleWood,7,12,.1);
-    for(let k=-1;k<=1;k+=2)addOrganicTube(parent,[[px+k*.65,cy,pz],[px+k*.9,cy+.8,pz+side*.1]],.11,.07,woodMat,6,7,.08);
+    const px=x-17+i*3.1,pz=z+side*7.2,cy=y+.78;
+    addOrganicTube(parent,[[px-.85,cy,pz],[px,cy+.30,pz+side*.2],[px+.85,cy,pz]],.25,.20,woodMat,8,10,.1);
+    addOrganicTube(parent,[[px-.72,cy,pz],[px-.78,cy+1.9,pz-side*.35],[px,cy+2.35,pz-side*.52],
+      [px+.78,cy+1.9,pz-side*.35],[px+.72,cy,pz]],.21,.13,paleWood,8,14,.1);
+    for(let k=-1;k<=1;k+=2)addOrganicTube(parent,[[px+k*.72,cy,pz],[px+k*.95,cy+.9,pz+side*.12]],.12,.07,woodMat,6,8,.08);
   }
-  // Pavilhão branco, trono feito de raízes e apoio curvo de Blagden.
-  addOpenOvoidPod(parent,x,y+7,z-17,6.2,4.2,3.4,whiteBarkMat,Math.PI/2);
-  addResidenceFloor(parent,x,y+3.3,z-17,4.9,2.5,mossFloorMat);
-  addLivingDoorFrame(parent,x,y+3.3,z-13.8,2.8,4.0);
-  // Trono branco construído em raízes entrelaçadas; pavilhão com interior acessível.
-  addOrganicTube(parent,[[x-2.3,y+3.6,z-17],[x-1.5,y+4.1,z-16.7],[x,y+4.3,z-17],[x+1.5,y+4.1,z-16.7],[x+2.3,y+3.6,z-17]],.48,.24,paleWood,9,24,.12);
-  addOrganicTube(parent,[[x-1.5,y+4.0,z-17],[x-1.2,y+6.4,z-18],[x,y+7.2,z-18.5],[x+1.2,y+6.4,z-18],[x+1.5,y+4.0,z-17]],.36,.18,whiteBarkMat,8,24,.10);
-  addOrganicTube(parent,[[x-2.3,y+3.2,z-17],[x-3.2,y+4.2,z-16],[x-3.0,y+5.1,z-17]],.3,.09,paleWood,7,16,.1);
-  addOrganicTube(parent,[[x+2.3,y+3.2,z-17],[x+3.2,y+4.2,z-16],[x+3.0,y+5.1,z-17]],.3,.09,paleWood,7,16,.1);
-  // Cortinas de raízes e ramagem fazem as paredes crescerem a partir do chão.
-  for(let i=0;i<18;i++){const xx=x-18+i*2.1,side=i%2?1:-1;
-    addOrganicTube(parent,[[xx,y+.2,z+side*7.2],[xx+Math.sin(i)*1.1,y+5,z+side*7.5],[xx+Math.cos(i*.7)*1.2,y+10+Math.random()*2,z+side*6.2]],.25,.07,woodMat,6,18,.12);}
-  // Piso e aproximação da porta do pavilhão.
-  registerWalkablePath([[x,y+3.3,z-13.8],[x,y+3.3,z-18],[x,y+3.3,z-21]],3.0);
-  // haste curva e travessa para o corvo branco.
-  addOrganicTube(parent,[[x+8,y+3,z-15],[x+8.8,y+5,z-16],[x+9,y+7,z-17]],.18,.09,woodMat,6,12,.08);
-  addOrganicTube(parent,[[x+8.5,y+6.7,z-17],[x+10,y+6.7,z-17]],.09,.06,woodMat,6,7,.04);
-  // Degraus de raízes diante da parede de mudas e entrada larga, sem porta convencional.
-  for(let i=0;i<8;i++)addRootStair(parent,x,y+i*.04,z+13+i*.75,1,9,1);
-  registerWalkablePath(Array.from({length:9},(_,i)=>[x,y+.25+i*.03,z+13+i*.75]),3.8);
-  // Raízes altas e verticais criam a fachada viva do salão.
-  for(let i=0;i<16;i++){const xx=x-20+i*2.65;
-    addOrganicTube(parent,[[xx,y-.2,z+19],[xx+Math.sin(i)*1.4,y+4,z+21],[xx+Math.cos(i*.8)*1.8,y+11,z+18],[xx+Math.sin(i*.5)*1.2,y+17,z+11]],.34,.08,woodMat,7,22,.16);}
-  for(let i=0;i<23;i++){
-    const dx=-12+i*1.1;
-    addOrganicTube(parent,[[x+dx,y,z+19],[x+dx+Math.sin(i)*.5,y+4+Math.random()*2,z+20],[x+dx*.9,y+9,z+18]],.16,.045,woodMat,5,12,.12);
+  // Pavilhão real: casca branca, piso próprio, entrada alta e trono feito de raízes.
+  addOpenOvoidPod(parent,x,y+7,z-20,7.2,4.6,4.2,whiteBarkMat,Math.PI/2);
+  addResidenceFloor(parent,x,y+3.35,z-20,5.8,3.2,mossFloorMat);
+  addLivingDoorFrame(parent,x,y+3.35,z-15.9,3.0,4.1);
+  addOrganicTube(parent,[[x-2.6,y+3.65,z-20],[x-1.6,y+4.2,z-19.8],[x,y+4.4,z-20],
+    [x+1.6,y+4.2,z-19.8],[x+2.6,y+3.65,z-20]],.55,.26,paleWood,9,26,.12);
+  addOrganicTube(parent,[[x-1.7,y+4.0,z-20],[x-1.35,y+6.7,z-21],[x,y+7.8,z-21.5],
+    [x+1.35,y+6.7,z-21],[x+1.7,y+4.0,z-20]],.42,.18,whiteBarkMat,9,26,.11);
+  const velvet=new THREE.MeshStandardMaterial({color:0x542a3b,roughness:.96,side:THREE.DoubleSide});
+  addOval(parent,x,y+5.2,z-23.6,3.0,2.8,.18,velvet,18);
+  for(let i=0;i<11;i++){
+    const xx=x-3.6+i*.72;
+    addOrganicTube(parent,[[xx,y+1,z-23.0],[xx+Math.sin(i)*.35,y+4.5,z-23.4],
+      [xx+Math.cos(i*.6)*.3,y+8.5,z-22.2]],.15,.045,whiteBarkMat,6,18,.1);
   }
+  // Poleiro curvo para Blagden.
+  addOrganicTube(parent,[[x+9,y+3,z-18],[x+10.2,y+5.5,z-20],[x+10.8,y+8,z-21]],.2,.1,woodMat,7,18,.08);
+  addOrganicTube(parent,[[x+10.2,y+7.7,z-21],[x+12,y+7.7,z-21]],.10,.07,paleWood,6,8,.04);
+  // Fachada de mudas, arco vivo e degraus de raízes na entrada.
+  for(let side of [-1,1])for(let i=0;i<9;i++){
+    const px=x+side*(7+i*2.2);
+    addOrganicTube(parent,[[px,y-.2,z+22],[px+side*.6,y+5,z+23],[px+Math.sin(i)*.8,y+11,z+19],
+      [px*.98,y+17+Math.random()*2,z+12]],.28,.07,woodMat,7,22,.14);
+  }
+  addOrganicTube(parent,[[x-8,y+2,z+22],[x-6,y+12,z+24],[x,y+19,z+23],
+    [x+6,y+12,z+24],[x+8,y+2,z+22]],1.2,.28,paleWood,12,40,.12);
+  for(let i=0;i<12;i++)addRootStair(parent,x,y+i*.06,z+17+i*.72,1,12,1);
+  registerWalkablePath(Array.from({length:13},(_,i)=>[x,y+.25+i*.05,z+17+i*.72]),4.2);
+  const hallGlow=new THREE.PointLight(0xffd18a,2.4,52,1.8);hallGlow.position.set(x,y+8,z);parent.add(hallGlow);
+  const throneGlow=new THREE.PointLight(0xffd69a,1.8,26,1.8);throneGlow.position.set(x,y+5,z-20);parent.add(throneGlow);
 }
 function buildForge(parent,x,y,z){
   // Anel de árvores vivas, túnel de corniso e cabana central sem paredes.
@@ -1364,7 +1465,7 @@ function buildTialdari(parent,x,y,z){
   addLivingDoorFrame(parent,x+18,hallFloor,z-14.0,2.5,3.5);
   const tialdariGlass=[0x9b8c56,0x4e7660,0x8a6950,0x627b83];
   for(let i=0;i<4;i++){
-    const angle=i*Math.PI/2,gemMat=new THREE.MeshStandardMaterial({color:tialdariGlass[i],roughness:.18,metalness:.1,emissive:0x10190e});
+    const angle=i*Math.PI/2,gemMat=new THREE.MeshStandardMaterial({color:tialdariGlass[i],roughness:.18,metalness:.1,emissive:0x9e6e32,emissiveIntensity:.7});
     addOval(parent,x-18+Math.cos(angle)*6.45,y+7,z-21+Math.sin(angle)*5.55,.42,1.05,.14,gemMat,12);
     addOval(parent,x+18+Math.cos(angle)*6.8,y+7,z-20+Math.sin(angle)*5.9,.42,1.05,.14,gemMat,12);
   }
@@ -1382,6 +1483,16 @@ function buildTialdari(parent,x,y,z){
   }
   addOrganicTube(parent,[[x-12,hallFloor+1,z-23],[x-8,hallFloor+2,z-22],[x-3,hallFloor+1,z-21]],.28,.08,paleWood,7,16,.10);
   addOrganicTube(parent,[[x+12,hallFloor+1,z-22],[x+8,hallFloor+2,z-21],[x+3,hallFloor+1,z-20]],.28,.08,paleWood,7,16,.10);
+  // Mobiliário e luz interna quente nas duas salas de Tialdarí.
+  addOval(parent,x-18,hallFloor+.62,z-22,1.7,.42,1.15,paleWood,16);
+  addOval(parent,x-18,hallFloor+.88,z-22,1.45,.13,.92,woodMat,14);
+  addOval(parent,x+18,hallFloor+.55,z-21,1.6,.38,1.05,paleWood,16);
+  addOrganicTube(parent,[[x+14,hallFloor+.25,z-19],[x+15,hallFloor+1.2,z-19.5],[x+18,hallFloor+1.35,z-19],
+    [x+21,hallFloor+1.2,z-19.5],[x+22,hallFloor+.25,z-19]],.18,.10,woodMat,7,16,.08);
+  const tialdariGlowA=new THREE.PointLight(0xffc77e,2.2,30,1.8);
+  tialdariGlowA.position.set(x-18,hallFloor+2.6,z-21);parent.add(tialdariGlowA);
+  const tialdariGlowB=new THREE.PointLight(0xffd18e,2.2,32,1.8);
+  tialdariGlowB.position.set(x+18,hallFloor+2.5,z-20);parent.add(tialdariGlowB);
   // Riacho prateado que desce uma parede viva e atravessa o piso.
   const silverWater=new THREE.MeshStandardMaterial({color:0x8babb1,metalness:.45,roughness:.18,transparent:true,opacity:.8});
   addOrganicTube(parent,[[x-18,y+12,z-14],[x-17,y+8,z-12],[x-15,y+3,z-8],[x-10,y+.15,z-4],[x,y+.12,z+10]],.22,.13,silverWater,7,30,.04);
@@ -1403,13 +1514,22 @@ function buildHexagonalResidence(parent,x,y,z,scale=1){
     addOrganicTube(parent,[[x+Math.cos(a)*7.0*scale,y+1.5*scale,z+Math.sin(a)*6.5*scale],[x+Math.cos(a)*7.6*scale,y+5*scale,z+Math.sin(a)*7.0*scale],
       [x+Math.cos(a)*4.0*scale,y+10*scale,z+Math.sin(a)*3.8*scale],[x+Math.cos(a)*.4*scale,y+11*scale,z+Math.sin(a)*.4*scale]],.38*scale,.11*scale,paleWood,8,20,.12);
     const jewelColors=[0x367f72,0x586caa,0x9b7050,0x547d52,0x926e9c,0x9b8751];
-    const gem=new THREE.MeshStandardMaterial({color:jewelColors[i],roughness:.22,metalness:.12,side:THREE.DoubleSide});
-    addOval(parent,x+Math.cos(a)*6.5*scale,y+4.4*scale,z+Math.sin(a)*6.0*scale,.50*scale,.9*scale,.18*scale,gem,10);}
+    const gem=new THREE.MeshStandardMaterial({color:jewelColors[i],roughness:.22,metalness:.12,
+      emissive:0x8d5e2a,emissiveIntensity:.42,side:THREE.DoubleSide});
+    addOval(parent,x+Math.cos(a)*6.5*scale,y+4.4*scale,z+Math.sin(a)*6.0*scale,.58*scale,1.02*scale,.22*scale,gem,10);}
   for(let glyph=0;glyph<3;glyph++){
     const gx=x+(glyph-1)*.55*scale;
     addOrganicTube(parent,[[gx,lowFloor+2.55*scale,z+6.28*scale],[gx+.18*scale,lowFloor+2.78*scale,z+6.34*scale],
       [gx,lowFloor+2.98*scale,z+6.28*scale]],.055*scale,.035*scale,paleWood,5,8,.04);
   }
+  const roomGlow=new THREE.PointLight(0xffc777,2.8*scale,30*scale,1.7);
+  roomGlow.position.set(x,lowFloor+2.4*scale,z);parent.add(roomGlow);
+  const upperGlow=new THREE.PointLight(0xffd08a,1.8*scale,20*scale,1.8);
+  upperGlow.position.set(x,upperFloor+1.0*scale,z);parent.add(upperGlow);
+  // Mobiliário no térreo: mesa baixa, leito e banco integrados à casca.
+  addOval(parent,x-1.8*scale,lowFloor+.5*scale,z-1.4*scale,1.55*scale,.38*scale,1.35*scale,paleWood,14);
+  addOval(parent,x-1.8*scale,lowFloor+.78*scale,z-1.4*scale,1.34*scale,.13*scale,1.12*scale,mossFloorMat,14);
+  addOval(parent,x+2.0*scale,lowFloor+.56*scale,z-1.2*scale,.95*scale,.48*scale,.72*scale,woodMat,14);
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2,px=x+Math.cos(a)*7.3*scale,pz=z+Math.sin(a)*6.8*scale;
     addOrganicTube(parent,[[px,y+6.7*scale,pz],[x+Math.cos(a)*6.3*scale,y+7.3*scale,pz-Math.sin(a)*.3],[x+Math.cos(a)*4.3*scale,y+8.3*scale,z+Math.sin(a)*4.0*scale]],.23*scale,.08*scale,woodMat,6,11,.1);}
   const spiral=[];for(let i=0;i<=64;i++){const t=i/64,a=t*Math.PI*2*2.0,rr=1.2+t*2.7;spiral.push([x+Math.cos(a)*rr*scale,lowFloor+t*(upperFloor-lowFloor),z+Math.sin(a)*rr*scale]);}
@@ -1425,8 +1545,13 @@ function buildFiveStoreyResidence(parent,x,y,z){
   const offsets=[[-8,-5],[8,-5],[0,9]];offsets.forEach(([dx,dz])=>addLivingTrunk(parent,x+dx,y,z+dz,62,2.25,dx*.16,dz*.12));
   let firstFloor=null;
   for(let level=0;level<5;level++){const h=y+12+level*6.5,shrink=1-level*.115,podX=x+(level%2?1:-.8),rx=4.7*shrink,ry=1.9*shrink,rz=4.1*shrink;
-    addOpenOvoidPod(parent,podX,h,z,rx,ry,rz,level%2?woodMat:paleWood,Math.PI/2);
-    const floorY=h-ry*.88;addResidenceFloor(parent,podX,floorY,z,rx*.77,rz*.76,mossFloorMat);addLivingDoorFrame(parent,podX,floorY,z+rz*.94,1.75*shrink,2.65*shrink);
+    addHexagonalLivingShell(parent,podX,h,z,rx,ry,rz,level%2?woodMat:paleWood,true);
+    const floorY=h-ry*.88;addResidenceFloor(parent,podX,floorY,z,rx*.77,rz*.76,mossFloorMat);
+    addLivingDoorFrame(parent,podX,floorY,z+rz*.94,1.75*shrink,2.65*shrink);
+    const windowMat=new THREE.MeshStandardMaterial({color:0xf1cd8b,emissive:0xffb85b,emissiveIntensity:1.25,roughness:.2});
+    addOval(parent,podX-rx*.78,floorY+1.5*shrink,z+rz*.68,.36*shrink,.72*shrink,.16,windowMat,10);
+    addOval(parent,podX+rx*.78,floorY+1.5*shrink,z+rz*.68,.36*shrink,.72*shrink,.16,windowMat,10);
+    const levelGlow=new THREE.PointLight(0xffc878,1.7,18,1.8);levelGlow.position.set(podX,floorY+1.8,z);parent.add(levelGlow);
     if(level===0)firstFloor=floorY;
     offsets.forEach(([dx,dz],i)=>{const tx=x+dx,tz=z+dz,side=i%2?1:-1;
       addOrganicTube(parent,[[tx,y+17+level*6.5,tz],[tx+side*2,h+1,z+dz*.55],[podX,h,z]],.82*shrink,.19*shrink,woodMat,8,20,.12);});}
@@ -1576,7 +1701,7 @@ function buildSite(name,x,z,kind){
   else if(kind==='treehome')buildTreeDwelling(g,x,y,z);
   else if(kind==='arch')buildNaturalArchSite(g,x,y,z);
   else if(kind==='hexhouse')buildHexagonalResidence(g,x,y,z,1);
-  else if(kind==='fivehome')buildFiveStoreyResidence(g,x,y,z);
+  else if(kind==='fivehome')buildFiveStoreyResidence(g,x,y+10,z);
   else if(kind==='bower')buildWillowBower(g,x,y,z);
   else if(kind==='gilderien')buildGilderien(g,x,y,z);
   else if(kind==='crags')buildCrags(g,x,y,z);
@@ -1588,6 +1713,9 @@ const SITE_BUILDINGS=[
   ['Arco natural',450,-60,'arch'],
   ['Casa hexagonal',350,-18,'hexhouse'],
   ['Residência de cinco andares',305,-92,'fivehome'],
+  ['Casa da trilha norte',215,-82,'hexhouse'],
+  ['Casa da margem do riacho',165,-235,'hexhouse'],
+  ['Casa junto às copas',520,-142,'hexhouse'],
   ['Caramanchão de salgueiro e corniso',285,-116,'bower'],
   ['Salão do Trono',250,-40,'hall'],['Colina do banquete',120,70,'banquet'],
   ['Árvore dos Cavaleiros',0,0,'treehome'],['Estábulos',200,-160,'stable'],
@@ -1598,35 +1726,41 @@ const SITE_BUILDINGS=[
 ];
 for(const [n,x,z,k] of SITE_BUILDINGS)buildSite(n,x,z,k);
 criarCaminho([[200,-160],[245,-167],[300,-170],[355,-174],[410,-177],[470,-180]],2.3);
+criarCaminho([[200,-160],[180,-145],[165,-130],[155,-120]],1.9);
+criarCaminho([[-300,-200],[-220,-190],[-150,-175],[-110,-170],[-75,-165]],1.9);
+criarCaminho([[120,70],[80,55],[50,40],[20,18]],1.8);
 function buildCanopyTransit(){
   const g=new THREE.Group();scene.add(g);
-  const ax=410,az=-110,aFloor=alturaTerreno(ax,az)+18;
-  const bx=150,bz=-80,bFloor=alturaTerreno(bx,bz)+22;
-  const cx=-60,cz=-165,cFloor=alturaTerreno(cx,cz)+19;
+  // As casas suspensas ficam entre 45 e 53 m acima do solo: são vistas olhando para a copa.
+  const ax=410,az=-110,aFloor=alturaTerreno(ax,az)+45;
+  const bx=150,bz=-80,bFloor=alturaTerreno(bx,bz)+52;
+  const cx=-60,cz=-165,cFloor=alturaTerreno(cx,cz)+46;
   const homeA=buildCanopyResidence(g,ax,az,aFloor,0);
   const homeB=buildCanopyResidence(g,bx,bz,bFloor,1);
   const homeC=buildCanopyResidence(g,cx,cz,cFloor,2);
-  const hexLow=alturaTerreno(350,-18)+4-3.17,hexUpper=alturaTerreno(350,-18)+8.2-1.85;
-  const fiveLow=alturaTerreno(305,-92)+12-1.67;
+  const fiveTop=alturaTerreno(305,-92)+10+12+26-1.9*.54*.88;
   const riderFloor=alturaTerreno(0,0)+30-3.17;
-  const rampGround=alturaTerreno(470,-180);
-  addRootStair(g,470,rampGround,-184,9,4.6,1);
-  const rampStart=[470,rampGround+.2,-180];
-  buildLivingBridge(g,[rampStart,[451,alturaTerreno(451,-160)+5,-160],[432,alturaTerreno(432,-136)+11,-136],[homeA.x,aFloor,homeA.z]],4.8);
-  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[390,aFloor+1,-88],[367,hexUpper+1,-46],[350,hexUpper,-14]],4.0);
-  buildLivingBridge(g,[[350,hexUpper,-14],[334,hexUpper+1,-38],[320,fiveLow+1,-68],[305,fiveLow,-88]],4.0);
-  buildLivingBridge(g,[[305,fiveLow,-88],[265,fiveLow+3,-78],[210,bFloor+2,-78],[homeB.x,bFloor,homeB.z]],4.0);
-  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[95,bFloor-1,-95],[20,cFloor+1,-145],[homeC.x,cFloor,homeC.z]],4.0);
-  buildLivingBridge(g,[[homeC.x,cFloor,homeC.z],[-42,cFloor+2,-115],[-18,riderFloor+1,-45],[0,riderFloor,5.8]],4.0);
-  // Galhos estruturais brotam dos troncos e sustentam a passagem como arcobotantes.
-  for(const [x,z,yy] of [[410,-110,aFloor],[150,-80,bFloor],[-60,-165,cFloor],[350,-18,hexUpper],[305,-92,fiveLow],[0,0,riderFloor]]){
+  // Quatro torres de escadas de madeira viva dão acesso do chão ao nível superior.
+  const stairA=buildCanopyStairTower(g,470,-180,alturaTerreno(470,-180),aFloor,0);
+  const stairB=buildCanopyStairTower(g,155,-120,alturaTerreno(155,-120),bFloor,1);
+  const stairC=buildCanopyStairTower(g,-75,-165,alturaTerreno(-75,-165),cFloor,2);
+  const stairD=buildCanopyStairTower(g,20,18,alturaTerreno(20,18),riderFloor,3);
+  // Ligação em altura entre as escadas, a casa de cinco níveis e as residências nas copas.
+  buildLivingBridge(g,[[stairA.x,stairA.y,stairA.z],[450,aFloor+1,-150],[homeA.x,aFloor,homeA.z]],4.8);
+  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[380,aFloor+1,-99],[340,fiveTop+1,-91],[305,fiveTop,-88]],4.4);
+  buildLivingBridge(g,[[305,fiveTop,-88],[260,fiveTop+1,-83],[205,bFloor+1,-78],[homeB.x,bFloor,homeB.z]],4.4);
+  buildLivingBridge(g,[[stairB.x,stairB.y,stairB.z],[155,bFloor,homeB.z],[homeB.x,bFloor,homeB.z]],4.4);
+  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[95,bFloor-1,-96],[20,cFloor+1,-145],[homeC.x,cFloor,homeC.z]],4.4);
+  buildLivingBridge(g,[[stairC.x,stairC.y,stairC.z],[-67,cFloor,-157],[homeC.x,cFloor,homeC.z]],4.4);
+  buildLivingBridge(g,[[homeC.x,cFloor,homeC.z],[-42,cFloor-2,-115],[-18,riderFloor+1,-45],[2,riderFloor,6.2]],4.0);
+  buildLivingBridge(g,[[stairD.x,stairD.y,stairD.z],[12,riderFloor,18],[2,riderFloor,6.2]],3.8);
+  // As passarelas nascem em galhos de sustentação e se prendem aos troncos das casas.
+  for(const [x,z,yy] of [[410,-110,aFloor],[150,-80,bFloor],[-60,-165,cFloor],[0,0,riderFloor],[305,-92,fiveTop]]){
     const ground=alturaTerreno(x,z);
-    addLivingTrunk(g,x-7,ground,z-4,Math.max(40,yy-ground+28),1.65,1.0,.6,woodMat);
-    addLivingTrunk(g,x+8,ground,z+3,Math.max(42,yy-ground+30),1.8,-.8,-.5,woodMat);
-    addOrganicTube(g,[[x-7,yy+5,z-4],[x-2,yy+3,z],[x+8,yy+5,z+3]],.9,.28,woodMat,8,28,.14);
+    addLivingTrunk(g,x-9,ground,z-5,Math.max(58,yy-ground+25),2.0,1.4,.7,woodMat);
+    addLivingTrunk(g,x+9,ground,z+5,Math.max(60,yy-ground+28),2.1,-1.0,-.6,woodMat);
+    addOrganicTube(g,[[x-9,yy+5,z-5],[x-2,yy+3,z],[x+9,yy+5,z+5]],1.05,.25,woodMat,9,32,.14);
   }
-  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[425,aFloor+2,-70],[405,aFloor+4,-40]],2.8);
-  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[175,bFloor+2,-38],[205,bFloor+1,-15]],2.8);
 }
 buildCanopyTransit();
 flushOrganicArchitecture();
@@ -1645,14 +1779,14 @@ function construirMenoa(){
   // Livro: Menoa tem a mesma altura das árvores vizinhas; é o tronco que é
   // colossal, mais grosso que cem árvores comuns. Diâmetro de projeto: 60 m.
   const altura=94,raioBase=34,raioTopo=15;
-  const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0x927654,roughness:.98,side:THREE.DoubleSide});
-  const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x735b40,roughness:1,side:THREE.DoubleSide});
-  const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xa1845c,roughness:1,side:THREE.DoubleSide});
+  const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0xb0956d,roughness:.98,side:THREE.DoubleSide});
+  const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x957a55,roughness:1,side:THREE.DoubleSide});
+  const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xb69a6d,roughness:1,side:THREE.DoubleSide});
   const needleMats=[
-    new THREE.MeshStandardMaterial({color:0x263d28,roughness:1,side:THREE.DoubleSide}),
-    new THREE.MeshStandardMaterial({color:0x344d31,roughness:1,side:THREE.DoubleSide}),
-    new THREE.MeshStandardMaterial({color:0x405a37,roughness:1,side:THREE.DoubleSide}),
-    new THREE.MeshStandardMaterial({color:0x1d3423,roughness:1,side:THREE.DoubleSide})
+    new THREE.MeshStandardMaterial({color:0x456b3d,roughness:1,side:THREE.DoubleSide}),
+    new THREE.MeshStandardMaterial({color:0x567e49,roughness:1,side:THREE.DoubleSide}),
+    new THREE.MeshStandardMaterial({color:0x6c8c52,roughness:1,side:THREE.DoubleSide}),
+    new THREE.MeshStandardMaterial({color:0x3a5f37,roughness:1,side:THREE.DoubleSide})
   ];
 
   const tubeBuckets=new Map([
@@ -1686,7 +1820,7 @@ function construirMenoa(){
   }
   function curve(points){return new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.4);}
   const needleGeo=new THREE.ConeGeometry(.04,1.05,6,1);needleGeo.translate(0,.4,0);
-  const needleCapacity=320000,needles=new THREE.InstancedMesh(needleGeo,needleMats[1],needleCapacity);
+  const needleCapacity=320000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
   needles.castShadow=false;needles.receiveShadow=true;
   const needleDummy=new THREE.Object3D();let needleIndex=0;
   // Recursos de agulhas são criados antes dos galhos que os preenchem.
@@ -1743,15 +1877,18 @@ function construirMenoa(){
       const rz=cz+Math.sin(a)*d+Math.sin(a+Math.PI/2)*lateral;
       pts.push([rx,alturaTerreno(rx,rz)+lift,rz]);
     }
-    tube(pts,5.2+Math.random()*1.7,.32,trunkMat,14,34,.22);
-    if(raised)raizElevadaPontos=pts.map((p,j)=>({x:p[0],y:p[1],z:p[2],r:5.3*(1-j/8)+.55}));
+    const rootRadius=2.35+Math.random()*.65;
+    tube(pts,rootRadius,.18,trunkMat,14,34,.18);
+    ROOT_WALKS.push({points:pts,r0:rootRadius,r1:.18});
+    if(raised)raizElevadaPontos=pts.map((p,j)=>({x:p[0],y:p[1]+(rootRadius*(1-j/8)+.18*(j/8))*.78,z:p[2],r:rootRadius*(1-j/8)+.35}));
     // Veias laterais ramificam a raiz principal para os lados.
     for(let fork=0;fork<3;fork++){
       const t=.38+fork*.18,base=curve(pts).getPoint(t),turn=a+(fork%2?1:-1)*(.55+Math.random()*.28),len=18+Math.random()*24;
       const ex=base.x+Math.cos(turn)*len,ez=base.z+Math.sin(turn)*len;
       const mx=base.x+Math.cos(turn)*len*.55,mz=base.z+Math.sin(turn)*len*.55;
-      tube([[base.x,base.y,base.z],[mx,alturaTerreno(mx,mz)+.22,mz],
-        [ex,alturaTerreno(ex,ez)+.12,ez]],1.15,.12,trunkMat,8,18,.18);
+      const forkPoints=[[base.x,base.y,base.z],[mx,alturaTerreno(mx,mz)+.22,mz],[ex,alturaTerreno(ex,ez)+.12,ez]];
+      tube(forkPoints,.62,.10,trunkMat,8,18,.16);
+      ROOT_WALKS.push({points:forkPoints,r0:.62,r1:.10});
     }
   }
 
@@ -1842,20 +1979,30 @@ function construirMenoa(){
 
 construirMenoa();
 
-function alturaChao(x, z) {
+function alturaChao(x,z,referenceY=null){
   let h=alturaTerreno(x,z);
-  if(raizElevadaPontos)for(const p of raizElevadaPontos){const d=Math.hypot(x-p.x,z-p.z);if(d<p.r*.9)h=Math.max(h,p.y);}
-  let bestDist=Infinity,bridgeY=null;
-  for(const walk of ELEVATED_WALKS){
-    const pts=walk.points;
-    for(let i=0;i<pts.length-1;i++){
-      const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
+  if(raizElevadaPontos)for(const p of raizElevadaPontos){
+    const d=Math.hypot(x-p.x,z-p.z);if(d<p.r*.9)h=Math.max(h,p.y);
+  }
+  let bestScore=Infinity,specialY=null;
+  const choose=(points,width,root=null)=>{
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
       const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
       const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
-      if(d<=walk.width*.5&&d<bestDist){bestDist=d;bridgeY=a[1]+(b[1]-a[1])*t;}
+      if(d>width)continue;
+      const centerY=a[1]+(b[1]-a[1])*t;
+      const y=root?centerY+(root.r0*(1-t)+root.r1*t)*.78:centerY;
+      const vertical=referenceY===null?0:Math.abs(y-referenceY);
+      // Não "teleporta" o jogador para uma ponte sobre a cabeça; só aceita o piso no nível atual.
+      if(referenceY!==null&&vertical>(root?4.2:2.6))continue;
+      const score=d*d+vertical*vertical*.32;
+      if(score<bestScore){bestScore=score;specialY=y;}
     }
-  }
-  if(bridgeY!==null)h=bridgeY;
+  };
+  for(const walk of ELEVATED_WALKS)choose(walk.points,walk.width*.5,null);
+  for(const root of ROOT_WALKS)choose(root.points,root.r0*.95+.28,root);
+  if(specialY!==null)h=Math.max(h,specialY);
   return h;
 }
 
@@ -1989,6 +2136,8 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyM') teletransportar(1);
   if (e.code === 'KeyN') teletransportar(-1);
   if (e.code === 'KeyG') posicionarNaMenoa();
+  if (e.code === 'KeyH') posicionarNaCidade();
+  if (e.code === 'KeyJ') posicionarNaEscadaPrincipal();
 });
 addEventListener('keyup', e => { teclas[e.code] = false; });
 
@@ -2014,34 +2163,62 @@ function teletransportar(dir) {
   const p = PONTOS[tpIdx];
   const px = p.x + (p.raio > 0 ? p.raio*0.5 : 0);
   const pz = p.z + (p.raio > 0 ? p.raio*0.5 : 0);
-  jogador.pos.set(px, alturaChao(px, pz) + jogador.alturaOlhos, pz);
+  jogador.pos.set(px, alturaChao(px, pz, alturaTerreno(px,pz)) + jogador.alturaOlhos, pz);
   jogador.vel.set(0,0,0);
   document.getElementById('tp').textContent = `TP: ${p.nome}`;
 }
 // Inspeção: 220 m a leste, +50 m de altura, olhando para oeste e para baixo.
 function posicionarNaMenoa() {
-  const cx = -380, cz = 520;
-  const px = cx + 220, pz = cz;
-  jogador.pos.set(px, alturaChao(px, pz) + jogador.alturaOlhos + 50, pz);
-  jogador.vel.set(0,0,0);
-  camera.rotation.y = -Math.PI/2;
-  camera.rotation.x = -0.45;
-  document.getElementById('tp').textContent = 'Inspeção: Árvore Menoa';
+  const cx=-380,cz=520,px=cx+220,pz=cz;
+  jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos+50,pz);
+  jogador.vel.set(0,0,0);camera.rotation.y=-Math.PI/2;camera.rotation.x=-0.45;
+  document.getElementById('tp').textContent='Inspeção: Árvore Menoa';
+}
+function posicionarNaCidade(){
+  const px=230,pz=-230;
+  jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos,pz);
+  jogador.vel.set(0,0,0);camera.rotation.y=-2.39;camera.rotation.x=-0.28;
+  document.getElementById('tp').textContent='Núcleo de Ellesméra — casas e copas';
+}
+function posicionarNaEscadaPrincipal(){
+  const px=470,pz=-180;
+  jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos,pz);
+  jogador.vel.set(0,0,0);camera.rotation.y=-0.42;camera.rotation.x=-0.18;
+  document.getElementById('tp').textContent='Base da escada principal — subida às copas';
 }
 
+function estaSobrePisoEspecial(x,z,footY){
+  // Degraus, pontes e raízes expostas substituem as colisões cilíndricas do tronco.
+  const check=(points,width,root=null)=>{
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
+      const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
+      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
+      if(d>width)continue;
+      let y=a[1]+(b[1]-a[1])*t;
+      if(root)y+=(root.r0*(1-t)+root.r1*t)*.78;
+      if(Math.abs(footY-y)<1.65)return true;
+    }
+    return false;
+  };
+  for(const walk of ELEVATED_WALKS)if(check(walk.points,walk.width*.5))return true;
+  if(footY-alturaTerreno(x,z)>.12){
+    for(const root of ROOT_WALKS)if(check(root.points,root.r0*.95+.28,root))return true;
+  }
+  return false;
+}
 function colidir(novaPos) {
   if (novaPos.x < -1150 + jogador.raio) novaPos.x = -1150 + jogador.raio;
   novaPos.x = Math.max(-1450, Math.min(1500, novaPos.x));
   novaPos.z = Math.max(-1450, Math.min(1500, novaPos.z));
-  if(novaPos.y-jogador.alturaOlhos>alturaTerreno(novaPos.x,novaPos.z)+4.5)return;
+  const footY=novaPos.y-jogador.alturaOlhos;
+  if(footY>alturaTerreno(novaPos.x,novaPos.z)+4.5||estaSobrePisoEspecial(novaPos.x,novaPos.z,footY))return;
   for (const c of colisores) {
     const dx = novaPos.x - c.x, dz = novaPos.z - c.z;
-    const dist = Math.hypot(dx, dz);
-    const minDist = c.raio + jogador.raio;
+    const dist = Math.hypot(dx, dz),minDist = c.raio + jogador.raio;
     if (dist < minDist && dist > 0.0001) {
-      const push = (minDist - dist);
-      novaPos.x += (dx/dist) * push;
-      novaPos.z += (dz/dist) * push;
+      const push = minDist - dist;
+      novaPos.x += (dx/dist) * push;novaPos.z += (dz/dist) * push;
     }
   }
 }
@@ -2051,10 +2228,24 @@ function colidir(novaPos) {
 // ============================================================================
 const relogio = new THREE.Clock();
 let mmTimer = 0;
-let alturaAlvo = alturaChao(jogador.pos.x, jogador.pos.z);
+let alturaAlvo = alturaChao(jogador.pos.x, jogador.pos.z, jogador.pos.y-jogador.alturaOlhos);
 let tAcum = 0;
 
-posicionarNaMenoa();
+function criarFeixesDeSol(){
+  // Feixes discretos nas clareiras: luz diurna filtrada pelo dossel, sem escurecer o bosque.
+  const spots=[[400,-60,34,52,-.08,.10],[250,-40,22,44,.06,-.08],[120,70,31,50,-.05,.12],
+    [470,-180,28,46,.08,.10],[150,-80,34,54,-.04,-.08],[-600,60,36,56,.07,.11],
+    [0,0,24,48,-.05,.06],[520,-142,30,48,.08,-.05],[-180,220,25,45,.04,.12]];
+  for(const [x,z,radius,height,tiltX,tiltZ] of spots){
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.10,radius,height,14,1,true),
+      new THREE.MeshBasicMaterial({color:0xfff0c9,transparent:true,opacity:.055,depthWrite:false,
+        side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
+    beam.position.set(x,alturaTerreno(x,z)+height*.52,z);
+    beam.rotation.x=tiltX;beam.rotation.z=tiltZ;beam.frustumCulled=false;scene.add(beam);
+  }
+}
+criarFeixesDeSol();
+posicionarNaCidade();
 
 function animar() {
   requestAnimationFrame(animar);
@@ -2089,7 +2280,7 @@ function animar() {
   jogador.pos.z += jogador.vel.z * dt;
   jogador.pos.y += jogador.vel.y * dt;
 
-  alturaAlvo = alturaChao(jogador.pos.x, jogador.pos.z);
+  alturaAlvo = alturaChao(jogador.pos.x, jogador.pos.z, jogador.pos.y-jogador.alturaOlhos);
   const alvoY = alturaAlvo + jogador.alturaOlhos;
   if (jogador.pos.y <= alvoY) {
     jogador.pos.y = alvoY;
