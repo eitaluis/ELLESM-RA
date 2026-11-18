@@ -972,7 +972,7 @@ function addOpenOvoidPod(parent,x,y,z,rx,ry,rz,mat=woodMat,frontAngle=Math.PI/2)
     for(const id of ids){nx+=sp.getX(id)/3;ny+=sp.getY(id)/3;nz+=sp.getZ(id)/3;}
     const phi=Math.atan2(nz,-nx),delta=Math.atan2(Math.sin(phi-frontAngle),Math.cos(phi-frontAngle));
     const theta=Math.acos(Math.max(-1,Math.min(1,ny/Math.max(.001,Math.hypot(nx,ny,nz)))));
-    if(Math.abs(delta)<.205&&theta>1.52&&theta<2.66)continue;
+    if(Math.abs(delta)<.205&&theta>1.52&&theta<2.96)continue;
     for(const id of ids){outP.push(x+sp.getX(id)*rx,y+sp.getY(id)*ry,z+sp.getZ(id)*rz);outUV.push(suv.getX(id),suv.getY(id));}
   }
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(outP,3));
@@ -1208,7 +1208,7 @@ function buildHall(parent,x,y,z){
     addLivingTrunk(parent,px,y,pz,height+2,1.05,Math.sin(i)*.8,side*.6);
     addOrganicTube(parent,[[px,y+height*.45,pz],[px+Math.sin(i)*1.5,y+height+2,pz+side*1.2],[px+2,y+height+5,z]],.48,.16,paleWood,7,16,.1);
   }
-  addWovenRoof(parent,x,y+height+3,z,length,width);
+  addHoneycombRoof(parent,x,y+height+3,z,length,width);
   const floor=new THREE.Mesh(new THREE.CircleGeometry(1,64),mossFloorMat);
   floor.rotation.x=-Math.PI/2;floor.position.set(x,y+.035,z);floor.scale.set(length*.55,width*.85,1);parent.add(floor);
   // 24 cadeiras de madeira viva, doze em cada parede.
@@ -1219,17 +1219,28 @@ function buildHall(parent,x,y,z){
     for(let k=-1;k<=1;k+=2)addOrganicTube(parent,[[px+k*.65,cy,pz],[px+k*.9,cy+.8,pz+side*.1]],.11,.07,woodMat,6,7,.08);
   }
   // Pavilhão branco, trono feito de raízes e apoio curvo de Blagden.
-  addOvoidPod(parent,x,y+7,z-17,6.2,4.2,3.4,whiteBarkMat);
-  addTearOpening(parent,x,y+6.7,z-13.65,2.8,4.6,Math.PI);
-  for(let i=0;i<7;i++){
-    const a=i/7*Math.PI*2;
-    addOrganicTube(parent,[[x+Math.cos(a)*.8,y+1,z-17+Math.sin(a)*.8],[x+Math.cos(a)*2.7,y+2,z-17+Math.sin(a)*1.5],[x+Math.cos(a)*1.8,y+3.7,z-17]],.45,.12,paleWood,8,18,.14);
-  }
+  addOpenOvoidPod(parent,x,y+7,z-17,6.2,4.2,3.4,whiteBarkMat,Math.PI/2);
+  addResidenceFloor(parent,x,y+3.3,z-17,4.9,2.5,mossFloorMat);
+  addLivingDoorFrame(parent,x,y+3.3,z-13.8,2.8,4.0);
+  // Trono branco construído em raízes entrelaçadas; pavilhão com interior acessível.
+  addOrganicTube(parent,[[x-2.3,y+3.6,z-17],[x-1.5,y+4.1,z-16.7],[x,y+4.3,z-17],[x+1.5,y+4.1,z-16.7],[x+2.3,y+3.6,z-17]],.48,.24,paleWood,9,24,.12);
+  addOrganicTube(parent,[[x-1.5,y+4.0,z-17],[x-1.2,y+6.4,z-18],[x,y+7.2,z-18.5],[x+1.2,y+6.4,z-18],[x+1.5,y+4.0,z-17]],.36,.18,whiteBarkMat,8,24,.10);
+  addOrganicTube(parent,[[x-2.3,y+3.2,z-17],[x-3.2,y+4.2,z-16],[x-3.0,y+5.1,z-17]],.3,.09,paleWood,7,16,.1);
+  addOrganicTube(parent,[[x+2.3,y+3.2,z-17],[x+3.2,y+4.2,z-16],[x+3.0,y+5.1,z-17]],.3,.09,paleWood,7,16,.1);
+  // Cortinas de raízes e ramagem fazem as paredes crescerem a partir do chão.
+  for(let i=0;i<18;i++){const xx=x-18+i*2.1,side=i%2?1:-1;
+    addOrganicTube(parent,[[xx,y+.2,z+side*7.2],[xx+Math.sin(i)*1.1,y+5,z+side*7.5],[xx+Math.cos(i*.7)*1.2,y+10+Math.random()*2,z+side*6.2]],.25,.07,woodMat,6,18,.12);}
+  // Piso e aproximação da porta do pavilhão.
+  registerWalkablePath([[x,y+3.3,z-13.8],[x,y+3.3,z-18],[x,y+3.3,z-21]],3.0);
   // haste curva e travessa para o corvo branco.
   addOrganicTube(parent,[[x+8,y+3,z-15],[x+8.8,y+5,z-16],[x+9,y+7,z-17]],.18,.09,woodMat,6,12,.08);
   addOrganicTube(parent,[[x+8.5,y+6.7,z-17],[x+10,y+6.7,z-17]],.09,.06,woodMat,6,7,.04);
-  // Degraus de raízes diante da parede de mudas.
+  // Degraus de raízes diante da parede de mudas e entrada larga, sem porta convencional.
   for(let i=0;i<8;i++)addRootStair(parent,x,y+i*.04,z+13+i*.75,1,9,1);
+  registerWalkablePath(Array.from({length:9},(_,i)=>[x,y+.25+i*.03,z+13+i*.75]),3.8);
+  // Raízes altas e verticais criam a fachada viva do salão.
+  for(let i=0;i<16;i++){const xx=x-20+i*2.65;
+    addOrganicTube(parent,[[xx,y-.2,z+19],[xx+Math.sin(i)*1.4,y+4,z+21],[xx+Math.cos(i*.8)*1.8,y+11,z+18],[xx+Math.sin(i*.5)*1.2,y+17,z+11]],.34,.08,woodMat,7,22,.16);}
   for(let i=0;i<23;i++){
     const dx=-12+i*1.1;
     addOrganicTube(parent,[[x+dx,y,z+19],[x+dx+Math.sin(i)*.5,y+4+Math.random()*2,z+20],[x+dx*.9,y+9,z+18]],.16,.045,woodMat,5,12,.12);
@@ -1485,6 +1496,35 @@ const SITE_BUILDINGS=[
   ['Toco branco',-1050,1230,'stump']
 ];
 for(const [n,x,z,k] of SITE_BUILDINGS)buildSite(n,x,z,k);
+function buildCanopyTransit(){
+  const g=new THREE.Group();scene.add(g);
+  const ax=410,az=-110,aFloor=alturaTerreno(ax,az)+18;
+  const bx=150,bz=-80,bFloor=alturaTerreno(bx,bz)+22;
+  const cx=-60,cz=-165,cFloor=alturaTerreno(cx,cz)+19;
+  const homeA=buildCanopyResidence(g,ax,az,aFloor,0);
+  const homeB=buildCanopyResidence(g,bx,bz,bFloor,1);
+  const homeC=buildCanopyResidence(g,cx,cz,cFloor,2);
+  const hexLow=alturaTerreno(350,-18)+4-3.17,hexUpper=alturaTerreno(350,-18)+8.2-1.85;
+  const fiveLow=alturaTerreno(305,-92)+12-1.67;
+  const riderFloor=alturaTerreno(0,0)+30-3.17;
+  const rampStart=[470,alturaTerreno(470,-180)+.2,-180];
+  buildLivingBridge(g,[rampStart,[451,alturaTerreno(451,-160)+5,-160],[432,alturaTerreno(432,-136)+11,-136],[homeA.x,aFloor,homeA.z]],4.8);
+  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[390,aFloor+1,-88],[367,hexUpper+1,-46],[350,hexUpper,-14]],4.0);
+  buildLivingBridge(g,[[350,hexUpper,-14],[334,hexUpper+1,-38],[320,fiveLow+1,-68],[305,fiveLow,-88]],4.0);
+  buildLivingBridge(g,[[305,fiveLow,-88],[265,fiveLow+3,-78],[210,bFloor+2,-78],[homeB.x,bFloor,homeB.z]],4.0);
+  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[95,bFloor-1,-95],[20,cFloor+1,-145],[homeC.x,cFloor,homeC.z]],4.0);
+  buildLivingBridge(g,[[homeC.x,cFloor,homeC.z],[-42,cFloor+2,-115],[-18,riderFloor+1,-45],[0,riderFloor,5.8]],4.0);
+  // Galhos estruturais brotam dos troncos e sustentam a passagem como arcobotantes.
+  for(const [x,z,yy] of [[410,-110,aFloor],[150,-80,bFloor],[-60,-165,cFloor],[350,-18,hexUpper],[305,-92,fiveLow],[0,0,riderFloor]]){
+    const ground=alturaTerreno(x,z);
+    addLivingTrunk(g,x-7,ground,z-4,Math.max(40,yy-ground+28),1.65,1.0,.6,woodMat);
+    addLivingTrunk(g,x+8,ground,z+3,Math.max(42,yy-ground+30),1.8,-.8,-.5,woodMat);
+    addOrganicTube(g,[[x-7,yy+5,z-4],[x-2,yy+3,z],[x+8,yy+5,z+3]],.9,.28,woodMat,8,28,.14);
+  }
+  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[425,aFloor+2,-70],[405,aFloor+4,-40]],2.8);
+  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[175,bFloor+2,-38],[205,bFloor+1,-15]],2.8);
+}
+buildCanopyTransit();
 flushOrganicArchitecture();
 
 
@@ -1500,7 +1540,7 @@ function construirMenoa(){
   const grupo=new THREE.Group(),cx=-380,cz=520,yBase=alturaTerreno(cx,cz);
   // Livro: Menoa tem a mesma altura das árvores vizinhas; é o tronco que é
   // colossal, mais grosso que cem árvores comuns. Diâmetro de projeto: 60 m.
-  const altura=88,raioBase=30,raioTopo=13.5;
+  const altura=104,raioBase=34,raioTopo=15;
   const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0x927654,roughness:.98,side:THREE.DoubleSide});
   const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x735b40,roughness:1,side:THREE.DoubleSide});
   const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xa1845c,roughness:1,side:THREE.DoubleSide});
@@ -1541,8 +1581,8 @@ function construirMenoa(){
     tubeBuckets.clear();
   }
   function curve(points){return new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.4);}
-  const needleGeo=new THREE.ConeGeometry(.027,.8,5,1);needleGeo.translate(0,.4,0);
-  const needleCapacity=145000,needles=new THREE.InstancedMesh(needleGeo,needleMats[1],needleCapacity);
+  const needleGeo=new THREE.ConeGeometry(.035,.95,6,1);needleGeo.translate(0,.4,0);
+  const needleCapacity=260000,needles=new THREE.InstancedMesh(needleGeo,needleMats[1],needleCapacity);
   needles.castShadow=false;needles.receiveShadow=true;
   const needleDummy=new THREE.Object3D();let needleIndex=0;
   // Recursos de agulhas são criados antes dos galhos que os preenchem.
@@ -1558,7 +1598,7 @@ function construirMenoa(){
       needleDummy.position.copy(base);
       needleDummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),ndir);
       needleDummy.rotateY(Math.random()*Math.PI*2);
-      const len=.34+Math.random()*.45,w=.045+Math.random()*.025;
+      const len=.48+Math.random()*.72,w=.055+Math.random()*.035;
       needleDummy.scale.set(w,len/.8,w);needleDummy.updateMatrix();
       needles.setMatrixAt(needleIndex,needleDummy.matrix);
       const shade=(seed+n)%needleMats.length;needles.setColorAt(needleIndex,new THREE.Color(needleMats[shade].color));needleIndex++;
@@ -1588,32 +1628,35 @@ function construirMenoa(){
   // de linhas menores visíveis entre musgo, húmus e agulhas.
   const rootCount=38;
   for(let i=0;i<rootCount;i++){
-    const a=i/rootCount*Math.PI*2+(Math.random()-.5)*.12,length=62+Math.random()*46;
+    const a=i/rootCount*Math.PI*2+(Math.random()-.5)*.12,length=72+Math.random()*52;
     const raised=i===0,side=Math.sin(i*1.3)*2.2,pts=[];
     for(let j=0;j<=8;j++){
       const t=j/8,d=length*t;
       let lift=raised?(t<.30?(t/.30)*3.7:(1-(t-.30)/.70)*3.7):.35+Math.sin(t*Math.PI)*(.45+Math.random()*.65);
       lift=Math.max(.12,lift);
       const lateral=Math.sin(t*3.8+i)*side*t;
-      pts.push([cx+Math.cos(a)*d+Math.cos(a+Math.PI/2)*lateral,yBase+lift,
-        cz+Math.sin(a)*d+Math.sin(a+Math.PI/2)*lateral]);
+      const rx=cx+Math.cos(a)*d+Math.cos(a+Math.PI/2)*lateral;
+      const rz=cz+Math.sin(a)*d+Math.sin(a+Math.PI/2)*lateral;
+      pts.push([rx,alturaTerreno(rx,rz)+lift,rz]);
     }
     tube(pts,5.2+Math.random()*1.7,.32,trunkMat,14,34,.22);
     if(raised)raizElevadaPontos=pts.map((p,j)=>({x:p[0],y:p[1],z:p[2],r:5.3*(1-j/8)+.55}));
     // Veias laterais ramificam a raiz principal para os lados.
     for(let fork=0;fork<3;fork++){
       const t=.38+fork*.18,base=curve(pts).getPoint(t),turn=a+(fork%2?1:-1)*(.55+Math.random()*.28),len=18+Math.random()*24;
-      tube([[base.x,base.y,base.z],[base.x+Math.cos(turn)*len*.55,yBase+.22,base.z+Math.sin(turn)*len*.55],
-        [base.x+Math.cos(turn)*len,yBase+.12,base.z+Math.sin(turn)*len]],1.15,.12,trunkMat,8,18,.18);
+      const ex=base.x+Math.cos(turn)*len,ez=base.z+Math.sin(turn)*len;
+      const mx=base.x+Math.cos(turn)*len*.55,mz=base.z+Math.sin(turn)*len*.55;
+      tube([[base.x,base.y,base.z],[mx,alturaTerreno(mx,mz)+.22,mz],
+        [ex,alturaTerreno(ex,ez)+.12,ez]],1.15,.12,trunkMat,8,18,.18);
     }
   }
 
   // Galhos principais: 6 m de diâmetro junto ao tronco, abrindo-se por até 100 m.
   const mainBranches=[];
-  const branchCount=18;
+  const branchCount=26;
   for(let b=0;b<branchCount;b++){
     const a=b/branchCount*Math.PI*2+.17+(Math.random()-.5)*.12;
-    const startY=yBase+altura*(.48+(b%4)*.035),length=62+Math.random()*36,rise=7+Math.random()*14;
+    const startY=yBase+altura*(.48+(b%4)*.035),length=68+Math.random()*38,rise=9+Math.random()*18;
     const pts=[];
     for(let j=0;j<=9;j++){
       const t=j/9,d=length*t,sway=Math.sin(t*Math.PI*1.3+b)*3.2;
@@ -1621,7 +1664,7 @@ function construirMenoa(){
         startY+rise*t+Math.sin(t*Math.PI)*2.2,
         cz+Math.sin(a)*d+Math.sin(a+Math.PI/2)*sway]);
     }
-    tube(pts,3.0+Math.random()*.3,.55,branchMat,18,42,.13);
+    tube(pts,3.25+Math.random()*.35,.58,branchMat,20,46,.16);
     mainBranches.push({points:pts,angle:a,length});
 
     // Ramos secundários alternados, distribuídos ao longo de cada galho.
@@ -1641,18 +1684,18 @@ function construirMenoa(){
         tube([[p.x,p.y,p.z],[p.x+Math.cos(a3)*l3*.55,p.y+4,p.z+Math.sin(a3)*l3*.55],t3],.34,.06,branchMat,7,12,.12);
         for(let k=0;k<4;k++){
           const f=.25+k*.17,sp=curve([[p.x,p.y,p.z],t3]).getPoint(f);
-          needleSpray([sp.x,sp.y,sp.z],[Math.cos(a3)*.6,.55+Math.random()*.2,Math.sin(a3)*.6],.75,10,b+r+q+k);
+          needleSpray([sp.x,sp.y,sp.z],[Math.cos(a3)*.6,.55+Math.random()*.2,Math.sin(a3)*.6],.75,28,b+r+q+k);
         }
       }
       for(let k=1;k<=5;k++){
         const sp=secCurve.getPoint(k/6);
-        needleSpray([sp.x,sp.y,sp.z],[Math.cos(aa)*.65,.38,Math.sin(aa)*.65],1.0,12,b+r+k);
+        needleSpray([sp.x,sp.y,sp.z],[Math.cos(aa)*.65,.38,Math.sin(aa)*.65],1.0,30,b+r+k);
       }
     }
     // Pequenos feixes ao longo do próprio galho, sem volumes elipsoidais.
     for(let k=1;k<=8;k++){
       const sp=mainCurve.getPoint(k/9);
-      needleSpray([sp.x,sp.y,sp.z],[Math.cos(a)*.55,.55,Math.sin(a)*.55],1.5,14,b+k);
+      needleSpray([sp.x,sp.y,sp.z],[Math.cos(a)*.55,.55,Math.sin(a)*.55],1.8,38,b+k);
     }
   }
 
@@ -1665,7 +1708,7 @@ function construirMenoa(){
     for(let k=1;k<=13;k++){
       const p=cv.getPoint(k/14),a=br.angle+(k%2?1:-1)*(.4+Math.random()*.4),offset=1.4+Math.random()*2.8;
       const pos=[p.x+Math.cos(a)*offset,p.y+Math.random()*2,p.z+Math.sin(a)*offset];
-      needleSpray(pos,[Math.cos(br.angle)*.55+Math.cos(a)*.5,.35+Math.random()*.35,Math.sin(br.angle)*.55+Math.sin(a)*.5],1.4+Math.random()*1.1,18,b+k);
+      needleSpray(pos,[Math.cos(br.angle)*.55+Math.cos(a)*.5,.35+Math.random()*.35,Math.sin(br.angle)*.55+Math.sin(a)*.5],1.8+Math.random()*1.5,44,b+k);
     }
   });
 
@@ -1696,15 +1739,19 @@ function construirMenoa(){
 construirMenoa();
 
 function alturaChao(x, z) {
-  let h = alturaTerreno(x, z);
-  if (raizElevadaPontos) {
-    for (const p of raizElevadaPontos) {
-      const d = Math.hypot(x - p.x, z - p.z);
-      if (d < p.r * 0.9) {
-        h = Math.max(h, p.y);
-      }
+  let h=alturaTerreno(x,z);
+  if(raizElevadaPontos)for(const p of raizElevadaPontos){const d=Math.hypot(x-p.x,z-p.z);if(d<p.r*.9)h=Math.max(h,p.y);}
+  let bestDist=Infinity,bridgeY=null;
+  for(const walk of ELEVATED_WALKS){
+    const pts=walk.points;
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
+      const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
+      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
+      if(d<=walk.width*.5&&d<bestDist){bestDist=d;bridgeY=a[1]+(b[1]-a[1])*t;}
     }
   }
+  if(bridgeY!==null)h=bridgeY;
   return h;
 }
 
@@ -1882,6 +1929,7 @@ function colidir(novaPos) {
   if (novaPos.x < -1150 + jogador.raio) novaPos.x = -1150 + jogador.raio;
   novaPos.x = Math.max(-1450, Math.min(1500, novaPos.x));
   novaPos.z = Math.max(-1450, Math.min(1500, novaPos.z));
+  if(novaPos.y-jogador.alturaOlhos>alturaTerreno(novaPos.x,novaPos.z)+4.5)return;
   for (const c of colisores) {
     const dx = novaPos.x - c.x, dz = novaPos.z - c.z;
     const dist = Math.hypot(dx, dz);
