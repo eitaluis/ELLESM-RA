@@ -130,6 +130,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyG') posicionarNaMenoa();
   if (e.code === 'KeyH') posicionarNaCidade();
   if (e.code === 'KeyJ') posicionarNaEscadaPrincipal();
+  if (e.code === 'KeyO') alternarSomDaFloresta();
 });
 addEventListener('keyup', e => { teclas[e.code] = false; });
 
@@ -137,6 +138,7 @@ let travado = false;
 const startEl = document.getElementById('start');
 startEl.addEventListener('click', () => {
   startEl.style.display = 'none';
+  iniciarSomDaFloresta();
   renderer.domElement.requestPointerLock();
 });
 document.addEventListener('pointerlockchange', () => {
