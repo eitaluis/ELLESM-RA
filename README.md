@@ -1,6 +1,6 @@
 # Ellesméra — floresta viva
 
-**Versão de produção: V29 — arquitetura viva canônica, navegação otimizada e pontos de inspeção.**
+**Versão de produção: V30 — arquitetura viva canônica, navegação otimizada e pontos de inspeção.**
 
 Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literária é a base da escala da floresta; as formas de arquitetura são interpretações visuais construídas para esta versão.
 
@@ -8,7 +8,7 @@ Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literár
 
 - `index.html`: interface, HUD e carregamento sequencial
 - `css/style.css`: apresentação da interface
-- `js/00–07`: iluminação, terreno, caminhos, floresta, arquitetura, Menoa, minimapa e jogador
+- `js/00–08`: iluminação, terreno, caminhos, floresta, arquitetura, Menoa, minimapa, jogador e vida da floresta
 - `js/08-forest-life.js`: aves em voo e folhas levadas pelo vento
 
 ## Direção de arte
@@ -41,6 +41,10 @@ Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literár
 - [x] Crags reconstruídos como penhasco rochoso com clareira no topo
 - [x] Mobiliário interno nas moradias: mesas, bancos, estantes, camas, baús e peças de uso cotidiano
 - [x] Áreas coletivas ampliadas: refeição comunal, alvos e armas de treino, cochos, feno e arreios nos estábulos
+- [x] Cabana de Oromis com volume hexagonal de madeira viva, cobertura trançada e interior mobiliado
+- [x] Estábulos com três baias, cobertura arqueada contínua, divisórias e corredores de acesso
+- [x] Toco branco com casca irregular, fibras, anéis de crescimento e raízes expostas
+- [x] Escada da Árvore dos Cavaleiros agrupada em malhas instanciadas para reduzir chamadas de renderização
 - [x] Vida silvestre em movimento: aves planando entre as copas e folhas carregadas pelo vento
 - [x] Paisagem sonora real de floresta, com gravação de campo em domínio público
 - [x] Otimização da malha do terreno, densidade de folhas, Menoa e vegetação rasteira
@@ -62,7 +66,7 @@ A tecla **O** liga e desliga a gravação de campo [“20090610 0 ambience.ogg�
 
 ## Desempenho
 
-A V29 reduz a quantidade de folhas geométricas por árvore sem deixar os ramos principais sem cobertura, diminui as instâncias de vegetação rasteira e simplifica a malha do terreno. O renderer usa escala de pixel limitada a 0,84. As árvores são agrupadas em setores de 620 m para permitir descarte por câmera; os segmentos de pontes e escadas também são indexados espacialmente, evitando percorrer toda a rede a cada quadro.
+A V30 mantém as otimizações de vegetação e terreno da versão anterior, agrupa os degraus da Árvore dos Cavaleiros em instâncias e melhora a legibilidade arquitetônica da cabana, dos estábulos e do toco branco. O renderer usa escala de pixel limitada a 0,84. As árvores são agrupadas em setores de 620 m para permitir descarte por câmera; os segmentos de pontes e escadas também são indexados espacialmente, evitando percorrer toda a rede a cada quadro.
 
 ## Desenvolvimento
 
