@@ -1189,12 +1189,69 @@ function buildBanquet(parent,x,y,z){
   }
 }
 function buildCrags(parent,x,y,z){
-  // Topo arborizado, clareira de trevo vermelho e início da queda de 300 m.
-  for(let i=0;i<12;i++){
-    const a=i/12*Math.PI*2,r=12+Math.random()*18,px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;
+  // Crags of Tel'naeír: uma borda de rocha alta e abrupta, com clareira de
+  // trevo vermelho no topo — o lugar não é uma ruína nem uma construção.
+  const segments=88,rows=16,rockPos=[],rockUv=[],rockColor=[],rockIdx=[];
+  const cliffLength=820;
+  for(let row=0;row<=rows;row++){
+    const t=row/rows;
+    for(let i=0;i<=segments;i++){
+      const u=i/segments,zz=z-cliffLength*.5+u*cliffLength;
+      const topX=x-12+Math.sin(u*8.5)*4.2+Math.sin(u*19.0)*1.35;
+      const topY=alturaTerreno(topX,zz)+.4;
+      const drop=292*(.93+.055*Math.sin(u*7.2)+.025*Math.sin(u*25.0));
+      const faceX=topX+15*t+Math.sin(u*13+t*4)*(.8+3.2*t);
+      const faceY=topY-drop*t+Math.sin(u*11+t*7)*2.1*t;
+      rockPos.push(faceX,faceY,zz+Math.sin(t*4+u*9)*1.0*t);
+      rockUv.push(u*9,t*3.5);
+      const strata=Math.sin(t*31+u*5)*.035+Math.sin(u*41)*.022;
+      const tone=.25+strata+(1-t)*.035;
+      const color=new THREE.Color().setHSL(.105+Math.sin(u*12+t*6)*.012,.13,tone);
+      rockColor.push(color.r,color.g,color.b);
+      if(row<rows&&i<segments){
+        const a=row*(segments+1)+i,b=a+1,c=a+segments+1,d=c+1;
+        rockIdx.push(a,c,b,b,c,d);
+      }
+    }
+  }
+  const cliffGeo=new THREE.BufferGeometry();
+  cliffGeo.setAttribute('position',new THREE.Float32BufferAttribute(rockPos,3));
+  cliffGeo.setAttribute('uv',new THREE.Float32BufferAttribute(rockUv,2));
+  cliffGeo.setAttribute('color',new THREE.Float32BufferAttribute(rockColor,3));
+  cliffGeo.setIndex(rockIdx);cliffGeo.computeVertexNormals();
+  const cliffMat=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,
+    map:TEX_PEDRA,roughness:1,side:THREE.DoubleSide});
+  const cliff=new THREE.Mesh(cliffGeo,cliffMat);cliff.castShadow=true;cliff.receiveShadow=true;parent.add(cliff);
+
+  // Estratos e saliências horizontais tornam a queda legível à distância.
+  for(const t of [.18,.37,.58,.78]){
+    const ledge=[];
+    for(let i=0;i<=segments;i+=2){
+      const u=i/segments,zz=z-cliffLength*.5+u*cliffLength;
+      const topX=x-12+Math.sin(u*8.5)*4.2+Math.sin(u*19.0)*1.35;
+      const topY=alturaTerreno(topX,zz)+.4,drop=292*(.93+.055*Math.sin(u*7.2)+.025*Math.sin(u*25.0));
+      ledge.push([topX+15*t+Math.sin(u*13+t*4)*(.8+3.2*t),
+        topY-drop*t+Math.sin(u*11+t*7)*2.1*t+1.2,
+        zz+Math.sin(t*4+u*9)*1.0*t]);
+    }
+    addOrganicTube(parent,ledge,.78,.32,stoneMat,7,segments*.5,.14);
+  }
+  const boulderMat=new THREE.MeshStandardMaterial({map:TEX_PEDRA,color:0x777064,roughness:1});
+  for(let i=0;i<13;i++){
+    const u=i/12,zz=z-cliffLength*.48+u*cliffLength*.96;
+    const bx=x+18+Math.sin(u*8.5)*4.2,by=alturaTerreno(x-12+Math.sin(u*8.5)*4.2,zz)-280;
+    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1.8+(i%4)*.65,1),boulderMat);
+    rock.position.set(bx,by,zz);rock.rotation.set(.2*i,.7*i,.13*i);
+    rock.scale.set(1.5,1.1,1.2);rock.castShadow=true;parent.add(rock);
+  }
+  // Árvores esparsas e trevo vermelho ficam no planalto, não na face vertical.
+  for(let i=0;i<9;i++){
+    const a=i/9*Math.PI*2,r=22+Math.random()*16,px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;
     addLivingTrunk(parent,px,y,pz,34+Math.random()*22,1.1+Math.random()*.6,Math.cos(a)*2,Math.sin(a)*2);
   }
   buildFlowerGrove(parent,x,y,z,24,360,0x9a3345);
+  addOrganicTube(parent,[[x-8,y+.15,z+cliffLength*.48],[x-8,y+.15,z+180],
+    [x-8,y+.15,z],[x-8,y+.15,z-180],[x-8,y+.15,z-cliffLength*.48]],.26,.15,woodMat,6,88,.08);
 }
 function buildOromisStump(parent,x,y,z){
   const stumpMat=new THREE.MeshStandardMaterial({color:0xd4c9a7,roughness:.9,side:THREE.DoubleSide});
