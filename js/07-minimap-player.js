@@ -2,39 +2,43 @@
 // 19. LOOP
 // ============================================================================
 const relogio = new THREE.Clock();
+// ÁUDIO AMBIENTE — gravação real de floresta (vento, folhas, aves e insetos).
+// Fonte: nille, "forest ambience", Wikimedia Commons — domínio público.
 let naturezaAudio=null,naturezaAtiva=true;
+const NATUREZA_AUDIO_URL='https://upload.wikimedia.org/wikipedia/commons/0/0a/20090610_0_ambience.ogg';
+
 function iniciarSomDaFloresta(){
-  if(naturezaAudio)return;
-  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-  const ctx=new AC(),master=ctx.createGain();master.gain.value=.20;master.connect(ctx.destination);
-  const buffer=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate),data=buffer.getChannelData(0);
-  for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.32;
-  const noise=ctx.createBufferSource();noise.buffer=buffer;noise.loop=true;
-  const low=ctx.createBiquadFilter();low.type='lowpass';low.frequency.value=620;
-  const wind=ctx.createGain();wind.gain.value=.12;noise.connect(low);low.connect(wind);wind.connect(master);noise.start();
-  const lfo=ctx.createOscillator(),lfoGain=ctx.createGain();lfo.frequency.value=.075;lfoGain.gain.value=.045;lfo.connect(lfoGain);lfoGain.connect(wind.gain);lfo.start();
-  const insects=ctx.createOscillator(),insectGain=ctx.createGain(),insectFilter=ctx.createBiquadFilter();
-  insects.type='sine';insects.frequency.value=3900;insectFilter.type='bandpass';insectFilter.frequency.value=3900;insectFilter.Q.value=2.5;
-  insectGain.gain.value=.006;insects.connect(insectFilter);insectFilter.connect(insectGain);insectGain.connect(master);insects.start();
-  naturezaAudio={ctx,master,noise,wind,lfo,insects,insectGain};
-  const bird=()=>{
-    if(!naturezaAudio||ctx.state==='closed')return;
-    if(naturezaAtiva){
-      const now=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain(),base=2100+Math.random()*1100;
-      osc.type='sine';osc.frequency.setValueAtTime(base,now);
-      osc.frequency.exponentialRampToValueAtTime(base*1.22,now+.11);
-      osc.frequency.exponentialRampToValueAtTime(base*.82,now+.27);
-      gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.014,now+.035);
-      gain.gain.exponentialRampToValueAtTime(.0001,now+.32);osc.connect(gain);gain.connect(master);osc.start(now);osc.stop(now+.34);
+  if(!naturezaAtiva)return;
+  if(!naturezaAudio){
+    naturezaAudio=new Audio(NATUREZA_AUDIO_URL);
+    naturezaAudio.loop=true;
+    naturezaAudio.preload='auto';
+    naturezaAudio.volume=.28;
+    naturezaAudio.addEventListener('error',()=>{
+      const aviso=document.getElementById('tp');
+      if(aviso)aviso.textContent='Não foi possível carregar o áudio da floresta. Verifique a conexão.';
+    });
+  }
+  if(naturezaAudio.paused){
+    const tentativa=naturezaAudio.play();
+    if(tentativa&&typeof tentativa.catch==='function'){
+      tentativa.catch(()=>{
+        const aviso=document.getElementById('tp');
+        if(aviso)aviso.textContent='Clique na cena para ativar o som ambiente.';
+      });
     }
-    setTimeout(bird,5200+Math.random()*8200);
-  };
-  bird();
+  }
 }
+
 function alternarSomDaFloresta(){
   naturezaAtiva=!naturezaAtiva;
-  if(naturezaAudio)naturezaAudio.master.gain.setTargetAtTime(naturezaAtiva?.20:0,naturezaAudio.ctx.currentTime,.25);
-  document.getElementById('tp').textContent=naturezaAtiva?'Som da floresta ligado':'Som da floresta desligado';
+  if(naturezaAtiva){
+    iniciarSomDaFloresta();
+  }else if(naturezaAudio){
+    naturezaAudio.pause();
+  }
+  const aviso=document.getElementById('tp');
+  if(aviso)aviso.textContent=naturezaAtiva?'Som natural da floresta ligado':'Som da floresta desligado';
 }
 let mmTimer = 0;
 let alturaAlvo = alturaChao(jogador.pos.x, jogador.pos.z, jogador.pos.y-jogador.alturaOlhos);
