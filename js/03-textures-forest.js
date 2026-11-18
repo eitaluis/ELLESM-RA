@@ -2,11 +2,11 @@
  // 12. ÁRVORES PROCEDURAIS — troncos altos, ramificação estrutural e agulhas
  // ============================================================================
 function criarPinheiroGeo(seed,tipo='adulto'){
-  const rand=(a,b)=>a+Math.random()*(b-a),sapling=tipo==='sub-bosque';
+  const rand=(a,b)=>a+Math.random()*(b-a),sapling=tipo==='sub-bosque',highCanopy=tipo==='corredor';
   const altura=sapling?rand(90,144):rand(225,270);
   const raioBase=sapling?rand(2.1,3.2):rand(5.2,6.2);
   const topoRaio=sapling ? .14 : .30;
-  const crownStart=altura*(sapling?rand(.38,.46):rand(.49,.57));
+  const crownStart=altura*(highCanopy?.86:(sapling?rand(.38,.46):rand(.49,.57)));
   const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[],rootMaskT=[],rootOffsetT=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
@@ -49,7 +49,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   }
 
   // Eixo principal onduloso: o tronco serpenteia antes de se dividir em quatro líderes.
-  const splitRatio=.54;
+  const splitRatio=highCanopy?.82:.54;
   const trunkCenter=t=>({
     x:cx+Math.sin(t*4.6+seed*.07)*14*t+Math.sin(t*11.2+seed)*2.8*t,
     z:cz+Math.sin(t*3.9+seed*.11)*11*t+Math.cos(t*9.1+seed*.4)*2.4*t
@@ -192,26 +192,37 @@ const ARCHITECTURE_CLEARINGS = [
   [450,-60,28],[285,-116,24],[-1130,1200,32],[-1100,0,28],
   [140,-300,32],[300,-260,32],[460,-220,32],
   [140,-40,32],[300,0,32],[460,40,32],
-  [140,220,32],[300,260,32],[460,300,32],
+  [140,220,32],[300,260,32],[460,300,32],[640,360,50],
   [-760,-640,36],[780,700,36],[940,-760,36],[-900,740,36],[1080,420,36]
 ];
 const ARCHITECTURE_CORRIDORS = [
   [[75,-350],[140,-280],[300,-240],[460,-200]],
   [[75,-100],[140,-20],[300,20],[460,60]],
-  [[75,150],[140,240],[300,280],[460,320]]
+  [[75,150],[140,240],[300,280],[460,320]],
+  [[460,320],[520,332],[575,348],[616,360]]
 ];
+function distanciaDasPassagens(x,z){
+  let best=Infinity;
+  for(const route of ARCHITECTURE_CORRIDORS){
+    for(let i=0;i<route.length-1;i++){
+      const a=route[i],b=route[i+1];
+      best=Math.min(best,distanciaPontoSegmento(x,z,a[0],a[1],b[0],b[1]));
+    }
+  }
+  return best;
+}
 function pertoDaArquitetura(x,z,extra=0){
   for(const p of ARCHITECTURE_CLEARINGS)
     if(Math.hypot(x-p[0],z-p[1])<p[2]+extra)return true;
   for(const route of ARCHITECTURE_CORRIDORS){
     for(let i=0;i<route.length-1;i++){
       const a=route[i],b=route[i+1];
-      if(distanciaPontoSegmento(x,z,a[0],a[1],b[0],b[1])<9+extra)return true;
+      if(distanciaPontoSegmento(x,z,a[0],a[1],b[0],b[1])<27+extra)return true;
     }
   }
   return false;
 }
-const PINHEIROS = [];
+const PINHEIROS = [], PINHEIROS_COPA_ALTA = [];
 const N_TENT = 5200;
 for (let i = 0; i < N_TENT; i++) {
   const x = (Math.random()-0.5) * 2900;
@@ -223,7 +234,9 @@ for (let i = 0; i < N_TENT; i++) {
   const distOrig = Math.hypot(x, z);
   const prob = distOrig < 120 ? 0.20 : (x < 0 ? 0.92 : 0.78);
   if (Math.random() > prob) continue;
-  PINHEIROS.push({ x, z });
+  const tree={x,z};
+  if(distanciaDasPassagens(x,z)<180)PINHEIROS_COPA_ALTA.push(tree);
+  else PINHEIROS.push(tree);
 }
 
 const VARIANTES_PINHEIRO = [criarPinheiroGeo(0), criarPinheiroGeo(50), criarPinheiroGeo(120), criarPinheiroGeo(200)];
@@ -264,6 +277,53 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
   if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
 });
 
+
+// Árvores junto às passarelas: troncos nus até a copa alta, sem ramos
+// atravessando o espaço de circulação suspenso.
+const VARIANTES_COPA_ALTA=[
+  criarPinheiroGeo(301,'corredor'),criarPinheiroGeo(402,'corredor'),
+  criarPinheiroGeo(503,'corredor'),criarPinheiroGeo(604,'corredor')
+];
+const gruposCopa=VARIANTES_COPA_ALTA.map(()=>[]);
+for(const p of PINHEIROS_COPA_ALTA){
+  gruposCopa[Math.floor(Math.random()*VARIANTES_COPA_ALTA.length)].push(p);
+}
+VARIANTES_COPA_ALTA.forEach((variante,vi)=>{
+  const lista=gruposCopa[vi];if(!lista.length)return;
+  const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
+  const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
+  const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
+  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  const dummy=new THREE.Object3D();
+  lista.forEach((p,i)=>{
+    const baseY=alturaTerreno(p.x,p.z),rotation=Math.random()*Math.PI*2;
+    dummy.position.set(p.x,baseY,p.z);dummy.rotation.y=rotation;
+    const scale=.98+Math.random()*.20,scaleY=scale*1.06;
+    dummy.scale.set(scale*1.16,scaleY,scale*1.16);dummy.updateMatrix();
+    imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
+    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.42+Math.random()*.16,.37+Math.random()*.11));
+    colisores.push({x:p.x,z:p.z,raio:variante.raioBase*scale*1.16+.9});
+    if(Math.hypot(p.x,p.z)<700){
+      const cs=Math.cos(rotation),sn=Math.sin(rotation);
+      for(let ri=0;ri<variante.raizes.length;ri+=3){
+        const root=variante.raizes[ri];
+        const points=root.points.map(v=>[
+          p.x+(v[0]*cs+v[2]*sn)*scale,
+          baseY+v[1]*scaleY,
+          p.z+(-v[0]*sn+v[2]*cs)*scale
+        ]);
+        for(const k of [1,2]){
+          const q=points[k];
+          colisores.push({x:q[0],z:q[2],raio:Math.max(.55,root.radius*scale*.78)});
+        }
+      }
+    }
+  });
+  imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
+  if(imC.instanceColor)imC.instanceColor.needsUpdate=true;
+  scene.add(imT,imB,imC);
+});
+
 const SECUNDARIAS = [];
 for (let i = 0; i < 1500; i++) {
   const x = (Math.random()-0.5) * 2900;
@@ -271,6 +331,7 @@ for (let i = 0; i < 1500; i++) {
   if (Math.abs(x) > 1450 || Math.abs(z) > 1450) continue;
   if (emClareira(x, z, 5) || pertoDaArquitetura(x,z)) continue;
   if (distanciaCaminhos(x, z) < 4) continue;
+  if (distanciaDasPassagens(x,z)<98) continue;
   if (Math.hypot(x + 380, z - 520) < 180) continue;
   SECUNDARIAS.push({ x, z });
 }
