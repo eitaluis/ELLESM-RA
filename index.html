@@ -2119,6 +2119,8 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyM') teletransportar(1);
   if (e.code === 'KeyN') teletransportar(-1);
   if (e.code === 'KeyG') posicionarNaMenoa();
+  if (e.code === 'KeyH') posicionarNaCidade();
+  if (e.code === 'KeyJ') posicionarNaEscadaPrincipal();
 });
 addEventListener('keyup', e => { teclas[e.code] = false; });
 
@@ -2150,28 +2152,56 @@ function teletransportar(dir) {
 }
 // Inspeção: 220 m a leste, +50 m de altura, olhando para oeste e para baixo.
 function posicionarNaMenoa() {
-  const cx = -380, cz = 520;
-  const px = cx + 220, pz = cz;
-  jogador.pos.set(px, alturaChao(px, pz) + jogador.alturaOlhos + 50, pz);
-  jogador.vel.set(0,0,0);
-  camera.rotation.y = -Math.PI/2;
-  camera.rotation.x = -0.45;
-  document.getElementById('tp').textContent = 'Inspeção: Árvore Menoa';
+  const cx=-380,cz=520,px=cx+220,pz=cz;
+  jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos+50,pz);
+  jogador.vel.set(0,0,0);camera.rotation.y=-Math.PI/2;camera.rotation.x=-0.45;
+  document.getElementById('tp').textContent='Inspeção: Árvore Menoa';
+}
+function posicionarNaCidade(){
+  const px=230,pz=-230;
+  jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos,pz);
+  jogador.vel.set(0,0,0);camera.rotation.y=-2.39;camera.rotation.x=-0.28;
+  document.getElementById('tp').textContent='Núcleo de Ellesméra — casas e copas';
+}
+function posicionarNaEscadaPrincipal(){
+  const px=470,pz=-180;
+  jogador.pos.set(px,alturaChao(px,pz)+jogador.alturaOlhos,pz);
+  jogador.vel.set(0,0,0);camera.rotation.y=-0.42;camera.rotation.x=-0.18;
+  document.getElementById('tp').textContent='Base da escada principal — subida às copas';
 }
 
+function estaSobrePisoEspecial(x,z,footY){
+  // Degraus, pontes e raízes expostas substituem as colisões cilíndricas do tronco.
+  const check=(points,width,root=null)=>{
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[2]-a[2],den=dx*dx+dz*dz;
+      const t=den>1e-8?Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/den)):0;
+      const px=a[0]+dx*t,pz=a[2]+dz*t,d=Math.hypot(x-px,z-pz);
+      if(d>width)continue;
+      let y=a[1]+(b[1]-a[1])*t;
+      if(root)y+=(root.r0*(1-t)+root.r1*t)*.78;
+      if(Math.abs(footY-y)<1.65)return true;
+    }
+    return false;
+  };
+  for(const walk of ELEVATED_WALKS)if(check(walk.points,walk.width*.5))return true;
+  if(footY-alturaTerreno(x,z)>.12){
+    for(const root of ROOT_WALKS)if(check(root.points,root.r0*.95+.28,root))return true;
+  }
+  return false;
+}
 function colidir(novaPos) {
   if (novaPos.x < -1150 + jogador.raio) novaPos.x = -1150 + jogador.raio;
   novaPos.x = Math.max(-1450, Math.min(1500, novaPos.x));
   novaPos.z = Math.max(-1450, Math.min(1500, novaPos.z));
-  if(novaPos.y-jogador.alturaOlhos>alturaTerreno(novaPos.x,novaPos.z)+4.5)return;
+  const footY=novaPos.y-jogador.alturaOlhos;
+  if(footY>alturaTerreno(novaPos.x,novaPos.z)+4.5||estaSobrePisoEspecial(novaPos.x,novaPos.z,footY))return;
   for (const c of colisores) {
     const dx = novaPos.x - c.x, dz = novaPos.z - c.z;
-    const dist = Math.hypot(dx, dz);
-    const minDist = c.raio + jogador.raio;
+    const dist = Math.hypot(dx, dz),minDist = c.raio + jogador.raio;
     if (dist < minDist && dist > 0.0001) {
-      const push = (minDist - dist);
-      novaPos.x += (dx/dist) * push;
-      novaPos.z += (dz/dist) * push;
+      const push = minDist - dist;
+      novaPos.x += (dx/dist) * push;novaPos.z += (dz/dist) * push;
     }
   }
 }
@@ -2184,7 +2214,7 @@ let mmTimer = 0;
 let alturaAlvo = alturaChao(jogador.pos.x, jogador.pos.z, jogador.pos.y-jogador.alturaOlhos);
 let tAcum = 0;
 
-posicionarNaMenoa();
+posicionarNaCidade();
 
 function animar() {
   requestAnimationFrame(animar);
