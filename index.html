@@ -319,7 +319,7 @@ function criarCaminho(pontosXZ, larguraBase = 1.8) {
   return curva;
 }
 
-criarCaminho([[530,-60],[490,-55],[450,-60],[425,-58],[400,-60],[360,-55],[320,-50],[280,-45],[250,-40],[200,-30],[150,-15],[100,-8],[50,-3],[0,0]], 1.8);
+criarCaminho([[850,-60],[700,-60],[600,-60],[530,-60],[490,-55],[450,-60],[425,-58],[400,-60],[360,-55],[320,-50],[280,-45],[250,-40],[200,-30],[150,-15],[100,-8],[50,-3],[0,0]], 1.8);
 criarCaminho([[0,0],[60,30],[120,70],[160,30],[200,-80],[200,-160]], 1.6);
 criarCaminho([[0,0],[-80,-60],[-180,-130],[-260,-180],[-300,-200]], 1.6);
 criarCaminho([[-300,-200],[-280,-120],[-240,-40],[-180,100],[-180,220]], 1.6);
@@ -590,8 +590,13 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
   // Tronco contínuo com conicidade forte, leve sinuosidade e casca irregular.
   const trunk=[];
-  for(let s=0;s<=12;s++){const t=s/12;trunk.push([cx+Math.sin(t*2.4+seed)*(.25+t*.8),t*altura,cz+Math.cos(t*1.9+seed*.4)*(.22+t*.55)]);}
-  addTube(posT,idxT,trunk,raioBase,topoRaio,16,40,.055);
+  for(let s=0;s<=12;s++){
+    const y=s<=2?s*3.5:7+(s-2)/10*(altura-7),t=y/altura;
+    trunk.push([cx+Math.sin(t*2.4+seed)*(.25+t*.8),y,cz+Math.cos(t*1.9+seed*.4)*(.22+t*.55)]);
+  }
+  // Root flare spreads the basal 7 m to approximately 1.6 times the trunk diameter.
+  addTube(posT,idxT,trunk.slice(0,3),raioBase*1.6,raioBase,16,16,.075);
+  addTube(posT,idxT,trunk.slice(2),raioBase,topoRaio,16,38,.055);
 
   // Raízes expostas, ligadas ao colo do tronco e apoiadas sobre o solo.
   const rootCount=sapling?5:8;
@@ -1211,6 +1216,70 @@ function buildTialdari(parent,x,y,z){
   addOrganicTube(parent,[[x-18,y+12,z-14],[x-17,y+8,z-12],[x-15,y+3,z-8],[x-10,y+.15,z-4],[x,y+.12,z+10]],.22,.13,silverWater,7,30,.04);
   buildFlowerGrove(parent,x,y,z,48,650);
 }
+function buildHexagonalResidence(parent,x,y,z,scale=1){
+  // Tronco alargado na base, duas câmaras de seis faces sugeridas por nervuras vivas.
+  addLivingTrunk(parent,x,y,z,25*scale,2.4*scale,.6*scale,-.4*scale);
+  addOvoidPod(parent,x,y+4*scale,z,7.2*scale,3.6*scale,6.7*scale,woodMat);
+  addOvoidPod(parent,x,y+8.2*scale,z,3.6*scale,2.1*scale,3.35*scale,paleWood);
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2;
+    addOrganicTube(parent,[[x+Math.cos(a)*7.0*scale,y+1.5*scale,z+Math.sin(a)*6.5*scale],
+      [x+Math.cos(a)*7.6*scale,y+5*scale,z+Math.sin(a)*7.0*scale],
+      [x+Math.cos(a)*4.0*scale,y+10*scale,z+Math.sin(a)*3.8*scale],
+      [x+Math.cos(a)*.4*scale,y+11*scale,z+Math.sin(a)*.4*scale]],.32*scale,.10*scale,paleWood,7,18,.08);
+    const jewelColors=[0x367f72,0x586caa,0x9b7050,0x547d52,0x926e9c,0x9b8751];
+    const gem=new THREE.MeshStandardMaterial({color:jewelColors[i],roughness:.22,metalness:.12,side:THREE.DoubleSide});
+    addOval(parent,x+Math.cos(a)*6.5*scale,y+4.4*scale,z+Math.sin(a)*6.0*scale,.42*scale,.78*scale,.15*scale,gem,10);
+  }
+  addTearOpening(parent,x,y+3.7*scale,z+6.55*scale,1.9*scale,3.1*scale,0);
+  // Beirais vivos com musgo e líquen amarelo discreto.
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2,px=x+Math.cos(a)*7.3*scale,pz=z+Math.sin(a)*6.8*scale;
+    addOrganicTube(parent,[[px,y+6.7*scale,pz],[x+Math.cos(a)*6.3*scale,y+7.3*scale,pz-Math.sin(a)*.3],[x+Math.cos(a)*4.3*scale,y+8.3*scale,z+Math.sin(a)*4.0*scale]],.20*scale,.07*scale,woodMat,6,11,.08);
+  }
+  addRootStair(parent,x,y,z+7.2*scale,6,4.5*scale,1);
+}
+function buildFiveStoreyResidence(parent,x,y,z){
+  // Casa aérea entre três pinheiros unidos por suportes curvos; cinco níveis.
+  const offsets=[[-8,-5],[8,-5],[0,9]];
+  offsets.forEach(([dx,dz])=>addLivingTrunk(parent,x+dx,y,z+dz,56,2.0,dx*.16,dz*.12));
+  for(let level=0;level<5;level++){
+    const h=y+12+level*6.5,shrink=1-level*.115,podX=x+(level%2?1:-.8),rx=4.7*shrink,rz=4.1*shrink;
+    addOvoidPod(parent,podX,h,z,rx,1.9*shrink,rz,level%2?woodMat:paleWood);
+    if(level===0||level===2||level===4)addTearOpening(parent,podX,h,z+rz*.96,1.15*shrink,2.1*shrink,0);
+    offsets.forEach(([dx,dz],i)=>{
+      const tx=x+dx,tz=z+dz,side=i%2?1:-1;
+      addOrganicTube(parent,[[tx,y+17+level*6.5,tz],[tx+side*2,h+1,z+dz*.55],[podX,h,z]],.72*shrink,.18*shrink,woodMat,8,17,.10);
+    });
+  }
+  for(let i=0;i<3;i++){
+    const [dx,dz]=offsets[i],a=i/3*Math.PI*2;
+    addOrganicTube(parent,[[x+dx,y+14,z+dz],[x+Math.cos(a)*11,y+20,z+Math.sin(a)*11],[x-dx*.3,y+28,z-dz*.3]],.28,.09,paleWood,6,16,.08);
+  }
+}
+function buildWillowBower(parent,x,y,z){
+  // Caramanchão aberto de salgueiro e corniso, trançado em arcos vivos.
+  const radius=3.7,arches=12;
+  for(let i=0;i<arches;i++){
+    const a=i/arches*Math.PI*2,pts=[];
+    for(let j=0;j<=8;j++){
+      const t=j/8,ang=a+t*Math.PI,rad=radius*Math.sin(t*Math.PI*.5);
+      pts.push([x+Math.cos(ang)*rad,y+Math.sin(t*Math.PI)*4.2,z+Math.sin(ang)*rad]);
+    }
+    addOrganicTube(parent,pts,.16,.055,i%2?woodMat:paleWood,6,18,.12);
+  }
+  for(let i=0;i<14;i++){
+    const a=i/14*Math.PI*2;
+    addOrganicTube(parent,[[x+Math.cos(a)*radius,y,z+Math.sin(a)*radius],
+      [x+Math.cos(a)*radius*.72,y+2,z+Math.sin(a)*radius*.72],
+      [x+Math.cos(a)*.3,y+4.3,z+Math.sin(a)*.3]],.12,.035,woodMat,5,12,.08);
+  }
+  const gallMat=new THREE.MeshStandardMaterial({color:0xc7b98a,emissive:0x2b2719,emissiveIntensity:.18,transparent:true,opacity:.7,roughness:.35});
+  for(let i=0;i<10;i++){
+    const a=i/10*Math.PI*2,px=x+Math.cos(a)*2.7,pz=z+Math.sin(a)*2.7;
+    addOval(parent,px,y+3.2+(i%3)*.35,pz,.22,.34,.22,gallMat,8);
+  }
+}
 function buildStable(parent,x,y,z){
   // Três baias sob ramos arqueados; sem paredes ou telhados separados.
   for(let i=-1;i<=1;i++){
@@ -1317,6 +1386,9 @@ function buildSite(name,x,z,kind){
   else if(kind==='flowers')buildFlowerGrove(g,x,y,z);
   else if(kind==='treehome')buildTreeDwelling(g,x,y,z);
   else if(kind==='arch')buildNaturalArchSite(g,x,y,z);
+  else if(kind==='hexhouse')buildHexagonalResidence(g,x,y,z,1);
+  else if(kind==='fivehome')buildFiveStoreyResidence(g,x,y,z);
+  else if(kind==='bower')buildWillowBower(g,x,y,z);
   else if(kind==='gilderien')buildGilderien(g,x,y,z);
   else if(kind==='crags')buildCrags(g,x,y,z);
   else if(kind==='stump')buildOromisStump(g,x,y,z);
@@ -1325,6 +1397,9 @@ function buildSite(name,x,z,kind){
 const SITE_BUILDINGS=[
   ['Gilderien (feixe de luz)',850,-60,'gilderien'],
   ['Arco natural',450,-60,'arch'],
+  ['Casa hexagonal',350,-18,'hexhouse'],
+  ['Residência de cinco andares',305,-92,'fivehome'],
+  ['Caramanchão de salgueiro e corniso',285,-116,'bower'],
   ['Salão do Trono',250,-40,'hall'],['Colina do banquete',120,70,'banquet'],
   ['Árvore dos Cavaleiros',0,0,'treehome'],['Estábulos',200,-160,'stable'],
   ['Campo de esgrima',-300,-200,'training'],['Forja de Rhunön',-180,220,'forge'],
@@ -1520,8 +1595,6 @@ function construirMenoa(){
   needles.count=needleIndex;needles.instanceMatrix.needsUpdate=true;
   if(needles.instanceColor)needles.instanceColor.needsUpdate=true;grupo.add(needles);
 
-  flushTubeBuckets();
-
   // Hollow in bark referenced in the Blood-oath celebration; quiet when not in use.
   const cavityMat=new THREE.MeshStandardMaterial({color:0x17160f,roughness:1,side:THREE.DoubleSide});
   const cavity=addOval(grupo,cx+raioBase*.96,yBase+9,cz+.8,1.55,2.1,.32,cavityMat,14);
@@ -1532,6 +1605,7 @@ function construirMenoa(){
     lip.push([cx+raioBase*.97+Math.cos(a)*1.75,yBase+9+Math.sin(a)*2.35,cz+.8]);
   }
   tube(lip,.34,.22,barkRidgeMat,8,20,.12);
+  flushTubeBuckets();
 
   // Lanternas só durante a celebração, nunca como pontos verdes permanentes.
   lanternaObjs.length=0;lanternaBaseY.length=0;
