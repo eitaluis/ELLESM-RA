@@ -501,7 +501,7 @@ TEX_PEDRA.repeat.set(2, 2);
 const MATERIAIS = {
   tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0xb09b79 }),
   galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x9b8767 }),
-  copa: new THREE.MeshStandardMaterial({ color:0x72945d, roughness:1.0, side:THREE.DoubleSide }),
+  copa: new THREE.MeshStandardMaterial({ color:0xffffff, roughness:1.0, side:THREE.DoubleSide }),
   pedra: new THREE.MeshStandardMaterial({ map: TEX_PEDRA, roughness: 0.95, color: 0x8a8a80 }),
   musgo: new THREE.MeshStandardMaterial({ map: TEX_MUSGO, roughness: 1.0, color: 0x6a7a4a }),
   lanterna: new THREE.MeshStandardMaterial({ color: 0x7aff8a, emissive: 0x4aff6a, emissiveIntensity: 1.4, roughness: 0.3 }),
@@ -704,7 +704,7 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
     dummy.position.set(p.x,baseY,p.z);dummy.rotation.y=rotation;
     const scale=.98+Math.random()*.20,scaleY=scale*1.06;dummy.scale.set(scale*1.16,scaleY,scale*1.16);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.38+Math.random()*.18,.31+Math.random()*.11));
+    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.42+Math.random()*.16,.37+Math.random()*.11));
     colisores.push({x:p.x,z:p.z,raio:variante.raioBase+.7});
     if(Math.hypot(p.x,p.z)<900){
       const cs=Math.cos(rotation),sn=Math.sin(rotation);
@@ -749,7 +749,7 @@ VARIANTES_SEC.forEach((variante, vi) => {
     dummy.position.set(s.x,baseY,s.z);dummy.rotation.y=rotation;
     const scale=.92+Math.random()*.18,scaleY=scale*1.05;dummy.scale.set(scale*1.18,scaleY,scale*1.18);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.255+Math.random()*.055,.34+Math.random()*.18,.29+Math.random()*.11));
+    imC.setColorAt(i,new THREE.Color().setHSL(.255+Math.random()*.055,.38+Math.random()*.16,.34+Math.random()*.11));
     colisores.push({x:s.x,z:s.z,raio:variante.raioBase+.35});
     if(Math.hypot(s.x,s.z)<900){
       const cs=Math.cos(rotation),sn=Math.sin(rotation);
@@ -1810,7 +1810,7 @@ function construirMenoa(){
   }
   function curve(points){return new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.4);}
   const needleGeo=new THREE.ConeGeometry(.04,1.05,6,1);needleGeo.translate(0,.4,0);
-  const needleCapacity=320000,needles=new THREE.InstancedMesh(needleGeo,needleMats[1],needleCapacity);
+  const needleCapacity=320000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
   needles.castShadow=false;needles.receiveShadow=true;
   const needleDummy=new THREE.Object3D();let needleIndex=0;
   // Recursos de agulhas são criados antes dos galhos que os preenchem.
