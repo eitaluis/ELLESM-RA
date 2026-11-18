@@ -1242,6 +1242,14 @@ function buildCrags(parent,x,y,z){
     map:TEX_PEDRA,roughness:1,side:THREE.DoubleSide});
   const cliff=new THREE.Mesh(cliffGeo,cliffMat);cliff.castShadow=true;cliff.receiveShadow=true;parent.add(cliff);
 
+  // Barreira de colisão contínua na borda: impede o visitante de atravessar o penhasco.
+  const guardCount=Math.ceil(cliffLength/3);
+  for(let i=0;i<=guardCount;i++){
+    const u=i/guardCount,zz=z-cliffLength*.5+u*cliffLength;
+    const topX=x-12+Math.sin(u*8.5)*4.2+Math.sin(u*19.0)*1.35;
+    colisores.push({x:topX+4.1,z:zz,raio:2.2});
+  }
+
   // Estratos e saliências horizontais tornam a queda legível à distância.
   for(const t of [.18,.37,.58,.78]){
     const ledge=[];
