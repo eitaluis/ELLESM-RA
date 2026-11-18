@@ -69,7 +69,7 @@ import * as THREE from 'three';
 // ============================================================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xaec5d0);
-scene.fog = new THREE.FogExp2(0x9eafa0, 0.00112);
+scene.fog = new THREE.FogExp2(0xc5d8c2, 0.00042);
 
 const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 8000);
 camera.position.set(0, 1.7, 34);
@@ -91,10 +91,10 @@ addEventListener('resize', () => {
 // ============================================================================
 // 2. ILUMINAÇÃO
 // ============================================================================
-const hemi = new THREE.HemisphereLight(0xdce9e0, 0x35452a, 1.18);
+const hemi = new THREE.HemisphereLight(0xf0f7e9, 0x596548, 1.78);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffe3b8, 1.48);
+const sun = new THREE.DirectionalLight(0xfff0d2, 2.15);
 sun.position.set(-600, 400, 300);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
@@ -104,7 +104,7 @@ sun.shadow.camera.left = -700; sun.shadow.camera.right = 700;
 sun.shadow.camera.top = 700; sun.shadow.camera.bottom = -700;
 scene.add(sun); scene.add(sun.target);
 
-const fill = new THREE.DirectionalLight(0xb9d3bf, 0.58);
+const fill = new THREE.DirectionalLight(0xd8ead5, 1.15);
 fill.position.set(400, 200, -400);
 scene.add(fill);
 
@@ -499,9 +499,9 @@ TEX_GALHO.repeat.set(2,5);
 TEX_PEDRA.repeat.set(2, 2);
 
 const MATERIAIS = {
-  tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0x927c62 }),
-  galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x806c52 }),
-  copa: new THREE.MeshStandardMaterial({ color:0x55764a, roughness:1.0, side:THREE.DoubleSide }),
+  tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0xb09b79 }),
+  galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x9b8767 }),
+  copa: new THREE.MeshStandardMaterial({ color:0x72945d, roughness:1.0, side:THREE.DoubleSide }),
   pedra: new THREE.MeshStandardMaterial({ map: TEX_PEDRA, roughness: 0.95, color: 0x8a8a80 }),
   musgo: new THREE.MeshStandardMaterial({ map: TEX_MUSGO, roughness: 1.0, color: 0x6a7a4a }),
   lanterna: new THREE.MeshStandardMaterial({ color: 0x7aff8a, emissive: 0x4aff6a, emissiveIntensity: 1.4, roughness: 0.3 }),
@@ -627,7 +627,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
 
   // Andares de galhos, mais longos na parte inferior da copa e progressivamente
   // menores no alto, com pequenos ramos alternados e agulhas finas individuais.
-  const levels=sapling?5:8,arms=sapling?6:9,baseReach=sapling?rand(9,13):rand(26,36);
+  const levels=sapling?6:9,arms=sapling?7:10,baseReach=sapling?rand(10,15):rand(29,39);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.92,reach=baseReach*(1-t*.86)+1.8,count=arms+(level%2);
     for(let arm=0;arm<count;arm++){
@@ -641,18 +641,18 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       // Pequenos sprays distribuídos ao longo do galho principal.
       for(let s=1;s<=4;s++){
         const q=s/6,px=cx+Math.cos(a)*len*q,py=y+len*.025*q-droop*q*.65,pz=cz+Math.sin(a)*len*q;
-        for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .28 : .72,sapling ? .62 : 1.55),sapling ? .035 : .075);}
+        for(let n=0;n<2;n++){const aa=a+n*Math.PI+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .42 : 1.08,sapling ? .82 : 2.15),sapling ? .045 : .10);}
       }
 
       // Ramificações secundárias alternadas que quebram a silhueta em fios vegetais.
-      const twigN=sapling?3:6;
+      const twigN=sapling?4:8;
       for(let twig=0;twig<twigN;twig++){
         const q=.16+twig*.17,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
         const aa=a+side*rand(.52,.92),tl=len*rand(.14,.22)*(1-t*.25);
         const mid=[bx+Math.cos(aa)*tl*.52,by+tl*.13,bz+Math.sin(aa)*tl*.52],end=[bx+Math.cos(aa)*tl,by+tl*.16+rand(.2,1.1),bz+Math.sin(aa)*tl];
         addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,5,6,.16);
-        for(let n=0;n<8;n++){
-          const a2=aa+n*Math.PI*2/9+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
+        for(let n=0;n<10;n++){
+          const a2=aa+n*Math.PI*2/11+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .42 : .95,sapling ? .82 : 2.2),sapling ? .045 : .105);
         }
       }
@@ -694,13 +694,13 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
   const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
   const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
   const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=true;imT.receiveShadow=true;imB.castShadow=true;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
   const dummy=new THREE.Object3D();
   lista.forEach((p,i)=>{
     dummy.position.set(p.x,alturaTerreno(p.x,p.z),p.z);dummy.rotation.y=Math.random()*Math.PI*2;
     const scale=.98+Math.random()*.20;dummy.scale.set(scale*1.16,scale*1.06,scale*1.16);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.38+Math.random()*.18,.17+Math.random()*.12));
+    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.38+Math.random()*.18,.31+Math.random()*.11));
     colisores.push({x:p.x,z:p.z,raio:variante.raioBase+.7});
   });
   imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
@@ -727,13 +727,13 @@ VARIANTES_SEC.forEach((variante, vi) => {
   const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
   const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
   const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=true;imT.receiveShadow=true;imB.castShadow=true;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
   const dummy=new THREE.Object3D();
   lista.forEach((s,i)=>{
     dummy.position.set(s.x,alturaTerreno(s.x,s.z),s.z);dummy.rotation.y=Math.random()*Math.PI*2;
     const scale=.92+Math.random()*.18;dummy.scale.set(scale*1.18,scale*1.05,scale*1.18);dummy.updateMatrix();
     imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.25+Math.random()*.055,.34+Math.random()*.18,.18+Math.random()*.12));
+    imC.setColorAt(i,new THREE.Color().setHSL(.255+Math.random()*.055,.34+Math.random()*.18,.29+Math.random()*.11));
     colisores.push({x:s.x,z:s.z,raio:variante.raioBase+.35});
   });
   imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
@@ -1645,14 +1645,14 @@ function construirMenoa(){
   // Livro: Menoa tem a mesma altura das árvores vizinhas; é o tronco que é
   // colossal, mais grosso que cem árvores comuns. Diâmetro de projeto: 60 m.
   const altura=94,raioBase=34,raioTopo=15;
-  const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0x927654,roughness:.98,side:THREE.DoubleSide});
-  const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x735b40,roughness:1,side:THREE.DoubleSide});
-  const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xa1845c,roughness:1,side:THREE.DoubleSide});
+  const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0xb0956d,roughness:.98,side:THREE.DoubleSide});
+  const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x957a55,roughness:1,side:THREE.DoubleSide});
+  const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xb69a6d,roughness:1,side:THREE.DoubleSide});
   const needleMats=[
-    new THREE.MeshStandardMaterial({color:0x263d28,roughness:1,side:THREE.DoubleSide}),
-    new THREE.MeshStandardMaterial({color:0x344d31,roughness:1,side:THREE.DoubleSide}),
-    new THREE.MeshStandardMaterial({color:0x405a37,roughness:1,side:THREE.DoubleSide}),
-    new THREE.MeshStandardMaterial({color:0x1d3423,roughness:1,side:THREE.DoubleSide})
+    new THREE.MeshStandardMaterial({color:0x456b3d,roughness:1,side:THREE.DoubleSide}),
+    new THREE.MeshStandardMaterial({color:0x567e49,roughness:1,side:THREE.DoubleSide}),
+    new THREE.MeshStandardMaterial({color:0x6c8c52,roughness:1,side:THREE.DoubleSide}),
+    new THREE.MeshStandardMaterial({color:0x3a5f37,roughness:1,side:THREE.DoubleSide})
   ];
 
   const tubeBuckets=new Map([
