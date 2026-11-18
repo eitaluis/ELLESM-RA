@@ -16,7 +16,7 @@ const dwellingDarkMat=new THREE.MeshStandardMaterial({color:0x181b13,roughness:1
 const RESIDENCE_WINDOW_MAT=new THREE.MeshStandardMaterial({color:0xffc16a,emissive:0xff922d,emissiveIntensity:2.0,roughness:.22,side:THREE.DoubleSide});
 const RESIDENCE_FRAME_MAT=new THREE.MeshStandardMaterial({color:0x493521,roughness:.96});
 const RESIDENCE_LAMP_GLOW=new THREE.MeshBasicMaterial({color:0xffbf63});
-const RESIDENCE_WOVEN_MAT=new THREE.MeshStandardMaterial({color:0x93856b,roughness:1,side:THREE.DoubleSide,transparent:true,opacity:.78,depthWrite:false});
+const RESIDENCE_WOVEN_MAT=new THREE.MeshStandardMaterial({color:0x887452,roughness:1,side:THREE.DoubleSide,transparent:true,opacity:.94,depthWrite:true});
 const RESIDENCE_FIBER_MAT=new THREE.MeshStandardMaterial({color:0xc1a982,roughness:1,side:THREE.DoubleSide});
 const CANOPY_DECK_MAT=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x927b59,roughness:.97,side:THREE.DoubleSide});
 const HOME_LINEN_MAT=new THREE.MeshStandardMaterial({color:0x9a9b79,roughness:1});
@@ -457,8 +457,8 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false,trunkHei
   }
   addInteriorFurniture(floorY,false);
   addInteriorFurniture(upperY,true);
-  for(let i=0;i<8;i++){
-    const a=i/8*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a);
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a);
     addOrganicTube(parent,[[x+ca*upperOuter,upperY+4.02*scale,z+sa*upperOuter],
       [x+ca*6.0*scale,upperY+5.2*scale,z+sa*6.0*scale],[x+ca*3.3*scale,upperY+6.35*scale,z+sa*3.3*scale],
       [x+ca*1.7*scale,upperY+7.0*scale,z+sa*1.7*scale]],.27*scale,.07*scale,i%2?woodMat:dwellingRoofMat,7,20,.10);
@@ -1267,11 +1267,12 @@ function buildNaturalArchSite(parent,x,y,z){
   // Duas casas disfarçadas em troncos curvados nos limites da clareira.
   for(let side of [-1,1]){
     const hx=x+side*17,hz=z+side*7;
-    addLivingTrunk(parent,hx,y,hz,19,1.15,side*2,-side);
-    addOpenOvoidPod(parent,hx+side*1.2,y+5,hz,4.8,3.1,4.0,woodMat,Math.PI/2);
-    addResidenceFloor(parent,hx+side*1.2,y+2.25,hz,3.7,3.0,mossFloorMat);
-    addLivingDoorFrame(parent,hx+side*1.2,y+2.25,hz+3.8,1.8,2.6);
-    registerWalkablePath([[hx+side*1.2,y+2.25,hz+3.8],[hx+side*1.2,y+2.25,hz+1],[hx+side*1.2,y+2.25,hz]],2.4);
+    addLivingTrunk(parent,hx,y,hz,25,1.35,side*2,-side,woodMat);
+    const home=buildReadableDwelling(parent,hx+side*1.2,hz,y+2.25,.46,false,78);
+    addOrganicTube(parent,[[hx,y+17,hz],[hx+side*7,y+20,hz+side*2],
+      [hx+side*13,y+22,hz+side*5],[hx+side*15,y+24,hz+side*7]],.55,.12,woodMat,8,24,.10);
+    registerWalkablePath([[hx+side*1.2,y+2.25,hz+home.outer+6],
+      [hx+side*1.2,y+2.25,hz+home.outer+3],home.door],2.6);
   }
   buildFlowerGrove(parent,x,y,z,30,220);
 }
@@ -1297,7 +1298,6 @@ function buildSite(name,x,z,kind){
   return g;
 }
 const SITE_BUILDINGS=[
-  ['Gilderien (feixe de luz)',850,-60,'gilderien'],
   ['Arco natural',450,-60,'arch'],
   ['Caramanchão de salgueiro e corniso',285,-116,'bower'],
   ['Salão do Trono',250,-40,'hall'],['Colina do banquete',120,70,'banquet'],
