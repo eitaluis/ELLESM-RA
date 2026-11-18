@@ -32,6 +32,9 @@ Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literár
 - [x] Escadas espirais protegidas e rede de pontes arqueadas com circulação livre
 - [x] Praça comunitária suspensa no nível superior da floresta
 - [x] Moradias hexagonais e cobertura com seis nervuras estruturais
+- [x] Árvore dos Cavaleiros com dois níveis hexagonais, escada e ramos de sustentação
+- [x] Caramanchão de salgueiro e corniso em arcos trançados com galhas luminosas
+- [x] Forja aberta sob cobertura de ramos vivos, com núcleo de pedra e bigorna
 - [x] Sala do Trono refeita como salão de árvores, com pavilhão e trono de raízes
 - [x] Tialdarí reconstruída como conjunto ancestral com sala comum, sala de estar, quarto, escritório e jardins
 - [x] Casa de cinco níveis separada, sustentada por três pinheiros e contrafortes vivos
@@ -42,6 +45,7 @@ Reconstrução 3D explorável de Ellesméra, em Three.js. A descrição literár
 - [x] Paisagem sonora real de floresta, com gravação de campo em domínio público
 - [x] Otimização da malha do terreno, densidade de folhas, Menoa e vegetação rasteira
 - [x] Índice espacial de pontes e escadas para cálculos de piso e colisão localizados
+- [x] Instanciamento de árvores por setores para descarte de áreas fora da câmera
 - [x] Teleporte direto para a fachada de uma moradia no terceiro nível da copa
 - [ ] Revisão visual em navegador e ajuste fino após exploração
 
