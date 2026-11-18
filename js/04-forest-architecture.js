@@ -748,12 +748,27 @@ function buildTreeDwelling(parent,x,y,z){
     railOuter.push([x+Math.cos(q)*(radius+2.1),sy+2.1,z+Math.sin(q)*(radius+2.1)]);
     railInner.push([x+Math.cos(q)*(radius-2),sy+1.7,z+Math.sin(q)*(radius-2)]);
     if(i<steps){
-      const step=new THREE.Mesh(new THREE.BoxGeometry(4.2,.42,1.45),paleWood);
-      step.position.set(px,sy,pz);step.rotation.y=-q;step.castShadow=true;step.receiveShadow=true;parent.add(step);
-      const nosing=new THREE.Mesh(new THREE.BoxGeometry(4.35,.12,.18),woodMat);
-      nosing.position.set(px,sy+.22,pz);nosing.rotation.y=-q;parent.add(nosing);
+      // Degraus e frisos em instâncias: mantém a escada detalhada sem 144 draw calls.
+      // As matrizes são preenchidas abaixo, depois de criar as malhas compartilhadas.
     }
   }
+  const knightStepCount=steps;
+  const knightStepGeo=new THREE.BoxGeometry(4.2,.42,1.45);
+  const knightNosingGeo=new THREE.BoxGeometry(4.35,.12,.18);
+  const knightSteps=new THREE.InstancedMesh(knightStepGeo,paleWood,knightStepCount);
+  const knightNosings=new THREE.InstancedMesh(knightNosingGeo,woodMat,knightStepCount);
+  const stairDummy=new THREE.Object3D();
+  for(let i=0;i<knightStepCount;i++){
+    const t=(i+.5)/knightStepCount,q=t*Math.PI*2*turns,sy=y+1+t*22.7;
+    const px=x+Math.cos(q)*radius,pz=z+Math.sin(q)*radius;
+    stairDummy.position.set(px,sy,pz);stairDummy.rotation.set(0,-q,0);stairDummy.scale.set(1,1,1);
+    stairDummy.updateMatrix();knightSteps.setMatrixAt(i,stairDummy.matrix);
+    stairDummy.position.y=sy+.22;stairDummy.updateMatrix();knightNosings.setMatrixAt(i,stairDummy.matrix);
+  }
+  knightSteps.instanceMatrix.needsUpdate=true;knightNosings.instanceMatrix.needsUpdate=true;
+  knightSteps.castShadow=false;knightSteps.receiveShadow=true;
+  knightNosings.castShadow=false;knightNosings.receiveShadow=true;
+  parent.add(knightSteps,knightNosings);
   addOrganicTube(parent,railOuter,.24,.18,paleWood,8,steps*2,.05);
   addOrganicTube(parent,railInner,.18,.12,woodMat,7,steps*2,.05);
   for(let i=0;i<=steps;i+=3){
