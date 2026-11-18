@@ -270,39 +270,79 @@ const VARIANTES_PINHEIRO = [criarPinheiroGeo(0), criarPinheiroGeo(50), criarPinh
 const gruposPinheiro = VARIANTES_PINHEIRO.map(() => []);
 for (const p of PINHEIROS) gruposPinheiro[Math.floor(Math.random()*VARIANTES_PINHEIRO.length)].push(p);
 
-VARIANTES_PINHEIRO.forEach((variante, vi) => {
-  const lista = gruposPinheiro[vi];
-  if (lista.length === 0) return;
-  const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
-  const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
-  const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
-  const dummy=new THREE.Object3D();
-  lista.forEach((p,i)=>{
-    const baseY=alturaTerreno(p.x,p.z),rotation=Math.random()*Math.PI*2;
-    dummy.position.set(p.x,baseY,p.z);dummy.rotation.y=rotation;
-    const scale=.98+Math.random()*.20,scaleY=scale*1.06;dummy.scale.set(scale*1.16,scaleY,scale*1.16);dummy.updateMatrix();
-    imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.42+Math.random()*.16,.37+Math.random()*.11));
-    colisores.push({x:p.x,z:p.z,raio:variante.raioBase*scale*1.16+.9});
-    if(Math.hypot(p.x,p.z)<700){
-      const cs=Math.cos(rotation),sn=Math.sin(rotation);
-      for(let ri=0;ri<variante.raizes.length;ri+=3){
-        const root=variante.raizes[ri],points=root.points.map(v=>[
-          p.x+(v[0]*cs+v[2]*sn)*scale,
-          baseY+v[1]*scaleY,
-          p.z+(-v[0]*sn+v[2]*cs)*scale
-        ]);
-        for(const k of [1,2]){
-          const q=points[k];
-          colisores.push({x:q[0],z:q[2],raio:Math.max(.55,root.radius*scale*.78)});
+// Instanciamento por setor: cada lote ocupa uma região limitada do mapa.
+// O frustum culling pode assim descartar setores inteiros fora da câmera,
+// em vez de manter uma única caixa de milhares de metros sempre visível.
+const TREE_RENDER_CHUNK=620;
+function instanciarArvoresEmSetores(variantes,grupos,config){
+  let setoresRenderizados=0;
+  variantes.forEach((variante,vi)=>{
+    const setores=new Map();
+    for(const tree of grupos[vi]){
+      const gx=Math.floor(tree.x/TREE_RENDER_CHUNK),gz=Math.floor(tree.z/TREE_RENDER_CHUNK);
+      const key=gx+','+gz;
+      if(!setores.has(key))setores.set(key,[]);
+      setores.get(key).push(tree);
+    }
+    for(const lista of setores.values()){
+      if(!lista.length)continue;
+      const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
+      const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
+      const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
+      imT.castShadow=false;imT.receiveShadow=true;
+      imB.castShadow=false;imB.receiveShadow=true;
+      imC.castShadow=false;imC.receiveShadow=true;
+      const dummy=new THREE.Object3D();
+      lista.forEach((tree,i)=>{
+        const baseY=alturaTerreno(tree.x,tree.z),rotation=Math.random()*Math.PI*2;
+        const scale=config.scaleMin+Math.random()*config.scaleRange,scaleY=scale*config.scaleY;
+        dummy.position.set(tree.x,baseY,tree.z);dummy.rotation.y=rotation;
+        dummy.scale.set(scale*config.horizontalScale,scaleY,scale*config.horizontalScale);
+        dummy.updateMatrix();
+        imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
+        imC.setColorAt(i,new THREE.Color().setHSL(
+          config.hue+Math.random()*config.hueRange,
+          config.saturation+Math.random()*config.saturationRange,
+          config.lightness+Math.random()*config.lightnessRange
+        ));
+        colisores.push({x:tree.x,z:tree.z,
+          raio:variante.raioBase*scale*config.horizontalScale+config.colliderExtra});
+        if(Math.hypot(tree.x,tree.z)<700){
+          const cs=Math.cos(rotation),sn=Math.sin(rotation);
+          for(let ri=0;ri<variante.raizes.length;ri+=3){
+            const root=variante.raizes[ri];
+            const points=root.points.map(v=>[
+              tree.x+(v[0]*cs+v[2]*sn)*scale,
+              baseY+v[1]*scaleY,
+              tree.z+(-v[0]*sn+v[2]*cs)*scale
+            ]);
+            for(const k of [1,2]){
+              const q=points[k];
+              colisores.push({x:q[0],z:q[2],raio:Math.max(config.rootMin,root.radius*scale*config.rootScale)});
+            }
+          }
         }
-      }
+      });
+      imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
+      if(imC.instanceColor)imC.instanceColor.needsUpdate=true;
+      // The chunk's instance bounds are local, so Three.js can cull it by camera.
+      imT.frustumCulled=true;imB.frustumCulled=true;imC.frustumCulled=true;
+      scene.add(imT,imB,imC);setoresRenderizados++;
     }
   });
-  imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
-  if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
-});
+  return setoresRenderizados;
+}
+const TREE_RENDER_CONFIG={
+  scaleMin:.98,scaleRange:.20,scaleY:1.06,horizontalScale:1.16,
+  hue:.265,hueRange:.055,saturation:.42,saturationRange:.16,
+  lightness:.37,lightnessRange:.11,colliderExtra:.9,rootMin:.55,rootScale:.78
+};
+const SAPLING_RENDER_CONFIG={
+  scaleMin:.92,scaleRange:.18,scaleY:1.05,horizontalScale:1.18,
+  hue:.255,hueRange:.055,saturation:.38,saturationRange:.16,
+  lightness:.34,lightnessRange:.11,colliderExtra:.65,rootMin:.42,rootScale:.72
+};
+instanciarArvoresEmSetores(VARIANTES_PINHEIRO,gruposPinheiro,TREE_RENDER_CONFIG);
 
 
 // Árvores junto às passarelas: troncos nus até a copa alta, sem ramos
@@ -315,41 +355,7 @@ const gruposCopa=VARIANTES_COPA_ALTA.map(()=>[]);
 for(const p of PINHEIROS_COPA_ALTA){
   gruposCopa[Math.floor(Math.random()*VARIANTES_COPA_ALTA.length)].push(p);
 }
-VARIANTES_COPA_ALTA.forEach((variante,vi)=>{
-  const lista=gruposCopa[vi];if(!lista.length)return;
-  const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
-  const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
-  const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
-  const dummy=new THREE.Object3D();
-  lista.forEach((p,i)=>{
-    const baseY=alturaTerreno(p.x,p.z),rotation=Math.random()*Math.PI*2;
-    dummy.position.set(p.x,baseY,p.z);dummy.rotation.y=rotation;
-    const scale=.98+Math.random()*.20,scaleY=scale*1.06;
-    dummy.scale.set(scale*1.16,scaleY,scale*1.16);dummy.updateMatrix();
-    imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.42+Math.random()*.16,.37+Math.random()*.11));
-    colisores.push({x:p.x,z:p.z,raio:variante.raioBase*scale*1.16+.9});
-    if(Math.hypot(p.x,p.z)<700){
-      const cs=Math.cos(rotation),sn=Math.sin(rotation);
-      for(let ri=0;ri<variante.raizes.length;ri+=3){
-        const root=variante.raizes[ri];
-        const points=root.points.map(v=>[
-          p.x+(v[0]*cs+v[2]*sn)*scale,
-          baseY+v[1]*scaleY,
-          p.z+(-v[0]*sn+v[2]*cs)*scale
-        ]);
-        for(const k of [1,2]){
-          const q=points[k];
-          colisores.push({x:q[0],z:q[2],raio:Math.max(.55,root.radius*scale*.78)});
-        }
-      }
-    }
-  });
-  imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
-  if(imC.instanceColor)imC.instanceColor.needsUpdate=true;
-  scene.add(imT,imB,imC);
-});
+instanciarArvoresEmSetores(VARIANTES_COPA_ALTA,gruposCopa,TREE_RENDER_CONFIG);
 
 const SECUNDARIAS = [];
 for (let i = 0; i < 950; i++) {
@@ -366,39 +372,7 @@ const VARIANTES_SEC = [criarSecundariaGeo(1), criarSecundariaGeo(77), criarSecun
 const gruposSec = VARIANTES_SEC.map(() => []);
 for (const s of SECUNDARIAS) gruposSec[Math.floor(Math.random()*VARIANTES_SEC.length)].push(s);
 
-VARIANTES_SEC.forEach((variante, vi) => {
-  const lista = gruposSec[vi];
-  if (lista.length === 0) return;
-  const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
-  const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
-  const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
-  imT.castShadow=false;imT.receiveShadow=true;imB.castShadow=false;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
-  const dummy=new THREE.Object3D();
-  lista.forEach((s,i)=>{
-    const baseY=alturaTerreno(s.x,s.z),rotation=Math.random()*Math.PI*2;
-    dummy.position.set(s.x,baseY,s.z);dummy.rotation.y=rotation;
-    const scale=.92+Math.random()*.18,scaleY=scale*1.05;dummy.scale.set(scale*1.18,scaleY,scale*1.18);dummy.updateMatrix();
-    imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(.255+Math.random()*.055,.38+Math.random()*.16,.34+Math.random()*.11));
-    colisores.push({x:s.x,z:s.z,raio:variante.raioBase*scale*1.18+.65});
-    if(Math.hypot(s.x,s.z)<700){
-      const cs=Math.cos(rotation),sn=Math.sin(rotation);
-      for(let ri=0;ri<variante.raizes.length;ri+=3){
-        const root=variante.raizes[ri],points=root.points.map(v=>[
-          s.x+(v[0]*cs+v[2]*sn)*scale,
-          baseY+v[1]*scaleY,
-          s.z+(-v[0]*sn+v[2]*cs)*scale
-        ]);
-        for(const k of [1,2]){
-          const q=points[k];
-          colisores.push({x:q[0],z:q[2],raio:Math.max(.42,root.radius*scale*.72)});
-        }
-      }
-    }
-  });
-  imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
-  if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
-});
+instanciarArvoresEmSetores(VARIANTES_SEC,gruposSec,SAPLING_RENDER_CONFIG);
 
 // ============================================================================
 // 15. VEGETAÇÃO RASTEIRA
