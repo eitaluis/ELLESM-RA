@@ -19,6 +19,10 @@ const RESIDENCE_LAMP_GLOW=new THREE.MeshBasicMaterial({color:0xffbf63});
 const RESIDENCE_WOVEN_MAT=new THREE.MeshStandardMaterial({color:0x93856b,roughness:1,side:THREE.DoubleSide,transparent:true,opacity:.78,depthWrite:false});
 const RESIDENCE_FIBER_MAT=new THREE.MeshStandardMaterial({color:0xc1a982,roughness:1,side:THREE.DoubleSide});
 const CANOPY_DECK_MAT=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x927b59,roughness:.97,side:THREE.DoubleSide});
+const HOME_LINEN_MAT=new THREE.MeshStandardMaterial({color:0x9a9b79,roughness:1});
+const HOME_CUSHION_MAT=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
+const HOME_CERAMIC_MAT=new THREE.MeshStandardMaterial({color:0x7d8a78,roughness:.72});
+const HOME_DARK_WOOD_MAT=new THREE.MeshStandardMaterial({color:0x483521,roughness:.96});
 
 const ARCH_TUBE_BUCKETS=new Map();
 const ELEVATED_WALKS=[];
@@ -389,6 +393,64 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false,trunkHei
     addOrganicTube(parent,ringPoints(wallRadius,wallTop),.25*scale,.18*scale,woodMat,7,72,.06);
   }
   addEnclosedStory(floorY,lowerOuter,4.8);addEnclosedStory(upperY,upperOuter,4.35);
+
+  // Interiores habitados: mobiliário encostado ao anel de piso, preservando
+  // a circulação entre a porta, a escada e o tronco vivo central.
+  function addInteriorFurniture(baseY,upper=false){
+    if(!upper){
+      const tx=10.0*scale,tz=-1.1*scale;
+      const rug=new THREE.Mesh(new THREE.CircleGeometry(1.75*scale,36),HOME_CUSHION_MAT);
+      rug.rotation.x=-Math.PI/2;rug.position.set(tx,baseY+.085*scale,tz);house.add(rug);
+      const top=new THREE.Mesh(new THREE.CylinderGeometry(1.28*scale,1.36*scale,.22*scale,20),woodMat);
+      top.position.set(tx,baseY+1.12*scale,tz);top.castShadow=true;house.add(top);
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(.22*scale,.34*scale,.95*scale,10),HOME_DARK_WOOD_MAT);
+      stem.position.set(tx,baseY+.55*scale,tz);house.add(stem);
+      for(let k=0;k<3;k++){
+        const a=k*Math.PI*2/3;
+        const leg=new THREE.Mesh(new THREE.CylinderGeometry(.09*scale,.15*scale,.9*scale,7),woodMat);
+        leg.position.set(tx+Math.cos(a)*.88*scale,baseY+.55*scale,tz+Math.sin(a)*.88*scale);house.add(leg);
+        const sx=tx+Math.cos(a)*2.05*scale,sz=tz+Math.sin(a)*2.05*scale;
+        const stool=new THREE.Mesh(new THREE.CylinderGeometry(.48*scale,.55*scale,.26*scale,12),HOME_CUSHION_MAT);
+        stool.position.set(sx,baseY+.55*scale,sz);stool.castShadow=true;house.add(stool);
+        const stoolLeg=new THREE.Mesh(new THREE.CylinderGeometry(.12*scale,.16*scale,.55*scale,7),woodMat);
+        stoolLeg.position.set(sx,baseY+.28*scale,sz);house.add(stoolLeg);
+      }
+      const bowl=new THREE.Mesh(new THREE.SphereGeometry(.36*scale,14,8,0,Math.PI*2,0,Math.PI*.48),HOME_CERAMIC_MAT);
+      bowl.position.set(tx,baseY+1.28*scale,tz);house.add(bowl);
+      const shelf=new THREE.Group();shelf.position.set(-10.85*scale,baseY+.1*scale,-.8*scale);shelf.rotation.y=.08;house.add(shelf);
+      const uprights=new THREE.BoxGeometry(.16*scale,2.65*scale,.18*scale);
+      for(const side of [-1,1]){const post=new THREE.Mesh(uprights,HOME_DARK_WOOD_MAT);post.position.set(0,1.32*scale,side*1.28*scale);shelf.add(post);}
+      for(let level=0;level<4;level++){
+        const plank=new THREE.Mesh(new THREE.BoxGeometry(.7*scale,.12*scale,2.75*scale),woodMat);
+        plank.position.set(.12*scale,.34*scale+level*.72*scale,0);shelf.add(plank);
+        for(let book=0;book<3;book++){
+          const volume=new THREE.Mesh(new THREE.BoxGeometry(.20*scale,.42*scale,.48*scale),
+            book%2?HOME_CUSHION_MAT:HOME_LINEN_MAT);
+          volume.position.set(.05*scale,.62*scale+level*.72*scale,(book-1)*.72*scale);shelf.add(volume);
+        }
+      }
+    }else{
+      const bx=-8.62*scale,bz=-.35*scale;
+      const bedBase=new THREE.Mesh(new THREE.BoxGeometry(2.9*scale,.42*scale,1.9*scale),HOME_DARK_WOOD_MAT);
+      bedBase.position.set(bx,baseY+.32*scale,bz);bedBase.castShadow=true;house.add(bedBase);
+      const mattress=new THREE.Mesh(new THREE.BoxGeometry(2.72*scale,.28*scale,1.78*scale),HOME_LINEN_MAT);
+      mattress.position.set(bx,baseY+.66*scale,bz);house.add(mattress);
+      const blanket=new THREE.Mesh(new THREE.BoxGeometry(1.72*scale,.13*scale,1.82*scale),HOME_CUSHION_MAT);
+      blanket.position.set(bx+.42*scale,baseY+.84*scale,bz);house.add(blanket);
+      const pillow=new THREE.Mesh(new THREE.BoxGeometry(.72*scale,.18*scale,.92*scale),HOME_LINEN_MAT);
+      pillow.position.set(bx-1.02*scale,baseY+.87*scale,bz);house.add(pillow);
+      const headboard=new THREE.Mesh(new THREE.BoxGeometry(.18*scale,1.3*scale,2.05*scale),woodMat);
+      headboard.position.set(bx-1.48*scale,baseY+.78*scale,bz);house.add(headboard);
+      const chest=new THREE.Mesh(new THREE.BoxGeometry(1.65*scale,.92*scale,1.05*scale),HOME_DARK_WOOD_MAT);
+      chest.position.set(8.45*scale,baseY+.52*scale,-.65*scale);chest.castShadow=true;house.add(chest);
+      const lid=new THREE.Mesh(new THREE.BoxGeometry(1.72*scale,.16*scale,1.12*scale),paleWood);
+      lid.position.set(8.45*scale,baseY+1.04*scale,-.65*scale);house.add(lid);
+      const stool=new THREE.Mesh(new THREE.BoxGeometry(1.25*scale,.5*scale,.85*scale),HOME_CUSHION_MAT);
+      stool.position.set(8.55*scale,baseY+.33*scale,2.0*scale);house.add(stool);
+    }
+  }
+  addInteriorFurniture(floorY,false);
+  addInteriorFurniture(upperY,true);
   for(let i=0;i<8;i++){
     const a=i/8*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a);
     addOrganicTube(parent,[[x+ca*upperOuter,upperY+4.02*scale,z+sa*upperOuter],
@@ -872,26 +934,86 @@ function buildWillowBower(parent,x,y,z){
   // Sem frutos esféricos artificiais pendurados no caramanchão.
 }
 function buildStable(parent,x,y,z){
-  // Três baias sob ramos arqueados; sem paredes ou telhados separados.
+  // Três baias vivas, com comedouros, água, feno e arreios pendurados.
+  const troughMat=new THREE.MeshStandardMaterial({color:0x5a432d,roughness:.98});
+  const hayMat=new THREE.MeshStandardMaterial({color:0xb39a5d,roughness:1});
   for(let i=-1;i<=1;i++){
     const px=x+i*5.5;
     addLivingTrunk(parent,px,y,z-4,8,.6,i*.3,-.6);
     addLivingTrunk(parent,px,y,z+4,8,.6,-i*.3,.6);
     addOrganicTube(parent,[[px,y+7,z-4],[px,y+10,z],[px,y+7,z+4]],.38,.12,woodMat,7,18,.12);
-    // Divisórias vivas e portais abertos para cada baia.
     addOrganicTube(parent,[[px-2.2,y,z],[px-2.4,y+2.3,z+1],[px-2.1,y+3.5,z]],.13,.05,paleWood,6,9,.07);
     addOrganicTube(parent,[[px+2.2,y,z],[px+2.4,y+2.3,z+1],[px+2.1,y+3.5,z]],.13,.05,paleWood,6,9,.07);
     addOrganicTube(parent,[[px-2.1,y,z+4.1],[px-1.2,y+3.0,z+4.2],[px,y+3.6,z+4.2],[px+1.2,y+3.0,z+4.2],[px+2.1,y,z+4.1]],.18,.10,paleWood,7,16,.08);
+    // Cocho baixo: bordas de madeira e interior escuro, sem caixas flutuantes.
+    const trough=new THREE.Mesh(new THREE.BoxGeometry(3.25,.72,.92),troughMat);
+    trough.position.set(px,y+.52,z+2.25);parent.add(trough);
+    const water=new THREE.Mesh(new THREE.BoxGeometry(2.78,.06,.55),HOME_CERAMIC_MAT);
+    water.position.set(px,y+.90,z+2.25);parent.add(water);
+    for(const side of [-1,1]){
+      const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.56,.18),woodMat);
+      leg.position.set(px+side*1.2,y+.25,z+2.25);parent.add(leg);
+    }
+    const hay=new THREE.Mesh(new THREE.ConeGeometry(1.1,1.35,8),hayMat);
+    hay.position.set(px-1.25,y+.85,z-1.75);hay.rotation.z=.28;parent.add(hay);
+    for(let strand=0;strand<8;strand++){
+      const a=strand/8*Math.PI*2;
+      addOrganicTube(parent,[[px-1.25+Math.cos(a)*.3,y+.35,z-1.75+Math.sin(a)*.3],
+        [px-1.25+Math.cos(a)*.85,y+.75+Math.sin(a)*.12,z-1.75+Math.sin(a)*.85]],.045,.018,hayMat,4,5,.02);
+    }
+    // Argolas e correias de sela no pilar frontal de cada baia.
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.34,.07,7,16),paleWood);
+    ring.position.set(px+1.8,y+2.35,z+3.92);ring.rotation.x=Math.PI/2;parent.add(ring);
+    const strap=new THREE.Mesh(new THREE.BoxGeometry(.10,1.15,.10),HOME_DARK_WOOD_MAT);
+    strap.position.set(px+1.8,y+1.62,z+3.85);parent.add(strap);
     registerWalkablePath([[px,y+.05,z+6],[px,y+.05,z+2],[px,y+.05,z]],2.7);
   }
 }
 function buildTraining(parent,x,y,z){
-  // Clareira de terra batida: nada de arena circular ou paliçada.
-  const floor=addOval(parent,x,y+.01,z,25,.05,24,new THREE.MeshStandardMaterial({color:0x554631,roughness:1}),32);
+  // Clareira de treino em terra, com alvos, bonecos e suporte de armas — sem arena rígida.
+  addOval(parent,x,y+.01,z,25,.05,24,new THREE.MeshStandardMaterial({color:0x554631,roughness:1}),32);
+  const targetWood=new THREE.MeshStandardMaterial({color:0x80613e,roughness:.98});
+  const targetDark=new THREE.MeshStandardMaterial({color:0x30291f,roughness:1});
+  const targetLight=new THREE.MeshStandardMaterial({color:0xb69b69,roughness:1});
   for(let i=0;i<5;i++){
-    const a=i/5*Math.PI*2,px=x+Math.cos(a)*17,pz=z+Math.sin(a)*17;
-    addLivingTrunk(parent,px,y,pz,5,.24,Math.cos(a)*.8,Math.sin(a)*.8);
-    addOrganicTube(parent,[[px-1.3,y+3.2,pz],[px,y+3.6,pz],[px+1.3,y+3.2,pz]],.13,.08,woodMat,6,9,.05);
+    const a=i/5*Math.PI*2,px=x+Math.cos(a)*18,pz=z+Math.sin(a)*18;
+    addLivingTrunk(parent,px,y,pz,7,.34,Math.cos(a)*.8,Math.sin(a)*.8);
+    addOrganicTube(parent,[[px-1.3,y+5.0,pz],[px,y+5.4,pz],[px+1.3,y+5.0,pz]],.15,.08,woodMat,6,9,.05);
+  }
+  // Três alvos de madeira voltados ao centro da clareira.
+  for(let i=0;i<3;i++){
+    const tx=x+(i-1)*7.5,tz=z-18.5,ty=y+3.6;
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(4.2,5.5,.42),targetWood);
+    frame.position.set(tx,ty,tz);parent.add(frame);
+    const target=new THREE.Mesh(new THREE.CircleGeometry(1.42,32),targetLight);
+    target.position.set(tx,ty+.25,tz+.23);parent.add(target);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(.76,.96,32),targetDark);
+    ring.position.set(tx,ty+.25,tz+.25);parent.add(ring);
+    const bull=new THREE.Mesh(new THREE.CircleGeometry(.38,24),dwellingGlassMat);
+    bull.position.set(tx,ty+.25,tz+.27);parent.add(bull);
+    addOrganicTube(parent,[[tx-2.4,y+.2,tz],[tx-2.5,y+5.4,tz],
+      [tx,y+6.1,tz],[tx+2.5,y+5.4,tz],[tx+2.4,y+.2,tz]],.18,.08,paleWood,6,20,.06);
+  }
+  // Bonecos de palha e armação de madeira para espadas de treino.
+  for(let i=0;i<2;i++){
+    const dx=i===0?-13:13,dummyX=x+dx,dummyZ=z+4;
+    addLivingTrunk(parent,dummyX,y,dummyZ,6,.52,dx>0?-.5:.5,0,woodMat);
+    const torso=new THREE.Mesh(new THREE.CylinderGeometry(.46,.62,2.6,8),HOME_LINEN_MAT);
+    torso.position.set(dummyX,y+3.25,dummyZ);parent.add(torso);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.52,10,8),targetWood);
+    head.position.set(dummyX,y+4.9,dummyZ);parent.add(head);
+    addOrganicTube(parent,[[dummyX-1.9,y+4.0,dummyZ],[dummyX,y+3.9,dummyZ+.2],
+      [dummyX+1.9,y+4.0,dummyZ]],.22,.12,targetWood,7,12,.08);
+  }
+  const rackX=x-20,rackZ=z+2;
+  addLivingTrunk(parent,rackX,y,rackZ,4.7,.36,.2,0,woodMat);
+  addLivingTrunk(parent,rackX+5,y,rackZ,4.7,.36,-.2,0,woodMat);
+  addOrganicTube(parent,[[rackX,y+3.4,rackZ],[rackX+2.5,y+3.4,rackZ+.1],[rackX+5,y+3.4,rackZ]],.30,.18,paleWood,7,14,.06);
+  for(let i=0;i<4;i++){
+    const sx=rackX+.85+i*1.0,blade=new THREE.Mesh(new THREE.BoxGeometry(.10,1.7,.16),targetDark);
+    blade.position.set(sx,y+2.55,rackZ+.08);blade.rotation.z=(i-1.5)*.09;parent.add(blade);
+    const grip=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.42,7),HOME_DARK_WOOD_MAT);
+    grip.position.set(sx,y+1.48,rackZ+.08);parent.add(grip);
   }
 }
 function buildCabin(parent,x,y,z){
@@ -930,15 +1052,36 @@ function buildCabin(parent,x,y,z){
   const stream=new THREE.Mesh(streamGeo,streamMat);stream.receiveShadow=true;parent.add(stream);
 }
 function buildBanquet(parent,x,y,z){
-  // Colina e assentos feitos de raízes; mesas são temporárias, não um edifício.
-  for(let i=0;i<5;i++){
-    const a=i/5*Math.PI*2,px=x+Math.cos(a)*8,pz=z+Math.sin(a)*7;
-    addOrganicTube(parent,[[px-3,y+1,pz],[px,y+1.3,pz+1],[px+3,y+1,pz]],.6,.42,woodMat,8,12,.12);
+  // Refeitório aberto: mesa comunal esculpida, bancos-raiz e pequenas peças de serviço.
+  const tableTop=addOval(parent,x,y+1.32,z,6.2,.42,3.25,woodMat,36);
+  addOrganicTube(parent,[[x-3.8,y+.98,z],[x-2.2,y+.44,z],[x,y+.34,z],
+    [x+2.2,y+.44,z],[x+3.8,y+.98,z]],.72,.34,woodMat,9,24,.12);
+  addOrganicTube(parent,[[x,y+.35,z-2.0],[x,y+.35,z+2.0]],.34,.20,paleWood,7,12,.08);
+  const seatMat=new THREE.MeshStandardMaterial({color:0x736047,roughness:.98});
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2,px=x+Math.cos(a)*13.0,pz=z+Math.sin(a)*10.2;
+    const tangent=a+Math.PI/2;
+    const bench=addOval(parent,px,y+.72,pz,4.1,.48,1.05,seatMat,24);bench.rotation.y=-tangent;
+    for(const side of [-1,1]){
+      addOrganicTube(parent,[[px+Math.cos(tangent)*side*1.3,y+.45,pz+Math.sin(tangent)*side*1.3],
+        [px+Math.cos(tangent)*side*1.1,y+.12,pz+Math.sin(tangent)*side*1.1]],.22,.14,woodMat,6,8,.06);
+    }
   }
-  const rootSeat=addOval(parent,x,y+.7,z,7,.6,5,woodMat,18);
+  const platter=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.12,.15,18),HOME_CERAMIC_MAT);
+  platter.position.set(x,y+1.83,z-.35);parent.add(platter);
   for(let i=0;i<7;i++){
-    const a=i/7*Math.PI*2;
-    addOrganicTube(parent,[[x+Math.cos(a)*4,y+1,z+Math.sin(a)*4],[x+Math.cos(a)*7,y+1.4,z+Math.sin(a)*6],[x+Math.cos(a)*10,y+.2,z+Math.sin(a)*9]],.6,.07,paleWood,7,18,.12);
+    const a=i/7*Math.PI*2,fruit=new THREE.Mesh(new THREE.SphereGeometry(.28+Math.random()*.10,10,8),
+      i%2?HOME_LINEN_MAT:dwellingGlassMat);
+    fruit.position.set(x+Math.cos(a)*.56,y+2.08,z-.35+Math.sin(a)*.56);parent.add(fruit);
+  }
+  for(let side of [-1,1]){
+    const vessel=new THREE.Mesh(new THREE.CylinderGeometry(.22,.28,.52,10),HOME_CERAMIC_MAT);
+    vessel.position.set(x+side*3.6,y+1.72,z+.2);parent.add(vessel);
+  }
+  for(let i=0;i<5;i++){
+    const a=i/5*Math.PI*2,px=x+Math.cos(a)*17,pz=z+Math.sin(a)*15;
+    addOrganicTube(parent,[[px,y+.15,pz],[px+Math.cos(a)*2.5,y+1.6,pz+Math.sin(a)*2.5],
+      [px+Math.cos(a+1.0)*2.2,y+2.6,pz+Math.sin(a+1.0)*2.2]],.22,.055,paleWood,6,14,.10);
   }
 }
 function buildCrags(parent,x,y,z){
