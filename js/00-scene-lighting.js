@@ -96,7 +96,7 @@ const PONTOS = [
   { nome: 'Árvore Menoa',                 x: -380, z:  520, raio: 120, cor: 0xb0e0b0 },
   { nome: 'Salão de Tialdarí (entrada)',  x: -600, z:   60, raio:  90, cor: 0xe0b0e0 },
   { nome: 'Colina dos Crags (topo)',      x:-1100, z:    0, raio:  40, cor: 0xe0e0e0 },
-  { nome: 'Borda do penhasco',            x:-1150, z:    0, raio:   0, cor: 0xffffff },
+  { nome: 'Mirante da borda do penhasco', x:-1104, z:    0, raio:   0, cor: 0xffffff },
   { nome: 'Cabana de Oromis',             x:-1130, z: 1200, raio:  30, cor: 0xa0b090 },
   { nome: 'Clareira do toco branco',      x:-1050, z: 1230, raio:  20, cor: 0xffffff },
 ];
