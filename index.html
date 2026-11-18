@@ -685,33 +685,49 @@ VARIANTES_SEC.forEach((variante, vi) => {
 // ============================================================================
 // 15. VEGETAÇÃO RASTEIRA
 // ============================================================================
-function criarSamambaiaGeo() {
-  const g = new THREE.BufferGeometry();
-  const pos = [];
-  for (let f = 0; f < 7; f++) {
-    const ang = (f/7)*Math.PI*2;
-    const h = 0.6 + Math.random()*0.7;
-    const w = 0.35 + Math.random()*0.25;
-    const cx = Math.cos(ang), cz = Math.sin(ang);
-    pos.push(0,0,0);
-    pos.push(cx*w*0.5, h*0.35, cz*w*0.5);
-    pos.push(cx*w, h*0.75, cz*w);
-    pos.push(cx*0.3, h, cz*0.3);
+function criarSamambaiaGeo(){
+  const pos=[],idx=[];
+  function blade(p,dir,len,w){
+    const d=new THREE.Vector3(...dir).normalize(),ref=Math.abs(d.y)>.8?new THREE.Vector3(1,0,0):new THREE.Vector3(0,1,0);
+    const side=new THREE.Vector3().crossVectors(d,ref).normalize().multiplyScalar(w),mid=new THREE.Vector3(...p).addScaledVector(d,.55*len),tip=new THREE.Vector3(...p).addScaledVector(d,len),n=pos.length/3;
+    pos.push(p[0],p[1],p[2],mid.x+side.x,mid.y+side.y,mid.z+side.z,tip.x,tip.y,tip.z,mid.x-side.x,mid.y-side.y,mid.z-side.z);
+    idx.push(n,n+1,n+2,n,n+2,n+3);
   }
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.computeVertexNormals();
-  return g;
+  // Frondes curvas; cada eixo tem dezenas de folíolos laterais.
+  for(let f=0;f<9;f++){
+    const a=f/9*Math.PI*2,dx=Math.cos(a),dz=Math.sin(a),len=.95+Math.random()*.72,h=.82+Math.random()*.55;
+    const stem=[];
+    for(let j=0;j<=7;j++){const t=j/7;stem.push([dx*len*t,h*(Math.sin(t*Math.PI*.78)*.72+t*.22),dz*len*t]);}
+    for(let j=0;j<7;j++){
+      const A=new THREE.Vector3(...stem[j]),B=new THREE.Vector3(...stem[j+1]),side=new THREE.Vector3(-dz,0,dx).normalize().multiplyScalar(.026),n=pos.length/3;
+      pos.push(A.x+side.x,A.y,A.z+side.z,A.x-side.x,A.y,A.z-side.z,B.x+side.x,B.y,B.z+side.z,B.x-side.x,B.y,B.z-side.z);
+      idx.push(n,n+2,n+1,n+1,n+2,n+3);
+    }
+    for(let j=1;j<=11;j++){
+      const t=j/12,p=[dx*len*t,h*(Math.sin(t*Math.PI*.78)*.72+t*.22),dz*len*t],spread=.5*(1-t)+.12;
+      for(const sign of [-1,1])blade(p,[dx*.28-dz*sign*.92,-.15+(.12*(1-t)),dz*.28+dx*sign*.92],spread,.075*(1-t*.4));
+    }
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-function criarArbustoGeo() {
-  const g = new THREE.IcosahedronGeometry(0.7, 2);
-  const p = g.attributes.position;
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    const n = 1 + (fbm(x*1.5, z*1.5, 3)-0.5)*0.7 + (fbm(y*2, x*2, 2)-0.5)*0.4;
-    p.setXYZ(i, x*n, y*n*0.7, z*n);
+function criarArbustoGeo(){
+  const pos=[],idx=[];
+  function blade(p,dir,len,w){
+    const d=new THREE.Vector3(...dir).normalize(),ref=Math.abs(d.y)>.8?new THREE.Vector3(1,0,0):new THREE.Vector3(0,1,0);
+    const side=new THREE.Vector3().crossVectors(d,ref).normalize().multiplyScalar(w),mid=new THREE.Vector3(...p).addScaledVector(d,len*.5),tip=new THREE.Vector3(...p).addScaledVector(d,len),n=pos.length/3;
+    pos.push(p[0],p[1],p[2],mid.x+side.x,mid.y+side.y,mid.z+side.z,tip.x,tip.y,tip.z,mid.x-side.x,mid.y-side.y,mid.z-side.z);
+    idx.push(n,n+1,n+2,n,n+2,n+3);
   }
-  g.computeVertexNormals();
-  return g;
+  for(let s=0;s<15;s++){
+    const a=s/15*Math.PI*2,dx=Math.cos(a),dz=Math.sin(a),h=.7+Math.random()*.95,r=.35+Math.random()*.55;
+    const base=[0,0,0],mid=[dx*r*.5,h*.48,dz*r*.5],tip=[dx*r,h,dz*r];
+    blade(mid,[dx*.5,.55,dz*.5],.34,.07);
+    for(let k=0;k<5;k++){
+      const t=.22+k*.14,p=[dx*r*t,h*(.34+t*.54),dz*r*t],side=k%2?1:-1;
+      blade(p,[dx*.18-dz*side*.92,.22,dz*.18+dx*side*.92],.2+Math.random()*.22,.045);
+    }
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
 function criarPedraGeo() {
   const g = new THREE.DodecahedronGeometry(0.5, 1);
@@ -725,55 +741,62 @@ function criarPedraGeo() {
   return g;
 }
 
-function distribuirRasteira(geo, material, count, minH, maxH, raioColisao = 0) {
-  const lista = [];
-  for (let i = 0; i < count; i++) {
-    const x = (Math.random()-0.5) * 2900;
-    const z = (Math.random()-0.5) * 2900;
-    if (Math.abs(x) > 1450 || Math.abs(z) > 1450) continue;
-    const marg = 2 + Math.random()*3;
-    if (emClareira(x, z, marg)) continue;
-    if (distanciaCaminhos(x, z) < 1.5) continue;
-    if (Math.hypot(x + 380, z - 520) < 60) continue;
-    lista.push({ x, z, s: minH + Math.random()*(maxH-minH), r: Math.random()*Math.PI*2 });
+function distribuirRasteira(geo,material,count,minH,maxH,raioColisao=0){
+  const lista=[];let tentativas=0;
+  while(lista.length<count && tentativas<count*5){
+    tentativas++;
+    const cx=(Math.random()-.5)*2900,cz=(Math.random()-.5)*2900;
+    if(emClareira(cx,cz,3)||distanciaCaminhos(cx,cz)<2||Math.hypot(cx+380,cz-520)<60)continue;
+    const densidade=8+Math.floor(Math.random()*16),raio=4+Math.random()*12;
+    for(let j=0;j<densidade && lista.length<count;j++){
+      const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*raio,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+      if(emClareira(x,z,2)||distanciaCaminhos(x,z)<1.7)continue;
+      lista.push({x,z,s:minH+Math.random()*(maxH-minH),r:Math.random()*Math.PI*2});
+    }
   }
-  if (lista.length === 0) return;
-  const im = new THREE.InstancedMesh(geo, material, lista.length);
-  im.castShadow = true; im.receiveShadow = true;
-  const dummy = new THREE.Object3D();
-  lista.forEach((o, i) => {
-    dummy.position.set(o.x, alturaTerreno(o.x, o.z), o.z);
-    dummy.rotation.y = o.r;
-    dummy.scale.setScalar(o.s);
-    dummy.updateMatrix();
-    im.setMatrixAt(i, dummy.matrix);
-    if (raioColisao > 0) colisores.push({ x: o.x, z: o.z, raio: raioColisao });
-  });
-  im.instanceMatrix.needsUpdate = true;
-  scene.add(im);
+  if(!lista.length)return;
+  const im=new THREE.InstancedMesh(geo,material,lista.length);im.castShadow=true;im.receiveShadow=true;
+  const dummy=new THREE.Object3D();
+  lista.forEach((o,i)=>{dummy.position.set(o.x,alturaTerreno(o.x,o.z),o.z);dummy.rotation.y=o.r;dummy.scale.setScalar(o.s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);if(raioColisao>0)colisores.push({x:o.x,z:o.z,raio:raioColisao});});
+  im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-
 distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 3600, 0.8, 2.25);
 distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 2100, 0.7, 1.9, 0.8);
 distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 350, 0.6, 1.6, 0.7);
 
 // CAMADA EXTRA DE FLORESTA — vegetação de transição, troncos caídos e musgo.
 function criarLogGeo(){
-  const g=new THREE.CylinderGeometry(0.32,0.48,1,9,5);g.rotateZ(Math.PI/2);
+  const g=new THREE.CylinderGeometry(0.42,0.66,1,14,12);g.rotateZ(Math.PI/2);
   const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i);p.setY(i,p.getY(i)*(1+Math.sin(x*9)*0.06));p.setZ(i,p.getZ(i)*(1+Math.cos(x*7)*0.08));}g.computeVertexNormals();return g;
 }
 const logGeo=criarLogGeo(), logMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x5a4938,roughness:1});
 const logs=[];
-for(let i=0;i<280;i++){
+for(let i=0;i<420;i++){
   const x=(Math.random()-0.5)*2850,z=(Math.random()-0.5)*2850;
   if(emClareira(x,z,4)||distanciaCaminhos(x,z)<3||Math.hypot(x+380,z-520)<155)continue;
-  logs.push({x,z,len:3+Math.random()*11,rot:Math.random()*Math.PI});
+  logs.push({x,z,len:5+Math.random()*15,rot:Math.random()*Math.PI,thick:.75+Math.random()*.8});
 }
-if(logs.length){const im=new THREE.InstancedMesh(logGeo,logMat,logs.length);im.castShadow=true;im.receiveShadow=true;const d=new THREE.Object3D();logs.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.35,o.z);d.rotation.set(0,o.rot,Math.random()*0.18);d.scale.set(o.len,0.8+Math.random()*0.5,0.8+Math.random()*0.5);d.updateMatrix();im.setMatrixAt(i,d.matrix);});im.instanceMatrix.needsUpdate=true;scene.add(im);}
+if(logs.length){const im=new THREE.InstancedMesh(logGeo,logMat,logs.length);im.castShadow=true;im.receiveShadow=true;const d=new THREE.Object3D();logs.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.35,o.z);d.rotation.set(0,o.rot,Math.random()*0.18);d.scale.set(o.len,o.thick,o.thick);d.updateMatrix();im.setMatrixAt(i,d.matrix);});im.instanceMatrix.needsUpdate=true;scene.add(im);}
 // Musgo/rosetas pequenas em manchas, em vez de distribuição uniforme de props.
-const mossGeo=new THREE.IcosahedronGeometry(0.45,1), mossMat=new THREE.MeshStandardMaterial({color:0x536b35,roughness:1});
-const moss=[];for(let patch=0;patch<650;patch++){const x=(Math.random()-0.5)*2850,z=(Math.random()-0.5)*2850;if(emClareira(x,z,2)||distanciaCaminhos(x,z)<2||Math.hypot(x+380,z-520)<150)continue;const n=2+Math.floor(Math.random()*5);for(let j=0;j<n;j++)moss.push({x:x+(Math.random()-0.5)*3,z:z+(Math.random()-0.5)*3,s:0.25+Math.random()*0.8});}
-if(moss.length){const im=new THREE.InstancedMesh(mossGeo,mossMat,moss.length);im.receiveShadow=true;const d=new THREE.Object3D();moss.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.13,o.z);d.scale.set(o.s,o.s*0.32,o.s);d.rotation.y=Math.random()*6.28;d.updateMatrix();im.setMatrixAt(i,d.matrix);});im.instanceMatrix.needsUpdate=true;scene.add(im);}
+const mossGeo=new THREE.BufferGeometry();
+{
+  const p=[0,.012,0],idx=[],n=18,phase=Math.random()*Math.PI*2;
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,r=.78+.17*Math.sin(a*3+phase)+.08*Math.sin(a*7);p.push(Math.cos(a)*r,.008+Math.random()*.015,Math.sin(a)*r);}
+  for(let i=0;i<n;i++)idx.push(0,i+1,(i+1)%n+1);
+  mossGeo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));mossGeo.setIndex(idx);mossGeo.computeVertexNormals();
+}
+const mossMat=new THREE.MeshStandardMaterial({color:0x465b2e,roughness:1,side:THREE.DoubleSide});
+const moss=[];
+for(let patch=0;patch<950;patch++){
+  const x=(Math.random()-.5)*2850,z=(Math.random()-.5)*2850;
+  if(emClareira(x,z,2)||distanciaCaminhos(x,z)<2||Math.hypot(x+380,z-520)<150)continue;
+  moss.push({x,z,s:1.5+Math.random()*5.5});
+}
+if(moss.length){
+  const im=new THREE.InstancedMesh(mossGeo,mossMat,moss.length),d=new THREE.Object3D();
+  moss.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.035,o.z);d.rotation.y=Math.random()*6.28;d.scale.set(o.s,.7,o.s*(.6+Math.random()*.6));d.updateMatrix();im.setMatrixAt(i,d.matrix);});
+  im.instanceMatrix.needsUpdate=true;im.receiveShadow=true;scene.add(im);
+}
 
 // ============================================================================
 // 16. SUB-BOSQUE PROFUNDO + SOLO FLORESTAL ORGÂNICO
@@ -809,71 +832,27 @@ function scatterInstanced(geo,mat,count,scaleMin,scaleMax,excludeClearings=true)
 scatterInstanced(leafGeo,leafMatA,4200,0.65,1.8);
 scatterInstanced(leafGeo,leafMatB,2600,0.45,1.35);
 
-// Raízes expostas: tubos orgânicos baixos irradiando de árvores grandes.
-function makeRootGeo(){
-  const pts=[]; const rad=7, sides=7;
-  for(let j=0;j<=rad;j++){const t=j/rad;for(let k=0;k<sides;k++){const a=k/sides*Math.PI*2;const rr=(1-t)*.36+.035;pts.push(Math.cos(a)*rr, t, Math.sin(a)*rr);}}
-  const g=new THREE.BufferGeometry(), ids=[];g.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
-  for(let j=0;j<rad;j++)for(let k=0;k<sides;k++){const a=j*sides+k,b=j*sides+(k+1)%sides,c=(j+1)*sides+k,d=(j+1)*sides+(k+1)%sides;ids.push(a,c,b,b,c,d);}g.setIndex(ids);g.computeVertexNormals();return g;
-}
-const rootGeo=makeRootGeo(), rootMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x6b5943,roughness:1});
-const roots=[];
-for(let i=0;i<1350;i++){
- const x=(Math.random()-.5)*2800,z=(Math.random()-.5)*2800;if(emClareira(x,z,3)||distanciaCaminhos(x,z)<2.5)continue;
- const a=Math.random()*Math.PI*2;roots.push({x,z,a,l:2.5+Math.random()*8,s:.45+Math.random()*.9});
-}
-if(roots.length){const im=new THREE.InstancedMesh(rootGeo,rootMat,roots.length),d=new THREE.Object3D();im.castShadow=true;roots.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.02,o.z);d.rotation.set(0,o.a,Math.PI/2);d.scale.set(o.s,o.l,o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);});im.instanceMatrix.needsUpdate=true;scene.add(im);}
+// Raízes estruturais já fazem parte do tronco e se projetam pelo terreno.
 
-// Serapilheira: discos irregulares quase coplanares, com tons de folhas e terra.
-const litterMats=[0x594b32,0x66563a,0x3d4a2c,0x786342].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1,transparent:true,opacity:.72,side:THREE.DoubleSide}));
-const litterGeo=new THREE.CircleGeometry(1,9);
+// Serapilheira natural: pequenas agulhas, folhas secas e fragmentos de casca.
+const litterGeo=new THREE.BufferGeometry(),litterPos=[],litterIdx=[];
+for(let k=0;k<7;k++){
+  const a=k/7*Math.PI*2,w=.045+Math.random()*.045,len=.25+Math.random()*.42,n=litterPos.length/3;
+  litterPos.push(0,.012,0,Math.cos(a)*w,.02,Math.sin(a)*w,Math.cos(a)*len,.008,Math.sin(a)*len,-Math.sin(a)*w,.016,Math.cos(a)*w);
+  litterIdx.push(n,n+1,n+2,n,n+2,n+3);
+}
+litterGeo.setAttribute('position',new THREE.Float32BufferAttribute(litterPos,3));litterGeo.setIndex(litterIdx);litterGeo.computeVertexNormals();
+const litterMats=[0x55452f,0x756142,0x39452d,0x8a7650].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
 for(let m=0;m<litterMats.length;m++){
- const arr=[];for(let i=0;i<900;i++){const x=(Math.random()-.5)*2900,z=(Math.random()-.5)*2900;if(emClareira(x,z,1)||distanciaCaminhos(x,z)<1.5)continue;arr.push({x,z,s:1.2+Math.random()*5});}
- const im=new THREE.InstancedMesh(litterGeo,litterMats[m],arr.length),d=new THREE.Object3D();arr.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.018+m*.002,o.z);d.rotation.x=-Math.PI/2;d.rotation.z=Math.random()*Math.PI;d.scale.set(o.s,o.s*(.45+Math.random()*.5),1);d.updateMatrix();im.setMatrixAt(i,d.matrix);});im.instanceMatrix.needsUpdate=true;scene.add(im);
-}
-
-// ============================================================================
-// ============================================================================
- // MICRO-HABITATS: touceiras, pedras parcialmente enterradas e plantas em manchas.
- // ============================================================================
-const grassGeo=new THREE.BufferGeometry();
-{
-  const v=[],idx=[];
-  for(let blade=0;blade<3;blade++){
-    const a=blade*Math.PI/3,dx=Math.cos(a),dz=Math.sin(a),w=0.075+blade*0.012,h=0.48+blade*0.16,b=v.length/3;
-    v.push(-dx*w,0,-dz*w,dx*w,0,dz*w,dx*w*0.28,h,dz*w*0.28);idx.push(b,b+1,b+2);
+  const bits=[];
+  for(let i=0;i<11500;i++){
+    const x=(Math.random()-.5)*2900,z=(Math.random()-.5)*2900;
+    if(emClareira(x,z,1)||distanciaCaminhos(x,z)<1.4)continue;
+    bits.push({x,z,s:.45+Math.random()*1.5,r:Math.random()*Math.PI*2});
   }
-  grassGeo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));grassGeo.setIndex(idx);grassGeo.computeVertexNormals();
-}
-const grassMats=[0x52663a,0x71804a,0x3e5834].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
-for(let variant=0;variant<grassMats.length;variant++){
-  const patches=[];
-  for(let cluster=0;cluster<210;cluster++){
-    const cx=(Math.random()-.5)*2850,cz=(Math.random()-.5)*2850;
-    if(emClareira(cx,cz,4)||distanciaCaminhos(cx,cz)<3||Math.hypot(cx+380,cz-520)<155)continue;
-    const amount=18+Math.floor(Math.random()*28);
-    for(let j=0;j<amount;j++){
-      const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*(5+Math.random()*8),x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
-      if(emClareira(x,z,1)||distanciaCaminhos(x,z)<1.5)continue;
-      patches.push({x,z,s:.65+Math.random()*1.65,rot:Math.random()*Math.PI*2});
-    }
-  }
-  const im=new THREE.InstancedMesh(grassGeo,grassMats[variant],patches.length),d=new THREE.Object3D();
-  patches.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.025,o.z);d.rotation.set((Math.random()-.5)*.16,o.rot,(Math.random()-.5)*.16);d.scale.setScalar(o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
+  const im=new THREE.InstancedMesh(litterGeo,litterMats[m],bits.length),d=new THREE.Object3D();
+  bits.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.025,o.z);d.rotation.set((Math.random()-.5)*.08,o.r,(Math.random()-.5)*.08);d.scale.setScalar(o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
   im.instanceMatrix.needsUpdate=true;im.receiveShadow=true;scene.add(im);
-}
-const pebbleGeo=new THREE.DodecahedronGeometry(.42,1);
-const pebbleMat=new THREE.MeshStandardMaterial({map:TEX_PEDRA,color:0x77796d,roughness:1});
-const pebbles=[];
-for(let i=0;i<2100;i++){
-  const x=(Math.random()-.5)*2850,z=(Math.random()-.5)*2850;
-  if(emClareira(x,z,2)||distanciaCaminhos(x,z)<2||Math.hypot(x+380,z-520)<145)continue;
-  pebbles.push({x,z,s:.35+Math.random()*1.35,rot:Math.random()*6.28});
-}
-if(pebbles.length){
-  const im=new THREE.InstancedMesh(pebbleGeo,pebbleMat,pebbles.length),d=new THREE.Object3D();
-  pebbles.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+.08,o.z);d.rotation.set(Math.random()*.5,o.rot,Math.random()*.5);d.scale.set(o.s,o.s*(.45+Math.random()*.4),o.s*.8);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
-  im.instanceMatrix.needsUpdate=true;im.castShadow=true;im.receiveShadow=true;scene.add(im);
 }
 
 // 17. ARQUITETURA DE ELLESMÉRA — estruturas exploráveis nos pontos do mapa
