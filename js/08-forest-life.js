@@ -28,9 +28,9 @@ function criarAveFlorestal(){
   const head=new THREE.Mesh(new THREE.SphereGeometry(.105,9,7),LIFE_BIRD_MAT);
   head.position.set(0,.035,-.31);bird.add(head);
   const beak=new THREE.Mesh(new THREE.ConeGeometry(.045,.18,5),LIFE_BIRD_MAT);
-  beak.rotation.x=Math.PI/2;beak.position.set(0,.02,-.47);bird.add(beak);
+  beak.rotation.x=-Math.PI/2;beak.position.set(0,.02,-.47);bird.add(beak);
   const tail=new THREE.Mesh(new THREE.ConeGeometry(.075,.38,5),LIFE_BIRD_MAT);
-  tail.rotation.x=-Math.PI/2;tail.position.set(0,-.015,.36);bird.add(tail);
+  tail.rotation.x=Math.PI/2;tail.position.set(0,-.015,.36);bird.add(tail);
 
   const wingShape=new THREE.Shape();
   wingShape.moveTo(0,0);
