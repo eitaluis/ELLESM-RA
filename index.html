@@ -1662,7 +1662,7 @@ function buildSite(name,x,z,kind){
   else if(kind==='treehome')buildTreeDwelling(g,x,y,z);
   else if(kind==='arch')buildNaturalArchSite(g,x,y,z);
   else if(kind==='hexhouse')buildHexagonalResidence(g,x,y,z,1);
-  else if(kind==='fivehome')buildFiveStoreyResidence(g,x,y,z);
+  else if(kind==='fivehome')buildFiveStoreyResidence(g,x,y+10,z);
   else if(kind==='bower')buildWillowBower(g,x,y,z);
   else if(kind==='gilderien')buildGilderien(g,x,y,z);
   else if(kind==='crags')buildCrags(g,x,y,z);
@@ -1674,6 +1674,9 @@ const SITE_BUILDINGS=[
   ['Arco natural',450,-60,'arch'],
   ['Casa hexagonal',350,-18,'hexhouse'],
   ['Residência de cinco andares',305,-92,'fivehome'],
+  ['Casa da trilha norte',215,-82,'hexhouse'],
+  ['Casa da margem do riacho',165,-235,'hexhouse'],
+  ['Casa junto às copas',520,-142,'hexhouse'],
   ['Caramanchão de salgueiro e corniso',285,-116,'bower'],
   ['Salão do Trono',250,-40,'hall'],['Colina do banquete',120,70,'banquet'],
   ['Árvore dos Cavaleiros',0,0,'treehome'],['Estábulos',200,-160,'stable'],
@@ -1684,35 +1687,41 @@ const SITE_BUILDINGS=[
 ];
 for(const [n,x,z,k] of SITE_BUILDINGS)buildSite(n,x,z,k);
 criarCaminho([[200,-160],[245,-167],[300,-170],[355,-174],[410,-177],[470,-180]],2.3);
+criarCaminho([[200,-160],[180,-145],[165,-130],[155,-120]],1.9);
+criarCaminho([[-300,-200],[-220,-190],[-150,-175],[-110,-170],[-75,-165]],1.9);
+criarCaminho([[120,70],[80,55],[50,40],[20,18]],1.8);
 function buildCanopyTransit(){
   const g=new THREE.Group();scene.add(g);
-  const ax=410,az=-110,aFloor=alturaTerreno(ax,az)+18;
-  const bx=150,bz=-80,bFloor=alturaTerreno(bx,bz)+22;
-  const cx=-60,cz=-165,cFloor=alturaTerreno(cx,cz)+19;
+  // As casas suspensas ficam entre 45 e 53 m acima do solo: são vistas olhando para a copa.
+  const ax=410,az=-110,aFloor=alturaTerreno(ax,az)+45;
+  const bx=150,bz=-80,bFloor=alturaTerreno(bx,bz)+52;
+  const cx=-60,cz=-165,cFloor=alturaTerreno(cx,cz)+46;
   const homeA=buildCanopyResidence(g,ax,az,aFloor,0);
   const homeB=buildCanopyResidence(g,bx,bz,bFloor,1);
   const homeC=buildCanopyResidence(g,cx,cz,cFloor,2);
-  const hexLow=alturaTerreno(350,-18)+4-3.17,hexUpper=alturaTerreno(350,-18)+8.2-1.85;
-  const fiveLow=alturaTerreno(305,-92)+12-1.67;
+  const fiveTop=alturaTerreno(305,-92)+10+12+26-1.9*.54*.88;
   const riderFloor=alturaTerreno(0,0)+30-3.17;
-  const rampGround=alturaTerreno(470,-180);
-  addRootStair(g,470,rampGround,-184,9,4.6,1);
-  const rampStart=[470,rampGround+.2,-180];
-  buildLivingBridge(g,[rampStart,[451,alturaTerreno(451,-160)+5,-160],[432,alturaTerreno(432,-136)+11,-136],[homeA.x,aFloor,homeA.z]],4.8);
-  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[390,aFloor+1,-88],[367,hexUpper+1,-46],[350,hexUpper,-14]],4.0);
-  buildLivingBridge(g,[[350,hexUpper,-14],[334,hexUpper+1,-38],[320,fiveLow+1,-68],[305,fiveLow,-88]],4.0);
-  buildLivingBridge(g,[[305,fiveLow,-88],[265,fiveLow+3,-78],[210,bFloor+2,-78],[homeB.x,bFloor,homeB.z]],4.0);
-  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[95,bFloor-1,-95],[20,cFloor+1,-145],[homeC.x,cFloor,homeC.z]],4.0);
-  buildLivingBridge(g,[[homeC.x,cFloor,homeC.z],[-42,cFloor+2,-115],[-18,riderFloor+1,-45],[0,riderFloor,5.8]],4.0);
-  // Galhos estruturais brotam dos troncos e sustentam a passagem como arcobotantes.
-  for(const [x,z,yy] of [[410,-110,aFloor],[150,-80,bFloor],[-60,-165,cFloor],[350,-18,hexUpper],[305,-92,fiveLow],[0,0,riderFloor]]){
+  // Quatro torres de escadas de madeira viva dão acesso do chão ao nível superior.
+  const stairA=buildCanopyStairTower(g,470,-180,alturaTerreno(470,-180),aFloor,0);
+  const stairB=buildCanopyStairTower(g,155,-120,alturaTerreno(155,-120),bFloor,1);
+  const stairC=buildCanopyStairTower(g,-75,-165,alturaTerreno(-75,-165),cFloor,2);
+  const stairD=buildCanopyStairTower(g,20,18,alturaTerreno(20,18),riderFloor,3);
+  // Ligação em altura entre as escadas, a casa de cinco níveis e as residências nas copas.
+  buildLivingBridge(g,[[stairA.x,stairA.y,stairA.z],[450,aFloor+1,-150],[homeA.x,aFloor,homeA.z]],4.8);
+  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[380,aFloor+1,-99],[340,fiveTop+1,-91],[305,fiveTop,-88]],4.4);
+  buildLivingBridge(g,[[305,fiveTop,-88],[260,fiveTop+1,-83],[205,bFloor+1,-78],[homeB.x,bFloor,homeB.z]],4.4);
+  buildLivingBridge(g,[[stairB.x,stairB.y,stairB.z],[155,bFloor,homeB.z],[homeB.x,bFloor,homeB.z]],4.4);
+  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[95,bFloor-1,-96],[20,cFloor+1,-145],[homeC.x,cFloor,homeC.z]],4.4);
+  buildLivingBridge(g,[[stairC.x,stairC.y,stairC.z],[-67,cFloor,-157],[homeC.x,cFloor,homeC.z]],4.4);
+  buildLivingBridge(g,[[homeC.x,cFloor,homeC.z],[-42,cFloor-2,-115],[-18,riderFloor+1,-45],[2,riderFloor,6.2]],4.0);
+  buildLivingBridge(g,[[stairD.x,stairD.y,stairD.z],[12,riderFloor,18],[2,riderFloor,6.2]],3.8);
+  // As passarelas nascem em galhos de sustentação e se prendem aos troncos das casas.
+  for(const [x,z,yy] of [[410,-110,aFloor],[150,-80,bFloor],[-60,-165,cFloor],[0,0,riderFloor],[305,-92,fiveTop]]){
     const ground=alturaTerreno(x,z);
-    addLivingTrunk(g,x-7,ground,z-4,Math.max(40,yy-ground+28),1.65,1.0,.6,woodMat);
-    addLivingTrunk(g,x+8,ground,z+3,Math.max(42,yy-ground+30),1.8,-.8,-.5,woodMat);
-    addOrganicTube(g,[[x-7,yy+5,z-4],[x-2,yy+3,z],[x+8,yy+5,z+3]],.9,.28,woodMat,8,28,.14);
+    addLivingTrunk(g,x-9,ground,z-5,Math.max(58,yy-ground+25),2.0,1.4,.7,woodMat);
+    addLivingTrunk(g,x+9,ground,z+5,Math.max(60,yy-ground+28),2.1,-1.0,-.6,woodMat);
+    addOrganicTube(g,[[x-9,yy+5,z-5],[x-2,yy+3,z],[x+9,yy+5,z+5]],1.05,.25,woodMat,9,32,.14);
   }
-  buildLivingBridge(g,[[homeA.x,aFloor,homeA.z],[425,aFloor+2,-70],[405,aFloor+4,-40]],2.8);
-  buildLivingBridge(g,[[homeB.x,bFloor,homeB.z],[175,bFloor+2,-38],[205,bFloor+1,-15]],2.8);
 }
 buildCanopyTransit();
 flushOrganicArchitecture();
