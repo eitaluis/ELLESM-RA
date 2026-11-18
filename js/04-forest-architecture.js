@@ -59,11 +59,12 @@ function addOpenOvoidPod(parent,x,y,z,rx,ry,rz,mat=woodMat,frontAngle=Math.PI/2)
   return shell;
 }
 
-function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true){
-  // Seis painéis arqueados de madeira viva entrelaçada; o painel frontal mantém a abertura da porta.
+function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true,windowSpecs=[]){
+  // Seis painéis de madeira viva; portas e janelas são vãos reais no casco.
   const positions=[],uvs=[],indices=[],rows=14,cols=6;
   for(let face=0;face<6;face++){
     const a0=-Math.PI/6+face*Math.PI/3,base=positions.length/3;
+    const windowSpec=windowSpecs.find(spec=>spec[0]===face);
     for(let row=0;row<=rows;row++){
       const t=row/rows*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6));
       for(let col=0;col<=cols;col++){
@@ -75,8 +76,9 @@ function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true){
     }
     for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
       const t=(row+.5)/rows*2-1,u=(col+.5)/cols;
-      // O vão frontal vai do piso até a altura de uma pessoa, sob o arco simbólico.
-      if(door&&face===0&&u>.34&&u<.67&&t<-.05&&t>-.92)continue;
+      const isDoor=door&&face===0&&u>.34&&u<.67&&t<-.05&&t>-.92;
+      const isWindow=windowSpec&&u>.28&&u<.72&&t>windowSpec[1]&&t<windowSpec[2];
+      if(isDoor||isWindow)continue;
       const a=base+row*(cols+1)+col,b=a+1,d=base+(row+1)*(cols+1)+col,e=d+1;
       indices.push(a,b,d,b,e,d);
     }
@@ -84,11 +86,14 @@ function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true){
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
   const shell=new THREE.Mesh(geo,mat);shell.castShadow=true;shell.receiveShadow=true;parent.add(shell);
-  // Linhas de fibras entrelaçadas atravessam cada painel, deixando visível a construção.
+
+  // Fibras horizontais e verticais contornam os vãos sem atravessar o vidro.
   for(let face=0;face<6;face++){
-    const a0=-Math.PI/6+face*Math.PI/3;
+    const a0=-Math.PI/6+face*Math.PI/3,windowSpec=windowSpecs.find(spec=>spec[0]===face);
     for(let row=1;row<rows;row+=2){
-      const t=row/rows*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),pts=[];
+      const t=row/rows*2-1;
+      if(windowSpec&&t>windowSpec[1]&&t<windowSpec[2])continue;
+      const profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),pts=[];
       for(let col=0;col<=6;col++){
         const u=col/6,a=a0+u*Math.PI/3,wobble=1+.018*Math.sin(face*2.3+u*8+t*5);
         pts.push([x+Math.sin(a)*rx*profile*wobble,y+t*ry,z+Math.cos(a)*rz*profile*wobble]);
@@ -96,7 +101,9 @@ function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true){
       addOrganicTube(parent,pts,.065,.045,row%4?woodMat:paleWood,5,14,.10);
     }
     for(let col=1;col<=5;col+=2){
-      const u=col/6,pts=[];
+      const u=col/6;
+      if(windowSpec&&u>.28&&u<.72)continue;
+      const pts=[];
       for(let row=0;row<=8;row++){
         const t=row/8*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),a=a0+u*Math.PI/3;
         pts.push([x+Math.sin(a)*rx*profile,y+t*ry,z+Math.cos(a)*rz*profile]);
@@ -700,7 +707,7 @@ function buildTreeDwelling(parent,x,y,z){
 
   const lower=y+23,upper=y+36;
   addResidenceFloor(parent,x+1,lower,z+1,9.0,6.8,mossFloorMat);
-  addHexagonalLivingShell(parent,x+1,lower+2.8,z+1,10.5,3.25,8.2,woodMat,true);
+  addHexagonalLivingShell(parent,x+1,lower+2.8,z+1,10.5,3.25,8.2,woodMat,true,[[1,-.24,.98],[5,-.24,.98]]);
   addLivingDoorFrame(parent,x+1,lower,z+9.0,4.2,4.1);
   for(let side=0;side<6;side++){
     const a=-Math.PI/6+side*Math.PI/3,dx=Math.sin(a),dz=Math.cos(a);
@@ -710,17 +717,18 @@ function buildTreeDwelling(parent,x,y,z){
       [x+1+dx*4.2,lower+6.35,z+1+dz*3.5]],.32,.075,paleWood,7,22,.09);
   }
   for(const side of [-1,1]){
-    const wx=x+side*7.6,wz=z+.8;
-    addOval(parent,wx,lower+4.1,wz,1.45,2.0,.18,darkMat,16);
+    const a=side===1?Math.PI/3:Math.PI*5/3;
+    const wx=x+1+Math.sin(a)*10.05,wz=z+1+Math.cos(a)*7.88,wy=lower+4.1;
+    const pane=addOval(parent,wx,wy,wz,1.45,2.0,.18,darkMat,16);pane.rotation.y=a;
     const frame=[];for(let i=0;i<=18;i++){
-      const q=-Math.PI*.82+i/18*Math.PI*1.64;
-      frame.push([wx+Math.cos(q)*1.65,lower+4.1+Math.sin(q)*2.25,wz+.15]);
+      const q=-Math.PI*.82+i/18*Math.PI*1.64,off=Math.cos(q)*1.65;
+      frame.push([wx+Math.cos(a)*off,wy+Math.sin(q)*2.25,wz-Math.sin(a)*off]);
     }
     addOrganicTube(parent,frame,.18,.12,paleWood,7,24,.06);
   }
 
   addResidenceFloor(parent,x-2,upper,z-4,6.3,5.0,mossFloorMat);
-  addHexagonalLivingShell(parent,x-2,upper+2.2,z-4,7.4,2.55,6.2,paleWood,true);
+  addHexagonalLivingShell(parent,x-2,upper+2.2,z-4,7.4,2.55,6.2,paleWood,true,[[1,-.24,.93],[5,-.24,.93]]);
   addLivingDoorFrame(parent,x-2,upper,z+2.0,2.8,3.1);
   for(let side=0;side<6;side++){
     const a=-Math.PI/6+side*Math.PI/3,dx=Math.sin(a),dz=Math.cos(a);
@@ -730,11 +738,12 @@ function buildTreeDwelling(parent,x,y,z){
       [x-2+dx*2.8,upper+5.1,z-4+dz*2.4]],.25,.06,woodMat,7,18,.08);
   }
   for(const side of [-1,1]){
-    const wx=x-2+side*5.0,wz=z-4;
-    addOval(parent,wx,upper+3.1,wz,1.0,1.45,.14,darkMat,14);
+    const a=side===1?Math.PI/3:Math.PI*5/3;
+    const wx=x-2+Math.sin(a)*7.12,wz=z-4+Math.cos(a)*5.92,wy=upper+3.1;
+    const pane=addOval(parent,wx,wy,wz,1.0,1.45,.14,darkMat,14);pane.rotation.y=a;
     const frame=[];for(let i=0;i<=16;i++){
-      const q=-Math.PI*.82+i/16*Math.PI*1.64;
-      frame.push([wx+Math.cos(q)*1.15,upper+3.1+Math.sin(q)*1.65,wz+.12]);
+      const q=-Math.PI*.82+i/16*Math.PI*1.64,off=Math.cos(q)*1.15;
+      frame.push([wx+Math.cos(a)*off,wy+Math.sin(q)*1.65,wz-Math.sin(a)*off]);
     }
     addOrganicTube(parent,frame,.14,.09,woodMat,7,20,.05);
   }
@@ -1121,7 +1130,7 @@ function buildFiveStoreyResidence(parent,x,y,z){
   for(let level=0;level<levels.length;level++){
     const floorY=y+levels[level],radius=radii[level],depth=radius*depthFactor;
     addResidenceFloor(parent,x,floorY,z,radius*1.08,depth*1.08,mossFloorMat);
-    addHexagonalLivingShell(parent,x,floorY+2.85,z,radius,3.15,depth,storyMaterials[level],true);
+    addHexagonalLivingShell(parent,x,floorY+2.85,z,radius,3.15,depth,storyMaterials[level],true,[[1,-.22,.46],[2,-.22,.46],[3,-.22,.46],[4,-.22,.46],[5,-.22,.46]]);
 
     // Seis nervuras de madeira viva sustentam cada pavimento e se afunilam no beiral.
     for(let side=0;side<6;side++){
@@ -1440,24 +1449,27 @@ function buildCabin(parent,x,y,z){
   });
 
   addResidenceFloor(parent,x,floorY,z,5.75,5.25,mossFloorMat);
-  addHexagonalLivingShell(parent,x,floorY+2.62,z,6.65,2.72,6.05,woodMat,true);
+  addHexagonalLivingShell(parent,x,floorY+2.62,z,6.65,2.72,6.05,woodMat,true,[[2,-.30,.25],[4,-.30,.25]]);
   addLivingDoorFrame(parent,x,floorY,z+5.96,2.18,2.62);
 
   // Janelas profundas encaixadas nos painéis laterais.
   for(const side of [-1,1]){
-    const wx=x+side*5.72,wz=z-2.45,wy=floorY+2.55;
-    const pane=new THREE.Mesh(new THREE.BoxGeometry(.16,1.48,1.58),RESIDENCE_WINDOW_MAT);
-    pane.position.set(wx,wy,wz);parent.add(pane);
-    for(const dz of [-.84,.84]){
-      const frame=new THREE.Mesh(new THREE.BoxGeometry(.20,1.72,.13),RESIDENCE_FRAME_MAT);
-      frame.position.set(wx+side*.08,wy,wz+dz);parent.add(frame);
+    const a=side===1?Math.PI*2/3:Math.PI*4/3;
+    const wx=x+Math.sin(a)*6.63,wz=z+Math.cos(a)*6.03,wy=floorY+2.55;
+    const windowGroup=new THREE.Group();windowGroup.position.set(wx,wy,wz);windowGroup.rotation.y=a;
+    const pane=new THREE.Mesh(new THREE.BoxGeometry(1.58,1.48,.14),RESIDENCE_WINDOW_MAT);
+    pane.position.z=.04;windowGroup.add(pane);
+    for(const localX of [-.84,.84]){
+      const frame=new THREE.Mesh(new THREE.BoxGeometry(.13,1.72,.20),RESIDENCE_FRAME_MAT);
+      frame.position.set(localX,0,.13);windowGroup.add(frame);
     }
-    for(const dy of [-.80,.80]){
-      const frame=new THREE.Mesh(new THREE.BoxGeometry(.22,.13,1.82),RESIDENCE_FRAME_MAT);
-      frame.position.set(wx+side*.08,wy+dy,wz);parent.add(frame);
+    for(const localY of [-.80,.80]){
+      const frame=new THREE.Mesh(new THREE.BoxGeometry(1.82,.13,.20),RESIDENCE_FRAME_MAT);
+      frame.position.set(0,localY,.13);windowGroup.add(frame);
     }
-    const mullion=new THREE.Mesh(new THREE.BoxGeometry(.22,1.48,.10),paleWood);
-    mullion.position.set(wx+side*.10,wy,wz);parent.add(mullion);
+    const mullion=new THREE.Mesh(new THREE.BoxGeometry(.10,1.48,.20),paleWood);
+    mullion.position.set(0,0,.14);windowGroup.add(mullion);
+    parent.add(windowGroup);
   }
 
   // Cobertura em trama orgânica, com beiral e nervuras que se apoiam nas árvores.
