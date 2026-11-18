@@ -61,7 +61,7 @@ function construirMenoa(){
       for(let k=0;k<radial;k++){
         const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+t*8)*irregular;
         const side=r*Math.cos(a)*w,vertical=r*.18*Math.sin(a)*w;
-        bucket.pos.push(p.x+lateral.x*side,p.y+vertical,p.z+lateral.z*side);bucket.uv.push(k/radial,t*2.7);bucket.rootMask.push(1);bucket.rootOffset.push(vertical);
+        bucket.pos.push(p.x+lateral.x*side,p.y+vertical,p.z+lateral.z*side);bucket.uv.push(k/radial,t*2.7);bucket.rootMask.push(1);bucket.rootOffset.push(vertical + r*.18);
       }
     }
     for(let j=0;j<segments;j++)for(let k=0;k<radial;k++){

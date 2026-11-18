@@ -92,7 +92,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+seed+t*7)*irregular;
         const side=radius*Math.cos(a)*w,vertical=radius*.18*Math.sin(a)*w;
         pos.push(center.x+lateral.x*side,center.y+vertical,center.z+lateral.z*side);
-        rootMaskT.push(1);rootOffsetT.push(vertical);
+        rootMaskT.push(1);rootOffsetT.push(vertical + radius*.18);
       }
     }
     for(let s=0;s<segments;s++)for(let k=0;k<radial;k++){
@@ -186,14 +186,29 @@ function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 const colisores = [];
 const ROOT_WALKS = [];
 const ARCHITECTURE_CLEARINGS = [
-  [410,-110,54],[150,-80,54],[-60,-165,54],[305,-92,42],[0,0,30],
-  [470,-180,13],[155,-120,13],[-75,-165,13],[20,18,13],
-  [350,-18,28],[215,-82,27],[165,-235,27],[520,-142,28],
-  [250,-40,48],[200,-160,28],[120,70,28],[-180,220,26],[-600,60,28]
+  [410,-110,34],[150,-80,34],[350,-18,34],[-60,-165,34],[305,-92,34],[520,-142,34],
+  [0,0,32],[470,-180,18],[75,-350,20],[75,-100,20],[75,150,20],
+  [250,-40,52],[200,-160,34],[120,70,32],[-180,220,32],[-600,60,36],
+  [450,-60,28],[285,-116,24],[-1130,1200,32],[-1100,0,28],
+  [140,-300,32],[300,-260,32],[460,-220,32],
+  [140,-40,32],[300,0,32],[460,40,32],
+  [140,220,32],[300,260,32],[460,300,32],
+  [-760,-640,36],[780,700,36],[940,-760,36],[-900,740,36],[1080,420,36]
+];
+const ARCHITECTURE_CORRIDORS = [
+  [[75,-350],[140,-280],[300,-240],[460,-200]],
+  [[75,-100],[140,-20],[300,20],[460,60]],
+  [[75,150],[140,240],[300,280],[460,320]]
 ];
 function pertoDaArquitetura(x,z,extra=0){
   for(const p of ARCHITECTURE_CLEARINGS)
     if(Math.hypot(x-p[0],z-p[1])<p[2]+extra)return true;
+  for(const route of ARCHITECTURE_CORRIDORS){
+    for(let i=0;i<route.length-1;i++){
+      const a=route[i],b=route[i+1];
+      if(distanciaPontoSegmento(x,z,a[0],a[1],b[0],b[1])<9+extra)return true;
+    }
+  }
   return false;
 }
 const PINHEIROS = [];
