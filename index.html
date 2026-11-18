@@ -466,7 +466,7 @@ TEX_PEDRA.repeat.set(2, 2);
 const MATERIAIS = {
   tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0x927c62 }),
   galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x806c52 }),
-  copa: new THREE.MeshStandardMaterial({ map: TEX_AGULHA, normalMap: TEX_AGULHA_N, roughness: 0.9, color: 0x5a7a4a, side: THREE.FrontSide }),
+  copa: new THREE.MeshStandardMaterial({ color:0x55764a, roughness:1.0, side:THREE.DoubleSide }),
   pedra: new THREE.MeshStandardMaterial({ map: TEX_PEDRA, roughness: 0.95, color: 0x8a8a80 }),
   musgo: new THREE.MeshStandardMaterial({ map: TEX_MUSGO, roughness: 1.0, color: 0x6a7a4a }),
   lanterna: new THREE.MeshStandardMaterial({ color: 0x7aff8a, emissive: 0x4aff6a, emissiveIntensity: 1.4, roughness: 0.3 }),
@@ -546,7 +546,16 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     posF.push(p[0],p[1],p[2],left.x,left.y,left.z,tip.x,tip.y,tip.z,right.x,right.y,right.z);
     idxF.push(base,base+1,base+2,base,base+2,base+3);
   }
-  function toGeo(pos,idx){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;}
+  function toGeo(pos,idx){
+    const g=new THREE.BufferGeometry(),uv=[];
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    for(let i=0;i<pos.length;i+=3){
+      const x=pos[i],y=pos[i+1],z=pos[i+2],angle=Math.atan2(z,x);
+      uv.push(angle/(Math.PI*2)+.5,y*.055+Math.hypot(x,z)*.035);
+    }
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    g.setIndex(idx);g.computeVertexNormals();return g;
+  }
 
   // Tronco contínuo com conicidade forte, leve sinuosidade e casca irregular.
   const trunk=[];
@@ -558,10 +567,10 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   for(let r=0;r<rootCount;r++){
     const a=r/rootCount*Math.PI*2+rand(-.18,.18),len=sapling?rand(2.8,5.8):rand(8,16),side=Math.sin(a*2+seed)*.8;
     const root=[
-      [cx+Math.cos(a)*raioBase*.42,.18,cz+Math.sin(a)*raioBase*.42],
-      [cx+Math.cos(a)*len*.28+Math.cos(a+Math.PI/2)*side,.55,cz+Math.sin(a)*len*.28+Math.sin(a+Math.PI/2)*side],
-      [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side*1.8,.22,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side*1.8],
-      [cx+Math.cos(a)*len,.07,cz+Math.sin(a)*len]
+      [cx+Math.cos(a)*raioBase*.42,.32,cz+Math.sin(a)*raioBase*.42],
+      [cx+Math.cos(a)*len*.28+Math.cos(a+Math.PI/2)*side,.72,cz+Math.sin(a)*len*.28+Math.sin(a+Math.PI/2)*side],
+      [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side*1.8,.38,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side*1.8],
+      [cx+Math.cos(a)*len,.18,cz+Math.sin(a)*len]
     ];
     addTube(posT,idxT,root,raioBase*rand(.24,.38),.035,6,14,.20);
     if(r%2===0){const fork=root[2],fa=a+rand(-.65,.65),fl=len*rand(.35,.58);addTube(posT,idxT,[fork,[fork[0]+Math.cos(fa)*fl*.45,.18,fork[2]+Math.sin(fa)*fl*.45],[fork[0]+Math.cos(fa)*fl,.05,fork[2]+Math.sin(fa)*fl]],.22,.025,6,9,.16);}
