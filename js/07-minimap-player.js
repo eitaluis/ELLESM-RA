@@ -84,7 +84,7 @@ function animar() {
   if (teclas['KeyA']) dir.sub(direita);
   if (dir.lengthSq() > 0) dir.normalize();
 
-  const velBase = teclas['ShiftLeft'] || teclas['ShiftRight'] ? 12 : 4.5;
+  const velBase = teclas['ShiftLeft'] || teclas['ShiftRight'] ? 16 : 7.0;
   jogador.vel.x = dir.x * velBase;
   jogador.vel.z = dir.z * velBase;
   jogador.vel.y -= 25 * dt;
