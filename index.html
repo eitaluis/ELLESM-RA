@@ -1086,16 +1086,16 @@ function buildCanopyStairTower(parent,x,z,groundY,targetY,seed=0){
     outer.push([x+Math.cos(a)*(radius+2.0),y+1.15,z+Math.sin(a)*(radius+2.0)]);
     inner.push([x+Math.cos(a)*(radius-1.9),y+.95,z+Math.sin(a)*(radius-1.9)]);
   }
-  registerWalkablePath(path,4.3);
+  registerWalkablePath(path,2.2);
   addOrganicTube(parent,outer,.24,.15,paleWood,7,560,.12);
   addOrganicTube(parent,inner,.28,.16,woodMat,7,560,.12);
   // Degraus instanciados mantêm a escada contínua sem criar centenas de meshes individuais.
-  const stepCount=Math.ceil(rise/.23),stepGeo=new THREE.BoxGeometry(4.5,.20,1.25);
+  const stepCount=Math.ceil(rise/.23),stepGeo=new THREE.BoxGeometry(4.5,.18,2.2);
   const steps=new THREE.InstancedMesh(stepGeo,woodMat,stepCount),dummy=new THREE.Object3D();
   for(let i=0;i<stepCount;i++){
     const t=i/(stepCount-1),a=t*Math.PI*2*turns,y=groundY+.23+t*(rise-.10);
     dummy.position.set(x+Math.cos(a)*radius,y,z+Math.sin(a)*radius);
-    dummy.rotation.set(0,a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();steps.setMatrixAt(i,dummy.matrix);
+    dummy.rotation.set(0,-a-Math.PI/2,0);dummy.scale.set(1,1,1);dummy.updateMatrix();steps.setMatrixAt(i,dummy.matrix);
   }
   steps.instanceMatrix.needsUpdate=true;steps.castShadow=true;steps.receiveShadow=true;parent.add(steps);
   // Galhos em arco sustentam a espiral e a unem ao tronco principal.
@@ -2163,7 +2163,7 @@ function teletransportar(dir) {
   const p = PONTOS[tpIdx];
   const px = p.x + (p.raio > 0 ? p.raio*0.5 : 0);
   const pz = p.z + (p.raio > 0 ? p.raio*0.5 : 0);
-  jogador.pos.set(px, alturaChao(px, pz) + jogador.alturaOlhos, pz);
+  jogador.pos.set(px, alturaChao(px, pz, alturaTerreno(px,pz)) + jogador.alturaOlhos, pz);
   jogador.vel.set(0,0,0);
   document.getElementById('tp').textContent = `TP: ${p.nome}`;
 }
