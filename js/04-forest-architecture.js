@@ -974,6 +974,12 @@ function buildTialdari(parent,x,y,z){
     stairRail.push([stairX+Math.cos(a)*(radius+1.65),y+1.35+t*stairHeight,stairZ+Math.sin(a)*(radius+1.65)]);
   }
   addOrganicTube(parent,stairRail,.20,.15,paleWood,7,samples,.04);
+  const innerStairRail=[];
+  for(let i=0;i<=samples;i++){
+    const t=i/samples,a=t*Math.PI*2*turns;
+    innerStairRail.push([stairX+Math.cos(a)*(radius-1.65),y+1.15+t*stairHeight,stairZ+Math.sin(a)*(radius-1.65)]);
+  }
+  addOrganicTube(parent,innerStairRail,.16,.12,woodMat,6,samples,.035);
   const stairGeo=new THREE.BoxGeometry(3.15,.20,.94);
   const stairCount=150,stairs=new THREE.InstancedMesh(stairGeo,woodMat,stairCount),dummy=new THREE.Object3D();
   for(let i=0;i<stairCount;i++){
@@ -982,6 +988,19 @@ function buildTialdari(parent,x,y,z){
     dummy.rotation.y=-a;dummy.updateMatrix();stairs.setMatrixAt(i,dummy.matrix);
   }
   stairs.instanceMatrix.needsUpdate=true;parent.add(stairs);
+
+  // Passarelas curtas unem a escada a cada nível habitado.
+  for(let level=0;level<floorLevels.length;level++){
+    const floorY=y+floorLevels[level],t=(floorLevels[level]-.2)/stairHeight;
+    const stairPoint=path[Math.max(0,Math.min(samples,Math.round(t*samples)))];
+    const doorPoint=[x,floorY+.16,z+radii[level]*.86+1.0];
+    buildLivingBridge(parent,stairPoint,doorPoint,3.6,level%2===0?1:-1);
+  }
+  // Escada de raízes até a entrada inferior da residência.
+  addRootStair(parent,x,y,z+27,8,7,-.82);
+  const entranceSteps=Array.from({length:9},(_,i)=>[x,y+.15+i*.38,z+27-i*.82]);
+  registerWalkablePath(entranceSteps,3.4,'stair');
+  buildLivingBridge(parent,entranceSteps[8], [x,y+3.36,z+radii[0]*.86+1.0],3.2,1);
 
   // Jardins da residência real e caminho de pedra com pequenos veios verdes.
   buildFlowerGrove(parent,x,y,z,42,420);
