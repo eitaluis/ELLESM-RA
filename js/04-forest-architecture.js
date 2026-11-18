@@ -109,7 +109,7 @@ function buildCanopyStairTower(parent,x,z,groundY,targetY,seed=0){
   const outerRail=[],innerRail=[],outerLower=[],innerLower=[],outerWallBase=[],innerWallBase=[];
   for(let i=0;i<=samples;i++){
     const t=i/samples,a=t*Math.PI*2*turns,y=groundY+.18+t*(rise-.18);
-    path.push([x+Math.cos(a)*radius,y,z+Math.sin(a)*radius]);
+    path.push([x+Math.cos(a)*radius,y+.26,z+Math.sin(a)*radius]);
     outerRail.push([x+Math.cos(a)*(radius+2.02),y+1.28,z+Math.sin(a)*(radius+2.02)]);
     innerRail.push([x+Math.cos(a)*(radius-2.02),y+1.28,z+Math.sin(a)*(radius-2.02)]);
     outerLower.push([x+Math.cos(a)*(radius+2.02),y+.58,z+Math.sin(a)*(radius+2.02)]);
@@ -131,6 +131,32 @@ function buildCanopyStairTower(parent,x,z,groundY,targetY,seed=0){
     steps.setMatrixAt(i,dummy.matrix);
   }
   steps.instanceMatrix.needsUpdate=true;steps.castShadow=false;steps.receiveShadow=true;parent.add(steps);
+
+  // Piso helicoidal contínuo sob os degraus: fecha todos os intervalos da escada.
+  const rampPos=[],rampIdx=[];
+  for(let i=0;i<path.length;i++){
+    const p=path[i],prev=path[Math.max(0,i-1)],next=path[Math.min(path.length-1,i+1)];
+    const tangent=new THREE.Vector3(next[0]-prev[0],0,next[2]-prev[2]).normalize();
+    const lateral=new THREE.Vector3(-tangent.z,0,tangent.x).normalize();
+    const half=1.92,yy=p[1]-.24;
+    rampPos.push(p[0]-lateral.x*half,yy,p[2]-lateral.z*half);
+    rampPos.push(p[0]+lateral.x*half,yy,p[2]+lateral.z*half);
+    if(i<path.length-1){const a=i*2;rampIdx.push(a,a+1,a+2,a+1,a+3,a+2);}
+  }
+  const rampGeo=new THREE.BufferGeometry();
+  rampGeo.setAttribute('position',new THREE.Float32BufferAttribute(rampPos,3));
+  rampGeo.setIndex(rampIdx);rampGeo.computeVertexNormals();
+  const rampMesh=new THREE.Mesh(rampGeo,new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x8c7655,roughness:.96,side:THREE.DoubleSide}));
+  rampMesh.receiveShadow=true;rampMesh.castShadow=true;parent.add(rampMesh);
+
+  // Patamares anulares integram o primeiro degrau ao solo e o último à ponte.
+  const landingGeo=new THREE.RingGeometry(radius-2.05,radius+2.05,48,1);
+  landingGeo.rotateX(-Math.PI/2);
+  const landingMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x8a7452,roughness:.96,side:THREE.DoubleSide});
+  for(const y of [groundY+.04,targetY+.04]){
+    const landing=new THREE.Mesh(landingGeo,landingMat);
+    landing.position.set(x,y,z);landing.receiveShadow=true;landing.castShadow=true;parent.add(landing);
+  }
 
   const railSegments=Math.min(380,samples);
   addOrganicTube(parent,outerRail,.24,.18,paleWood,8,railSegments,.055);
@@ -331,7 +357,7 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   const stairPath=[],turns=1.18,stairRadius=4.95*scale,samples=56;
   for(let i=0;i<=samples;i++){
     const t=i/samples,a=t*Math.PI*2*turns,y=floorY+.18*scale+t*(upperY-floorY-.24*scale);
-    stairPath.push([x+Math.cos(a)*stairRadius,y,z+Math.sin(a)*stairRadius]);
+    stairPath.push([x+Math.cos(a)*stairRadius,y+.185*scale,z+Math.sin(a)*stairRadius]);
   }
   registerWalkablePath(stairPath,1.45*scale,'stair');
   const stepCount=42,stepGeo=new THREE.BoxGeometry(1.25*scale,.17*scale,.88*scale);
