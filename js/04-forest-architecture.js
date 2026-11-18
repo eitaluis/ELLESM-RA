@@ -1056,7 +1056,7 @@ function buildCanopyForum(parent,x,z,floorY){
     dummy.position.set(x+Math.cos(a)*24,floorY+.65,z+Math.sin(a)*24);
     dummy.updateMatrix();posts.setMatrixAt(i,dummy.matrix);
     if(i%4===0){
-      const glow=new THREE.Mesh(new THREE.SphereGeometry(.36,10,8),RESIDENCE_LAMP_GLOW);
+      const glow=new THREE.Mesh(new THREE.BoxGeometry(.22,.48,.22),RESIDENCE_LAMP_GLOW);
       glow.position.set(x+Math.cos(a)*22.9,floorY+2.2,z+Math.sin(a)*22.9);parent.add(glow);
     }
   });
