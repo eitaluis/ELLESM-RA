@@ -92,7 +92,9 @@ function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true,win
     const a0=-Math.PI/6+face*Math.PI/3,windowSpec=windowSpecs.find(spec=>spec[0]===face);
     for(let row=1;row<rows;row+=2){
       const t=row/rows*2-1;
-      if(windowSpec&&t>windowSpec[1]&&t<windowSpec[2])continue;
+      const crossesDoor=door&&face===0&&t>-.92&&t<-.05;
+      const crossesWindow=windowSpec&&t>windowSpec[1]&&t<windowSpec[2];
+      if(crossesDoor||crossesWindow)continue;
       const profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),pts=[];
       for(let col=0;col<=6;col++){
         const u=col/6,a=a0+u*Math.PI/3,wobble=1+.018*Math.sin(face*2.3+u*8+t*5);
@@ -102,7 +104,9 @@ function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true,win
     }
     for(let col=1;col<=5;col+=2){
       const u=col/6;
-      if(windowSpec&&u>.28&&u<.72)continue;
+      const crossesDoor=door&&face===0&&u>.34&&u<.67;
+      const crossesWindow=windowSpec&&u>.28&&u<.72;
+      if(crossesDoor||crossesWindow)continue;
       const pts=[];
       for(let row=0;row<=8;row++){
         const t=row/8*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),a=a0+u*Math.PI/3;
