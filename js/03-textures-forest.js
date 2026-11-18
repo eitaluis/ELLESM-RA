@@ -29,12 +29,15 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   }
   function addNeedle(p,dir,len,width){
     const d=new THREE.Vector3(...dir).normalize(),ref=Math.abs(d.y)>.86?new THREE.Vector3(1,0,0):new THREE.Vector3(0,1,0);
-    const side=new THREE.Vector3().crossVectors(d,ref).normalize().multiplyScalar(width);
-    const lift=new THREE.Vector3().crossVectors(side,d).normalize().multiplyScalar(width*.22);
-    const base=posF.length/3,mid=new THREE.Vector3(...p).addScaledVector(d,len*.52).add(lift),tip=new THREE.Vector3(...p).addScaledVector(d,len);
-    const left=mid.clone().add(side),right=mid.clone().sub(side);
-    posF.push(p[0],p[1],p[2],left.x,left.y,left.z,tip.x,tip.y,tip.z,right.x,right.y,right.z);
-    idxF.push(base,base+1,base+2,base,base+2,base+3);
+    const sideA=new THREE.Vector3().crossVectors(d,ref).normalize().multiplyScalar(width);
+    const sideB=new THREE.Vector3().crossVectors(d,sideA).normalize().multiplyScalar(width*.82);
+    const lift=new THREE.Vector3().crossVectors(sideA,d).normalize().multiplyScalar(width*.22);
+    const base=posF.length/3,origin=new THREE.Vector3(...p),mid=origin.clone().addScaledVector(d,len*.52).add(lift);
+    const tip=origin.clone().addScaledVector(d,len);
+    const l1=mid.clone().add(sideA),r1=mid.clone().sub(sideA),l2=mid.clone().add(sideB),r2=mid.clone().sub(sideB);
+    posF.push(origin.x,origin.y,origin.z,l1.x,l1.y,l1.z,tip.x,tip.y,tip.z,r1.x,r1.y,r1.z,
+      l2.x,l2.y,l2.z,tip.x,tip.y,tip.z,r2.x,r2.y,r2.z);
+    idxF.push(base,base+1,base+2,base,base+2,base+3,base,base+4,base+5,base,base+5,base+6);
   }
   function toGeo(pos,idx,rootMask=null,rootOffset=null){
     const g=new THREE.BufferGeometry(),uv=[];
@@ -51,8 +54,8 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   // Eixo principal onduloso: o tronco serpenteia antes de se dividir em quatro líderes.
   const splitRatio=highCanopy?.82:.54;
   const trunkCenter=t=>({
-    x:cx+Math.sin(t*4.6+seed*.07)*14*t+Math.sin(t*11.2+seed)*2.8*t,
-    z:cz+Math.sin(t*3.9+seed*.11)*11*t+Math.cos(t*9.1+seed*.4)*2.4*t
+    x:cx+Math.sin(t*4.6+seed*.07)*8*t+Math.sin(t*11.2+seed)*1.8*t,
+    z:cz+Math.sin(t*3.9+seed*.11)*7*t+Math.cos(t*9.1+seed*.4)*1.6*t
   });
   const trunk=[];
   for(let s=0;s<=30;s++){
@@ -123,7 +126,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     }
   }
 
-  const levels=sapling?5:8,arms=sapling?6:10,baseReach=sapling?rand(17,24):rand(48,66);
+  const levels=sapling?6:10,arms=sapling?7:12,baseReach=sapling?rand(17,24):rand(48,66);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.94,ratio=y/altura;
     const reach=baseReach*(1-t*.78)+3.2,count=arms+(level%2);
@@ -142,9 +145,9 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       }
       const len=reach*rand(.82,1.2),droop=(1-t)*len*.12;
       const root=[anchor.x+Math.cos(a)*.55,y,anchor.z+Math.sin(a)*.55];
-      const p1=[anchor.x+Math.cos(a)*len*.30+Math.cos(a+1.2)*4,y+len*.10,anchor.z+Math.sin(a)*len*.30+Math.sin(a+1.2)*4];
-      const p2=[anchor.x+Math.cos(a)*len*.68+Math.sin(a*2+level)*4,y+len*.16-droop*.28,anchor.z+Math.sin(a)*len*.68+Math.cos(a*2+level)*4];
-      const tip=[anchor.x+Math.cos(a)*len,y+len*.08-droop,anchor.z+Math.sin(a)*len];
+      const p1=[anchor.x+Math.cos(a)*len*.30+Math.cos(a+1.2)*4,y+len*.06,anchor.z+Math.sin(a)*len*.30+Math.sin(a+1.2)*4];
+      const p2=[anchor.x+Math.cos(a)*len*.68+Math.sin(a*2+level)*4,y+len*.10-droop*.28,anchor.z+Math.sin(a)*len*.68+Math.cos(a*2+level)*4];
+      const tip=[anchor.x+Math.cos(a)*len,y+len*.04-droop,anchor.z+Math.sin(a)*len];
       const branchPoints=[root,p1,p2,tip];
       addTube(posB,idxB,branchPoints,sapling?.58:1.55,sapling?.045:.16,6,16,.18);
       const branchCurve=new THREE.CatmullRomCurve3(branchPoints.map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
@@ -163,7 +166,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const mid=[base.x+Math.cos(aa)*tl*.48,base.y+tl*.19+2,base.z+Math.sin(aa)*tl*.48];
         const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
         addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,5,9,.18);
-        for(let n=0;n<14;n++){
+        for(let n=0;n<18;n++){
           const a2=aa+n*Math.PI*2/13+rand(-.18,.18);
           const p=[end[0]-Math.cos(aa)*rand(0,1.1),end[1]-rand(0,.5),end[2]-Math.sin(aa)*rand(0,1.1)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],
