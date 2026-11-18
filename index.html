@@ -773,6 +773,23 @@ distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 
 distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 2100, 0.7, 1.9, 0.8);
 distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 350, 0.6, 1.6, 0.7);
 
+// Capins de sub-bosque em touceiras: lâminas longas, finas e arqueadas.
+function criarGramaGeo(){
+  const pos=[],idx=[];
+  for(let blade=0;blade<24;blade++){
+    const a=blade/24*Math.PI*2+Math.random()*.22,dx=Math.cos(a),dz=Math.sin(a);
+    const rootR=.08+Math.random()*.28,len=.55+Math.random()*1.05,width=.025+Math.random()*.035;
+    const bx=dx*rootR,bz=dz*rootR,lean=(Math.random()-.5)*.35;
+    const mx=bx+dx*len*.38+lean,mz=bz+dz*len*.38;
+    const tx=bx+dx*len*.72+lean*2,tz=bz+dz*len*.72;
+    const sideX=-dz*width,sideZ=dx*width,n=pos.length/3;
+    pos.push(bx,0,bz,mx+sideX,.42*len,mz+sideZ,tx,len,tz,mx-sideX,.42*len,mz-sideZ);
+    idx.push(n,n+1,n+2,n,n+2,n+3);
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),4800,.62,1.25);
+
 // CAMADA EXTRA DE FLORESTA — vegetação de transição, troncos caídos e musgo.
 function criarLogGeo(){
   const g=new THREE.CylinderGeometry(0.42,0.66,1,14,12);g.rotateZ(Math.PI/2);
@@ -786,6 +803,20 @@ for(let i=0;i<420;i++){
   logs.push({x,z,len:5+Math.random()*15,rot:Math.random()*Math.PI,thick:.75+Math.random()*.8});
 }
 if(logs.length){const im=new THREE.InstancedMesh(logGeo,logMat,logs.length);im.castShadow=true;im.receiveShadow=true;const d=new THREE.Object3D();logs.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.35,o.z);d.rotation.set(0,o.rot,Math.random()*0.18);d.scale.set(o.len,o.thick,o.thick);d.updateMatrix();im.setMatrixAt(i,d.matrix);});im.instanceMatrix.needsUpdate=true;scene.add(im);}
+const logEndGeo=new THREE.CircleGeometry(.54,16);logEndGeo.rotateY(Math.PI/2);
+const logEndMat=new THREE.MeshStandardMaterial({color:0x92734d,roughness:1,side:THREE.DoubleSide});
+if(logs.length){
+  const ends=new THREE.InstancedMesh(logEndGeo,logEndMat,logs.length*2),d=new THREE.Object3D();
+  logs.forEach((o,i)=>{
+    const y=alturaTerreno(o.x,o.z)+.35;
+    for(let s=0;s<2;s++){
+      const sign=s===0?-1:1;
+      d.position.set(o.x+Math.cos(o.rot)*o.len*.5*sign,y,o.z-Math.sin(o.rot)*o.len*.5*sign);
+      d.rotation.set(0,o.rot,0);d.scale.set(1,o.thick,o.thick);d.updateMatrix();ends.setMatrixAt(i*2+s,d.matrix);
+    }
+  });
+  ends.instanceMatrix.needsUpdate=true;scene.add(ends);
+}
 // Musgo/rosetas pequenas em manchas, em vez de distribuição uniforme de props.
 const mossGeo=new THREE.BufferGeometry();
 {
@@ -816,14 +847,13 @@ const leafMatA = new THREE.MeshStandardMaterial({color:0x354f2b,roughness:1,side
 const leafMatB = new THREE.MeshStandardMaterial({color:0x53683a,roughness:1,side:THREE.DoubleSide});
 const leafGeo = new THREE.BufferGeometry();
 {
-  const v=[]; const ix=[];
-  for(let k=0;k<5;k++){
-    const a=k*Math.PI*2/5, cx=Math.cos(a), cz=Math.sin(a), w=0.22+Math.random()*0.12, h=0.72+Math.random()*0.42;
-    const base=v.length/3;
-    v.push(0,0,0, cx*w,h*0.48,cz*w, cx*w*0.72,h,cz*w*0.72, -cz*w*0.55,h*0.62,cx*w*0.55);
+  const v=[],ix=[];
+  for(let k=0;k<8;k++){
+    const a=k*Math.PI*2/8,dx=Math.cos(a),dz=Math.sin(a),w=.035+Math.random()*.025,len=.28+Math.random()*.48,base=v.length/3;
+    v.push(0,.012,0,dx*len*.48-dz*w,.035,dz*len*.48+dx*w,dx*len,.018,dz*len,dx*len*.48+dz*w,.025,dz*len*.48-dx*w);
     ix.push(base,base+1,base+2,base,base+2,base+3);
   }
-  leafGeo.setAttribute('position',new THREE.Float32BufferAttribute(v,3)); leafGeo.setIndex(ix); leafGeo.computeVertexNormals();
+  leafGeo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));leafGeo.setIndex(ix);leafGeo.computeVertexNormals();
 }
 function scatterInstanced(geo,mat,count,scaleMin,scaleMax,excludeClearings=true){
   const d=new THREE.Object3D(), list=[];
