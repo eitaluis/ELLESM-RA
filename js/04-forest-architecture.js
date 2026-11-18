@@ -970,70 +970,119 @@ function buildForge(parent,x,y,z){
   registerWalkablePath([[x,y+.82,z+10],[x,y+.82,z+5],[x,y+.82,z],[x,y+.82,z-5]],4.2);
 }
 function buildTialdari(parent,x,y,z){
-  // Tialdarí Hall: edifícios ancestrais da família de Arya, com sala comum,
-  // aposentos privados e jardins. O livro não fixa uma fachada única: a forma
-  // é uma interpretação em madeira viva, seguindo a linguagem de Ellesméra.
-
-  // Sala comum ampla: casa de pinheiro com dois níveis, integrada ao tronco.
+  // Tialdarí Hall: conjunto ancestral da família de Arya, com sala comum,
+  // jardins e uma ala privada. Os aposentos formam uma sequência interna:
+  // sala de estar coberta de trepadeiras, quarto pequeno e escritório.
   const common=buildReadableDwelling(parent,x,z,y+.18,1.18,true,112);
 
-  // Sala de estar de Arya, descrita como ampla e coberta por trepadeiras.
-  const loungeX=x-31,loungeZ=z-5;
-  const lounge=buildReadableDwelling(parent,loungeX,loungeZ,y+.18,.78,false,86);
-  for(let vine=0;vine<16;vine++){
-    const a=vine/16*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a),radius=lounge.outer-.35;
-    addOrganicTube(parent,[[loungeX+ca*radius,y+.2,loungeZ+sa*radius],
-      [loungeX+ca*(radius+.5),y+2.8,loungeZ+sa*(radius+.5)],
-      [loungeX+ca*(radius-.2),y+5.1,loungeZ+sa*(radius-.2)],
-      [loungeX+ca*(radius*.62),y+7.0,loungeZ+sa*(radius*.62)]],
-      .12,.035,vine%3===0?mossFloorMat:paleWood,5,20,.14);
+  // Ala de Arya: um único volume orgânico, de madeira viva e planta hexagonal.
+  const suiteX=x-31,suiteZ=z-5,suiteFloor=y+.18,suiteRadius=12.3,suiteDepth=10.5;
+  addResidenceFloor(parent,suiteX,suiteFloor,suiteZ,11.6,9.9,mossFloorMat);
+  addHexagonalLivingShell(parent,suiteX,suiteFloor+2.75,suiteZ,
+    suiteRadius,3.05,suiteDepth,dwellingWallMat,true);
+  addLivingDoorFrame(parent,suiteX,suiteFloor,suiteZ+suiteDepth*.96,2.8,3.5);
+  const suiteWalk=[];
+  for(let i=0;i<=30;i++){
+    const t=i/30;
+    suiteWalk.push([suiteX,suiteFloor+.16,suiteZ+suiteDepth*.70-t*suiteDepth*1.28]);
   }
-  // Trepadeiras e ramos cruzados formam um dossel vivo sobre a entrada da sala.
-  addOrganicTube(parent,[[loungeX-7,y+6,loungeZ+11],[loungeX-4,y+10,loungeZ+13],
-    [loungeX,y+11.5,loungeZ+10],[loungeX+4,y+10,loungeZ+13],
-    [loungeX+7,y+6,loungeZ+11]],.34,.09,woodMat,8,26,.1);
+  registerWalkablePath(suiteWalk,4.2,'house');
 
-  // Quarto pequeno e escritório particular, em volumes menores conectados à sala.
-  const bedroomX=x-48,bedroomZ=z+13,studyX=x-48,studyZ=z-23;
-  const bedroom=buildReadableDwelling(parent,bedroomX,bedroomZ,y+.18,.52,false,72);
-  const study=buildReadableDwelling(parent,studyX,studyZ,y+.18,.52,false,72);
-
-  // Passagens cobertas e rampas no nível do jardim conectam as quatro construções.
-  buildLivingBridge(parent,common.door,lounge.door,3.8,1);
-  buildLivingBridge(parent,lounge.door,bedroom.door,3.0,-1);
-  buildLivingBridge(parent,lounge.door,study.door,3.0,1);
-
-  // Pequenos pórticos de entrada em galhos curvos e portas de correr em treliça.
-  for(const h of [common,lounge,bedroom,study]){
-    const dx=h.x,dz=h.centerZ,doorZ=dz+h.outer+1.3*h.scale;
-    addOrganicTube(parent,[[dx-2.2,y+3.3,dz+h.outer+.4],
-      [dx-1.5,y+5.0,doorZ],[dx,y+5.6,doorZ+.25],
-      [dx+1.5,y+5.0,doorZ],[dx+2.2,y+3.3,dz+h.outer+.4]],.22,.07,paleWood,7,20,.07);
-    for(let bar=0;bar<7;bar++){
-      const bx=dx-1.25+bar*.42;
-      addOrganicTube(parent,[[bx,y+.25,doorZ+.05],[bx,y+2.75,doorZ+.05]],.045,.025,woodMat,5,8,.03);
-    }
+  // Nervuras que se fecham em arcos altos e sustentam as paredes de madeira.
+  for(let side=0;side<6;side++){
+    const a=-Math.PI/6+side*Math.PI/3,dx=Math.sin(a),dz=Math.cos(a);
+    addOrganicTube(parent,[[suiteX+dx*suiteRadius*.98,suiteFloor+.12,suiteZ+dz*suiteDepth*.98],
+      [suiteX+dx*suiteRadius*1.02,suiteFloor+2.75,suiteZ+dz*suiteDepth*1.02],
+      [suiteX+dx*suiteRadius*.84,suiteFloor+5.0,suiteZ+dz*suiteDepth*.84],
+      [suiteX+dx*suiteRadius*.35,suiteFloor+6.25,suiteZ+dz*suiteDepth*.35]],
+      .28,.07,side%2?woodMat:paleWood,7,22,.08);
   }
 
-  // Aposentos de Arya: escrivaninha, rolos, globos botânicos e lembranças em vidro.
-  const desk=new THREE.Mesh(new THREE.BoxGeometry(2.7,.18,1.25),woodMat);
-  desk.position.set(studyX, y+1.35, studyZ-5.2);parent.add(desk);
+  // Trepadeiras cobrem o exterior da sala de estar e se entrelaçam pelo beiral.
+  for(let vine=0;vine<18;vine++){
+    const a=vine/18*Math.PI*2,ca=Math.sin(a),sa=Math.cos(a),
+      radius=suiteRadius*.98,depth=suiteDepth*.98;
+    addOrganicTube(parent,[[suiteX+ca*radius,suiteFloor+.2,suiteZ+sa*depth],
+      [suiteX+ca*(radius+.35),suiteFloor+2.6,suiteZ+sa*(depth+.35)],
+      [suiteX+ca*(radius-.2),suiteFloor+4.8,suiteZ+sa*(depth-.2)],
+      [suiteX+ca*(radius*.56),suiteFloor+6.6,suiteZ+sa*(depth*.56)]],
+      .115,.032,vine%3===0?mossFloorMat:paleWood,5,22,.13);
+  }
+  addWovenCanopy(parent,suiteX,suiteFloor+5.8,suiteZ,suiteRadius*.94,2.2,2.7,[0,4],.82);
+
+  // Divisórias vazadas abrem para dois ambientes menores dentro da mesma ala.
+  const dividerMat=new THREE.MeshStandardMaterial({color:0x796447,roughness:1,
+    transparent:true,opacity:.88,side:THREE.DoubleSide});
+  for(let side of [-1,1]){
+    const divider=new THREE.Mesh(new THREE.BoxGeometry(.13,2.5,4.7),dividerMat);
+    divider.position.set(suiteX+side*4.45,suiteFloor+1.25,suiteZ-.15);
+    parent.add(divider);
+    addOrganicTube(parent,[[suiteX+side*4.5,suiteFloor+.15,suiteZ-2.55],
+      [suiteX+side*4.8,suiteFloor+2.6,suiteZ-2.55],
+      [suiteX+side*4.45,suiteFloor+2.9,suiteZ+2.25],
+      [suiteX+side*4.45,suiteFloor+.15,suiteZ+2.25]],.14,.05,woodMat,6,16,.08);
+  }
+
+  // Sala de estar: tapete, assentos e mesa baixa no centro.
+  const livingRug=new THREE.Mesh(new THREE.CircleGeometry(2.7,32),HOME_CUSHION_MAT);
+  livingRug.rotation.x=-Math.PI/2;livingRug.position.set(suiteX,suiteFloor+.10,suiteZ+1.1);parent.add(livingRug);
+  const dayBed=new THREE.Mesh(new THREE.BoxGeometry(4.6,.62,1.35),HOME_LINEN_MAT);
+  dayBed.position.set(suiteX,suiteFloor+.42,suiteZ+4.1);parent.add(dayBed);
+  const lowTable=new THREE.Mesh(new THREE.CylinderGeometry(1.18,1.28,.24,16),woodMat);
+  lowTable.position.set(suiteX,suiteFloor+.64,suiteZ+.45);parent.add(lowTable);
+  const lowStem=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,.62,9),HOME_DARK_WOOD_MAT);
+  lowStem.position.set(suiteX,suiteFloor+.34,suiteZ+.45);parent.add(lowStem);
+
+  // Quarto pequeno: cama, cabeceira, manta e uma mesinha junto à parede lateral.
+  const bedX=suiteX-8.0,bedZ=suiteZ+1.0;
+  const bedBase=new THREE.Mesh(new THREE.BoxGeometry(3.3,.42,2.25),HOME_DARK_WOOD_MAT);
+  bedBase.position.set(bedX,suiteFloor+.30,bedZ);parent.add(bedBase);
+  const mattress=new THREE.Mesh(new THREE.BoxGeometry(3.12,.28,2.08),HOME_LINEN_MAT);
+  mattress.position.set(bedX,suiteFloor+.64,bedZ);parent.add(mattress);
+  const blanket=new THREE.Mesh(new THREE.BoxGeometry(1.8,.12,2.1),HOME_CUSHION_MAT);
+  blanket.position.set(bedX+.42,suiteFloor+.84,bedZ);parent.add(blanket);
+  const pillow=new THREE.Mesh(new THREE.BoxGeometry(.82,.18,1.02),HOME_LINEN_MAT);
+  pillow.position.set(bedX-1.0,suiteFloor+.86,bedZ);parent.add(pillow);
+
+  // Escritório: escrivaninha, rolos de pergaminho e estante estreita.
+  const deskX=suiteX+8.0,deskZ=suiteZ-1.4;
+  const desk=new THREE.Mesh(new THREE.BoxGeometry(3.0,.18,1.42),woodMat);
+  desk.position.set(deskX,suiteFloor+1.22,deskZ);parent.add(desk);
+  for(let side of [-1,1]){
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(.16,1.1,.16),HOME_DARK_WOOD_MAT);
+    leg.position.set(deskX+side*1.15,suiteFloor+.63,deskZ);parent.add(leg);
+  }
   for(let i=0;i<5;i++){
-    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.9,8),HOME_LINEN_MAT);
-    roll.rotation.z=Math.PI/2;roll.position.set(studyX-1+i*.48,y+1.58,studyZ-5.2);parent.add(roll);
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.95,8),HOME_LINEN_MAT);
+    roll.rotation.z=Math.PI/2;roll.position.set(deskX-1.0+i*.48,suiteFloor+1.43,deskZ);parent.add(roll);
   }
-  const glassMemory=new THREE.Mesh(new THREE.SphereGeometry(.52,16,12),new THREE.MeshPhysicalMaterial({
-    color:0x94a99b,roughness:.12,transmission:.72,transparent:true,opacity:.74
-  }));
-  glassMemory.position.set(bedroomX+2,y+1.3,bedroomZ-3.8);parent.add(glassMemory);
+  const shelf=new THREE.Mesh(new THREE.BoxGeometry(.38,2.45,3.2),HOME_DARK_WOOD_MAT);
+  shelf.position.set(suiteX+10.0,suiteFloor+1.3,suiteZ-5.2);parent.add(shelf);
+  for(let level=0;level<3;level++){
+    const plank=new THREE.Mesh(new THREE.BoxGeometry(.56,.10,3.3),paleWood);
+    plank.position.set(suiteX+9.75,suiteFloor+.55+level*.73,suiteZ-5.2);parent.add(plank);
+  }
+  const glassMemory=new THREE.Mesh(new THREE.SphereGeometry(.48,14,10),
+    new THREE.MeshPhysicalMaterial({color:0x94a99b,roughness:.12,transmission:.72,transparent:true,opacity:.74}));
+  glassMemory.position.set(bedX+2.1,suiteFloor+1.4,bedZ-1.5);parent.add(glassMemory);
 
-  // Jardins da família: canteiros em torno das casas, conectados por caminhos sinuosos.
+  // Caminho de madeira viva liga a sala comum à ala privada.
+  const suiteDoor=[suiteX,suiteFloor+.16,suiteZ+suiteDepth*.96+1.0];
+  buildLivingBridge(parent,common.door,suiteDoor,4.0,1);
+  const screen=[];
+  for(let i=0;i<=16;i++){
+    const t=i/16;
+    screen.push([suiteX-1.65+3.3*t,suiteFloor+.25+Math.sin(t*Math.PI)*3.1,
+      suiteZ+suiteDepth*.96+.15]);
+  }
+  addOrganicTube(parent,screen,.18,.07,paleWood,7,28,.06);
+
+  // Jardins da família: canteiros em torno das casas e caminhos sinuosos.
   buildFlowerGrove(parent,x+25,y,z+25,28,150);
   buildFlowerGrove(parent,x-18,y,z+42,24,115);
   buildFlowerGrove(parent,x-62,y,z-4,20,95);
   addOrganicTube(parent,[[x+30,y+.12,z+38],[x+18,y+.14,z+32],
     [x+2,y+.12,z+31],[x-18,y+.12,z+35],[x-38,y+.12,z+33]],.24,.12,woodMat,6,48,.08);
-  // Árvores de sombra e raízes unem as moradas ao jardim, sem formar muralhas.
   for(let i=0;i<9;i++){
     const a=i/9*Math.PI*2,px=x+Math.cos(a)*61,pz=z+Math.sin(a)*42;
     addLivingTrunk(parent,px,y,pz,38+Math.random()*10,.78+Math.random()*.22,
