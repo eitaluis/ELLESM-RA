@@ -60,6 +60,41 @@ const MATERIAIS = {
   lanterna: new THREE.MeshStandardMaterial({ color: 0x7aff8a, emissive: 0x4aff6a, emissiveIntensity: 1.4, roughness: 0.3 }),
 };
 
+// Ajusta apenas os vértices marcados como raízes ao relevo mundial.
+// rootOffset preserva a espessura vertical da raiz depois da projeção no terreno.
+function aplicarAjusteRaizesAoRelevo(material) {
+  material.onBeforeCompile = shader => {
+    shader.uniforms.uTerrainHeightMap = { value: TERRAIN_HEIGHT_TEXTURE };
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      `#include <common>
+attribute float rootMask;
+attribute float rootOffset;
+uniform sampler2D uTerrainHeightMap;`
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `#include <begin_vertex>
+if (rootMask > 0.5) {
+  vec4 rootWorld;
+  float rootScale = 1.0;
+  #ifdef USE_INSTANCING
+    rootWorld = modelMatrix * instanceMatrix * vec4(transformed, 1.0);
+    rootScale = length(instanceMatrix[1].xyz);
+  #else
+    rootWorld = modelMatrix * vec4(transformed, 1.0);
+  #endif
+  vec2 rootUv = clamp((rootWorld.xz + vec2(1600.0)) / 3200.0, vec2(0.001), vec2(0.999));
+  float groundHeight = texture2D(uTerrainHeightMap, rootUv).r * 80.0 - 40.0;
+  float targetY = groundHeight + 0.12 + rootOffset * rootScale;
+  transformed.y += (targetY - rootWorld.y) / rootScale;
+}`
+    );
+  };
+  material.customProgramCacheKey = () => 'terrain-following-roots-v1';
+}
+aplicarAjusteRaizesAoRelevo(MATERIAIS.tronco);
+
 // ============================================================================
 // 11. DISTRIBUIÇÃO — helpers
 // ============================================================================

@@ -1,7 +1,7 @@
 // ============================================================================
 // 5. TERRENO
 // ============================================================================
-const TERR_W = 3200, TERR_H = 3200, segs = 800;
+const TERR_W = 3200, TERR_H = 3200, segs = 512;
 const terrenoGeo = new THREE.PlaneGeometry(TERR_W, TERR_H, segs, segs);
 terrenoGeo.rotateX(-Math.PI/2);
 
@@ -11,6 +11,26 @@ for (let i = 0; i < posAttr.count; i++) {
   posAttr.setY(i, alturaTerreno(x, z));
 }
 terrenoGeo.computeVertexNormals();
+
+// Mapa de altura compartilhado pelo shader das raízes.
+// É gerado dos mesmos vértices do terreno, sem recalcular o relevo.
+const TERRAIN_HEIGHT_TEXTURE = (() => {
+  const size = segs + 1, data = new Uint8Array(size * size * 4);
+  const minHeight = -40, heightRange = 80;
+  for (let i = 0; i < posAttr.count; i++) {
+    const x = posAttr.getX(i), z = posAttr.getZ(i), h = posAttr.getY(i);
+    const ix = Math.max(0, Math.min(size - 1, Math.round((x + TERR_W * .5) / TERR_W * (size - 1))));
+    const iy = Math.max(0, Math.min(size - 1, Math.round((z + TERR_H * .5) / TERR_H * (size - 1))));
+    const p = (iy * size + ix) * 4;
+    const encoded = Math.round(THREE.MathUtils.clamp((h - minHeight) / heightRange, 0, 1) * 255);
+    data[p] = encoded; data[p + 1] = 0; data[p + 2] = 0; data[p + 3] = 255;
+  }
+  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.UnsignedByteType);
+  tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter;
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.generateMipmaps = false; tex.unpackAlignment = 1; tex.flipY = false; tex.needsUpdate = true;
+  return tex;
+})();
 
 const corTerreno = new THREE.Color();
 const cores = new Float32Array(posAttr.count * 3);

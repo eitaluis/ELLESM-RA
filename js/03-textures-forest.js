@@ -7,7 +7,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   const raioBase=sapling?rand(2.1,3.2):rand(5.2,6.2);
   const topoRaio=sapling ? .14 : .30;
   const crownStart=altura*(sapling?rand(.38,.46):rand(.49,.57));
-  const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[];
+  const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[],rootPaths=[],rootMaskT=[],rootOffsetT=[];
   const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
   function addTube(pos,idx,points,r0,r1,radial=8,segments=12,irregular=.10){
@@ -19,6 +19,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const a=k/radial*Math.PI*2,wob=1+Math.sin(a*3+seed+t*7)*irregular+Math.cos(a*5-seed)*irregular*.32;
         const off=frames.normals[s].clone().multiplyScalar(Math.cos(a)*radius*wob).add(frames.binormals[s].clone().multiplyScalar(Math.sin(a)*radius*wob));
         pos.push(center.x+off.x,center.y+off.y,center.z+off.z);
+        if(pos===posT){rootMaskT.push(0);rootOffsetT.push(0);}
       }
     }
     for(let s=0;s<segments;s++)for(let k=0;k<radial;k++){
@@ -35,7 +36,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     posF.push(p[0],p[1],p[2],left.x,left.y,left.z,tip.x,tip.y,tip.z,right.x,right.y,right.z);
     idxF.push(base,base+1,base+2,base,base+2,base+3);
   }
-  function toGeo(pos,idx){
+  function toGeo(pos,idx,rootMask=null,rootOffset=null){
     const g=new THREE.BufferGeometry(),uv=[];
     g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     for(let i=0;i<pos.length;i+=3){
@@ -43,6 +44,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       uv.push(angle/(Math.PI*2)+.5,y*.055+Math.hypot(x,z)*.035);
     }
     g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    if(rootMask){g.setAttribute('rootMask',new THREE.Float32BufferAttribute(rootMask,1));g.setAttribute('rootOffset',new THREE.Float32BufferAttribute(rootOffset,1));}
     g.setIndex(idx);g.computeVertexNormals();return g;
   }
 
@@ -57,7 +59,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     const t=s/30*splitRatio,c=trunkCenter(t);
     trunk.push([c.x,t*altura,c.z]);
   }
-  addTube(posT,idxT,trunk,raioBase*1.62,raioBase*.52,26,76,.19);
+  addTube(posT,idxT,trunk,raioBase*1.62,raioBase*.52,20,56,.19);
   const leaders=[],forkBase=trunkCenter(splitRatio);
   for(let i=0;i<4;i++){
     const angle=i/4*Math.PI*2+.23+(seed%9)*.07,reach=34+rand(8,19),sway=rand(5,11),pts=[];
@@ -68,16 +70,16 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       pts.push([forkBase.x+Math.cos(angle)*spread+Math.sin(t*2.9+i)*4.2*t,
         altura*ratio,forkBase.z+Math.sin(angle)*spread+Math.cos(t*2.6+i)*4.0*t]);
     }
-    addTube(posT,idxT,pts,raioBase*.62,.26,20,60,.21);
+    addTube(posT,idxT,pts,raioBase*.62,.26,16,42,.21);
     leaders.push({angle,curve:new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)),false,'centripetal',.38)});
   }
-  for(let rib=0;rib<18;rib++){
-    const a=rib/18*Math.PI*2+(seed%7)*.08,pts=[];
-    for(let j=0;j<=16;j++){
-      const t=j/16*splitRatio,c=trunkCenter(t),r=raioBase*1.5*(1-t*.72),aa=a+Math.sin(t*13+rib)*.11;
+  for(let rib=0;rib<12;rib++){
+    const a=rib/12*Math.PI*2+(seed%7)*.08,pts=[];
+    for(let j=0;j<=12;j++){
+      const t=j/12*splitRatio,c=trunkCenter(t),r=raioBase*1.5*(1-t*.72),aa=a+Math.sin(t*13+rib)*.11;
       pts.push([c.x+Math.cos(aa)*(r+.12),t*altura,c.z+Math.sin(aa)*(r+.12)]);
     }
-    addTube(posT,idxT,pts,.20+raioBase*.035,.055,6,28,.18);
+    addTube(posT,idxT,pts,.20+raioBase*.035,.055,5,20,.18);
   }
   // Roots are broad and flattened against the terrain, never suspended arches.
   function addGroundRoot(pos,idx,points,r0,r1,radial=10,segments=28,irregular=.14){
@@ -90,6 +92,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
         const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+seed+t*7)*irregular;
         const side=radius*Math.cos(a)*w,vertical=radius*.18*Math.sin(a)*w;
         pos.push(center.x+lateral.x*side,center.y+vertical,center.z+lateral.z*side);
+        rootMaskT.push(1);rootOffsetT.push(vertical);
       }
     }
     for(let s=0;s<segments;s++)for(let k=0;k<radial;k++){
@@ -98,7 +101,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
     }
   }
 
-  const rootCount=sapling?8:16;
+  const rootCount=sapling?6:12;
   for(let r=0;r<rootCount;r++){
     const a=r/rootCount*Math.PI*2+rand(-.22,.22),len=sapling?rand(8,14):rand(24,40);
     const side=Math.sin(a*2+seed)*rand(1.6,3.8);
@@ -109,18 +112,18 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       [cx+Math.cos(a)*len,.035,cz+Math.sin(a)*len]
     ];
     const rootRadius=raioBase*rand(.14,.20);
-    addGroundRoot(posT,idxT,root,rootRadius,.05,10,30,.18);
+    addGroundRoot(posT,idxT,root,rootRadius,.05,8,20,.18);
     rootPaths.push({points:root.map(p=>p.slice()),radius:rootRadius});
     if(r%2===0){
       const fork=root[2],fa=a+rand(-.72,.72),fl=len*rand(.30,.48);
       const forkPoints=[fork,[fork[0]+Math.cos(fa)*fl*.48,.075,fork[2]+Math.sin(fa)*fl*.48],
         [fork[0]+Math.cos(fa)*fl,.035,fork[2]+Math.sin(fa)*fl]];
-      addGroundRoot(posT,idxT,forkPoints,rootRadius*.42,.035,8,18,.15);
+      addGroundRoot(posT,idxT,forkPoints,rootRadius*.42,.035,6,14,.15);
       rootPaths.push({points:forkPoints.map(p=>p.slice()),radius:rootRadius*.42});
     }
   }
 
-  const levels=sapling?7:10,arms=sapling?8:12,baseReach=sapling?rand(17,24):rand(48,66);
+  const levels=sapling?5:8,arms=sapling?6:10,baseReach=sapling?rand(17,24):rand(48,66);
   for(let level=0;level<levels;level++){
     const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.94,ratio=y/altura;
     const reach=baseReach*(1-t*.78)+3.2,count=arms+(level%2);
@@ -143,24 +146,24 @@ function criarPinheiroGeo(seed,tipo='adulto'){
       const p2=[anchor.x+Math.cos(a)*len*.68+Math.sin(a*2+level)*4,y+len*.16-droop*.28,anchor.z+Math.sin(a)*len*.68+Math.cos(a*2+level)*4];
       const tip=[anchor.x+Math.cos(a)*len,y+len*.08-droop,anchor.z+Math.sin(a)*len];
       const branchPoints=[root,p1,p2,tip];
-      addTube(posB,idxB,branchPoints,sapling?.58:1.55,sapling?.045:.16,8,22,.18);
+      addTube(posB,idxB,branchPoints,sapling?.58:1.55,sapling?.045:.16,6,16,.18);
       const branchCurve=new THREE.CatmullRomCurve3(branchPoints.map(p=>new THREE.Vector3(...p)),false,'centripetal',.36);
-      for(let s=1;s<=5;s++){
+      for(let s=1;s<=3;s++){
         const q=s/6,p=branchCurve.getPoint(q);
-        for(let n=0;n<3;n++){
+        for(let n=0;n<2;n++){
           const aa=a+n*Math.PI*2/3+rand(-.32,.32);
           addNeedle([p.x,p.y,p.z],[Math.cos(aa)*.58+Math.cos(a)*.62,.34+rand(-.08,.40),Math.sin(aa)*.58+Math.sin(a)*.62],
             rand(sapling?.55:1.25,sapling?1.0:2.5),sapling?.055:.12);
         }
       }
-      const twigN=sapling?4:7;
+      const twigN=sapling?3:4;
       for(let twig=0;twig<twigN;twig++){
         const q=.18+twig*.105,side=twig%2===0?1:-1,base=branchCurve.getPoint(q);
         const aa=a+side*rand(.48,.98),tl=len*rand(.15,.24)*(1-t*.2);
         const mid=[base.x+Math.cos(aa)*tl*.48,base.y+tl*.19+2,base.z+Math.sin(aa)*tl*.48];
         const end=[base.x+Math.cos(aa)*tl,base.y+tl*.28+rand(1,3),base.z+Math.sin(aa)*tl];
-        addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,6,12,.18);
-        for(let n=0;n<12;n++){
+        addTube(posB,idxB,[[base.x,base.y,base.z],mid,end],sapling?.19:.54,.035,5,9,.18);
+        for(let n=0;n<7;n++){
           const a2=aa+n*Math.PI*2/13+rand(-.18,.18);
           const p=[end[0]-Math.cos(aa)*rand(0,1.1),end[1]-rand(0,.5),end[2]-Math.sin(aa)*rand(0,1.1)];
           addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],
@@ -173,7 +176,7 @@ function criarPinheiroGeo(seed,tipo='adulto'){
   // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
   addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
   for(let n=0;n<14;n++){const a=n/14*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
-  return {tronco:toGeo(posT,idxT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase,raizes:rootPaths};
+  return {tronco:toGeo(posT,idxT,rootMaskT,rootOffsetT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase,raizes:rootPaths};
 }
 function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 
@@ -194,7 +197,7 @@ function pertoDaArquitetura(x,z,extra=0){
   return false;
 }
 const PINHEIROS = [];
-const N_TENT = 6200;
+const N_TENT = 5200;
 for (let i = 0; i < N_TENT; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
@@ -247,7 +250,7 @@ VARIANTES_PINHEIRO.forEach((variante, vi) => {
 });
 
 const SECUNDARIAS = [];
-for (let i = 0; i < 2000; i++) {
+for (let i = 0; i < 1500; i++) {
   const x = (Math.random()-0.5) * 2900;
   const z = (Math.random()-0.5) * 2900;
   if (Math.abs(x) > 1450 || Math.abs(z) > 1450) continue;
@@ -372,8 +375,8 @@ function distribuirRasteira(geo,material,count,minH,maxH,raioColisao=0){
   lista.forEach((o,i)=>{dummy.position.set(o.x,alturaTerreno(o.x,o.z),o.z);dummy.rotation.y=o.r;dummy.scale.setScalar(o.s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);if(raioColisao>0)colisores.push({x:o.x,z:o.z,raio:raioColisao});});
   im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 2800, 0.9, 2.65);
-distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 1750, 0.8, 2.25, 0.8);
+distribuirRasteira(criarSamambaiaGeo(), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, side: THREE.DoubleSide, roughness: 0.9 }), 1900, 0.9, 2.65);
+distribuirRasteira(criarArbustoGeo(), new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.9 }), 1200, 0.8, 2.25, 0.8);
 distribuirRasteira(criarPedraGeo(), MATERIAIS.pedra, 200, 0.6, 1.6, 0.7);
 
 // Capins de sub-bosque em touceiras: lâminas longas, finas e arqueadas.
@@ -391,7 +394,7 @@ function criarGramaGeo(){
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),4600,1.0,2.1);
+distribuirRasteira(criarGramaGeo(),new THREE.MeshStandardMaterial({color:0x52683c,roughness:1,side:THREE.DoubleSide}),2500,1.0,2.1);
 
 // CAMADA EXTRA DE FLORESTA — vegetação de transição, troncos caídos e musgo.
 function criarLogGeo(){
@@ -400,7 +403,7 @@ function criarLogGeo(){
 }
 const logGeo=criarLogGeo(), logMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0x5a4938,roughness:1});
 const logs=[];
-for(let i=0;i<420;i++){
+for(let i=0;i<320;i++){
   const x=(Math.random()-0.5)*2850,z=(Math.random()-0.5)*2850;
   if(emClareira(x,z,4)||distanciaCaminhos(x,z)<3||Math.hypot(x+380,z-520)<155)continue;
   logs.push({x,z,len:5+Math.random()*15,rot:Math.random()*Math.PI,thick:.75+Math.random()*.8});
@@ -430,7 +433,7 @@ const mossGeo=new THREE.BufferGeometry();
 }
 const mossMat=new THREE.MeshStandardMaterial({color:0x465b2e,roughness:1,side:THREE.DoubleSide});
 const moss=[];
-for(let patch=0;patch<650;patch++){
+for(let patch=0;patch<500;patch++){
   const cx=(Math.random()-.5)*2850,cz=(Math.random()-.5)*2850;
   if(emClareira(cx,cz,2)||distanciaCaminhos(cx,cz)<2||Math.hypot(cx+380,cz-520)<150)continue;
   const count=3+Math.floor(Math.random()*7),radius=2+Math.random()*7;
@@ -474,8 +477,8 @@ function scatterInstanced(geo,mat,count,scaleMin,scaleMax,excludeClearings=true)
   list.forEach((o,i)=>{d.position.set(o.x,alturaTerreno(o.x,o.z)+0.03,o.z);d.rotation.set((Math.random()-.5)*.18,o.r,(Math.random()-.5)*.18);d.scale.setScalar(o.s);d.updateMatrix();im.setMatrixAt(i,d.matrix);if(im.instanceColor){} });
   im.instanceMatrix.needsUpdate=true;scene.add(im);
 }
-scatterInstanced(leafGeo,leafMatA,3100,0.65,1.8);
-scatterInstanced(leafGeo,leafMatB,2200,0.45,1.35);
+scatterInstanced(leafGeo,leafMatA,2200,0.65,1.8);
+scatterInstanced(leafGeo,leafMatB,1500,0.45,1.35);
 
 // Raízes estruturais já fazem parte do tronco e se projetam pelo terreno.
 
@@ -490,7 +493,7 @@ litterGeo.setAttribute('position',new THREE.Float32BufferAttribute(litterPos,3))
 const litterMats=[0x55452f,0x756142,0x39452d,0x8a7650].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
 for(let m=0;m<litterMats.length;m++){
   const bits=[];
-  for(let patch=0;patch<220;patch++){
+  for(let patch=0;patch<150;patch++){
     const cx=(Math.random()-.5)*2900,cz=(Math.random()-.5)*2900;
     if(emClareira(cx,cz,2)||distanciaCaminhos(cx,cz)<1.5)continue;
     const amount=13+Math.floor(Math.random()*24),radius=3+Math.random()*12;

@@ -223,6 +223,16 @@ function protegerJogadorNaEscada(novaPos){
   }
 }
 
+// Grade espacial de colisão: evita percorrer milhares de objetos a cada quadro.
+const COLLISION_GRID_CELL = 48;
+const COLLISION_GRID = new Map();
+for (const c of colisores) {
+  const gx = Math.floor(c.x / COLLISION_GRID_CELL), gz = Math.floor(c.z / COLLISION_GRID_CELL);
+  const key = gx + ',' + gz;
+  if (!COLLISION_GRID.has(key)) COLLISION_GRID.set(key, []);
+  COLLISION_GRID.get(key).push(c);
+}
+
 function colidir(novaPos) {
   protegerJogadorNaEscada(novaPos);
   if (novaPos.x < -1150 + jogador.raio) novaPos.x = -1150 + jogador.raio;
@@ -230,12 +240,24 @@ function colidir(novaPos) {
   novaPos.z = Math.max(-1450, Math.min(1500, novaPos.z));
   const footY=novaPos.y-jogador.alturaOlhos;
   if(footY>alturaTerreno(novaPos.x,novaPos.z)+4.5||estaSobrePisoEspecial(novaPos.x,novaPos.z,footY))return;
-  for (const c of colisores) {
-    const dx = novaPos.x - c.x, dz = novaPos.z - c.z;
-    const dist = Math.hypot(dx, dz),minDist = c.raio + jogador.raio;
-    if (dist < minDist && dist > 0.0001) {
-      const push = minDist - dist;
-      novaPos.x += (dx/dist) * push;novaPos.z += (dz/dist) * push;
+  const cellX = Math.floor(novaPos.x / COLLISION_GRID_CELL);
+  const cellZ = Math.floor(novaPos.z / COLLISION_GRID_CELL);
+  for (let ox = -1; ox <= 1; ox++) {
+    for (let oz = -1; oz <= 1; oz++) {
+      const nearby = COLLISION_GRID.get((cellX + ox) + ',' + (cellZ + oz));
+      if (!nearby) continue;
+      for (let i = 0; i < nearby.length; i++) {
+        const c = nearby[i];
+        const dx = novaPos.x - c.x, dz = novaPos.z - c.z;
+        const minDist = c.raio + jogador.raio;
+        if (dx*dx + dz*dz < minDist*minDist) {
+          const dist = Math.sqrt(dx*dx + dz*dz);
+          if (dist > 0.0001) {
+            const push = minDist - dist;
+            novaPos.x += (dx/dist) * push; novaPos.z += (dz/dist) * push;
+          }
+        }
+      }
     }
   }
 }

@@ -12,6 +12,7 @@ function construirMenoa(){
   // colossal, mais grosso que cem árvores comuns. Diâmetro de projeto: 60 m.
   const altura=245,raioBase=34,raioTopo=15;
   const trunkMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,normalMap:TEX_CASCA_N,color:0xb0956d,roughness:.98,side:THREE.DoubleSide});
+  aplicarAjusteRaizesAoRelevo(trunkMat);
   const branchMat=new THREE.MeshStandardMaterial({map:TEX_GALHO,color:0x957a55,roughness:1,side:THREE.DoubleSide});
   const barkRidgeMat=new THREE.MeshStandardMaterial({map:TEX_CASCA,color:0xb69a6d,roughness:1,side:THREE.DoubleSide});
   const needleMats=[
@@ -22,9 +23,9 @@ function construirMenoa(){
   ];
 
   const tubeBuckets=new Map([
-    [trunkMat,{pos:[],uv:[],idx:[]}],
-    [branchMat,{pos:[],uv:[],idx:[]}],
-    [barkRidgeMat,{pos:[],uv:[],idx:[]}]
+    [trunkMat,{pos:[],uv:[],idx:[],rootMask:[],rootOffset:[]}],
+    [branchMat,{pos:[],uv:[],idx:[],rootMask:[],rootOffset:[]}],
+    [barkRidgeMat,{pos:[],uv:[],idx:[],rootMask:[],rootOffset:[]}]
   ]);
   function tube(points,r0,r1,mat=trunkMat,radial=14,segments=24,irregular=.14){
     const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.4);
@@ -34,7 +35,7 @@ function construirMenoa(){
       for(let k=0;k<radial;k++){
         const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+t*8)*irregular+Math.cos(a*7-t*10)*irregular*.28;
         const off=frames.normals[j].clone().multiplyScalar(Math.cos(a)*r*w).add(frames.binormals[j].clone().multiplyScalar(Math.sin(a)*r*w));
-        bucket.pos.push(p.x+off.x,p.y+off.y,p.z+off.z);bucket.uv.push(k/radial,t*2.7);
+        bucket.pos.push(p.x+off.x,p.y+off.y,p.z+off.z);bucket.uv.push(k/radial,t*2.7);bucket.rootMask.push(0);bucket.rootOffset.push(0);
       }
     }
     for(let j=0;j<segments;j++)for(let k=0;k<radial;k++){
@@ -45,7 +46,7 @@ function construirMenoa(){
   function flushTubeBuckets(){
     for(const [mat,b] of tubeBuckets){
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(b.pos,3));
-      g.setAttribute('uv',new THREE.Float32BufferAttribute(b.uv,2));g.setIndex(b.idx);g.computeVertexNormals();
+      g.setAttribute('uv',new THREE.Float32BufferAttribute(b.uv,2));g.setAttribute('rootMask',new THREE.Float32BufferAttribute(b.rootMask,1));g.setAttribute('rootOffset',new THREE.Float32BufferAttribute(b.rootOffset,1));g.setIndex(b.idx);g.computeVertexNormals();
       const mesh=new THREE.Mesh(g,mat);mesh.castShadow=true;mesh.receiveShadow=true;grupo.add(mesh);
     }
     tubeBuckets.clear();
@@ -60,7 +61,7 @@ function construirMenoa(){
       for(let k=0;k<radial;k++){
         const a=k/radial*Math.PI*2,w=1+Math.sin(a*3+t*8)*irregular;
         const side=r*Math.cos(a)*w,vertical=r*.18*Math.sin(a)*w;
-        bucket.pos.push(p.x+lateral.x*side,p.y+vertical,p.z+lateral.z*side);bucket.uv.push(k/radial,t*2.7);
+        bucket.pos.push(p.x+lateral.x*side,p.y+vertical,p.z+lateral.z*side);bucket.uv.push(k/radial,t*2.7);bucket.rootMask.push(1);bucket.rootOffset.push(vertical);
       }
     }
     for(let j=0;j<segments;j++)for(let k=0;k<radial;k++){
@@ -69,7 +70,7 @@ function construirMenoa(){
     }
   }
   const needleGeo=new THREE.ConeGeometry(.04,1.05,6,1);needleGeo.translate(0,.4,0);
-  const needleCapacity=180000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
+  const needleCapacity=90000,needles=new THREE.InstancedMesh(needleGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide}),needleCapacity);
   needles.castShadow=false;needles.receiveShadow=true;
   const needleDummy=new THREE.Object3D();let needleIndex=0;
   // Recursos de agulhas são criados antes dos galhos que os preenchem.
@@ -126,7 +127,7 @@ function construirMenoa(){
       pts.push([rx,alturaTerreno(rx,rz)+lift,rz]);
     }
     const rootRadius=2.35+Math.random()*.65;
-    rootTube(pts,rootRadius,.18,trunkMat,14,34,.18);
+    rootTube(pts,rootRadius,.18,trunkMat,12,24,.18);
     for(const k of [2,4,6])colisores.push({x:pts[k][0],z:pts[k][2],raio:rootRadius*.78});
     // Veias laterais ramificam a raiz principal para os lados.
     for(let fork=0;fork<3;fork++){
@@ -134,7 +135,7 @@ function construirMenoa(){
       const ex=base.x+Math.cos(turn)*len,ez=base.z+Math.sin(turn)*len;
       const mx=base.x+Math.cos(turn)*len*.55,mz=base.z+Math.sin(turn)*len*.55;
       const forkPoints=[[base.x,base.y,base.z],[mx,alturaTerreno(mx,mz)+.22,mz],[ex,alturaTerreno(ex,ez)+.12,ez]];
-      rootTube(forkPoints,.62,.10,trunkMat,8,18,.16);
+      rootTube(forkPoints,.62,.10,trunkMat,7,12,.16);
       colisores.push({x:mx,z:mz,raio:.55});
     }
   }
@@ -172,18 +173,18 @@ function construirMenoa(){
         tube([[p.x,p.y,p.z],[p.x+Math.cos(a3)*l3*.55,p.y+4,p.z+Math.sin(a3)*l3*.55],t3],.34,.06,branchMat,7,12,.12);
         for(let k=0;k<4;k++){
           const f=.25+k*.17,sp=curve([[p.x,p.y,p.z],t3]).getPoint(f);
-          needleSpray([sp.x,sp.y,sp.z],[Math.cos(a3)*.6,.55+Math.random()*.2,Math.sin(a3)*.6],1.0,36,b+r+q+k);
+          needleSpray([sp.x,sp.y,sp.z],[Math.cos(a3)*.6,.55+Math.random()*.2,Math.sin(a3)*.6],1.0,18,b+r+q+k);
         }
       }
       for(let k=1;k<=5;k++){
         const sp=secCurve.getPoint(k/6);
-        needleSpray([sp.x,sp.y,sp.z],[Math.cos(aa)*.65,.38,Math.sin(aa)*.65],1.3,40,b+r+k);
+        needleSpray([sp.x,sp.y,sp.z],[Math.cos(aa)*.65,.38,Math.sin(aa)*.65],1.3,20,b+r+k);
       }
     }
     // Pequenos feixes ao longo do próprio galho, sem volumes elipsoidais.
     for(let k=1;k<=8;k++){
       const sp=mainCurve.getPoint(k/9);
-      needleSpray([sp.x,sp.y,sp.z],[Math.cos(a)*.55,.55,Math.sin(a)*.55],2.0,48,b+k);
+      needleSpray([sp.x,sp.y,sp.z],[Math.cos(a)*.55,.55,Math.sin(a)*.55],2.0,24,b+k);
     }
   }
 
@@ -196,7 +197,7 @@ function construirMenoa(){
     for(let k=1;k<=13;k++){
       const p=cv.getPoint(k/14),a=br.angle+(k%2?1:-1)*(.4+Math.random()*.4),offset=1.4+Math.random()*2.8;
       const pos=[p.x+Math.cos(a)*offset,p.y+Math.random()*2,p.z+Math.sin(a)*offset];
-      needleSpray(pos,[Math.cos(br.angle)*.55+Math.cos(a)*.5,.35+Math.random()*.35,Math.sin(br.angle)*.55+Math.sin(a)*.5],2.0+Math.random()*1.6,52,b+k);
+      needleSpray(pos,[Math.cos(br.angle)*.55+Math.cos(a)*.5,.35+Math.random()*.35,Math.sin(br.angle)*.55+Math.sin(a)*.5],2.0+Math.random()*1.6,26,b+k);
     }
   });
 
