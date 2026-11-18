@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ellesméra — Floresta Viva + Arquitetura v17</title>
+<title>Ellesméra — Floresta Viva + Arquitetura v18</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0f0a; font-family: monospace; }
   #hud { position: fixed; top: 10px; left: 10px; color: #cfe8cf; background: rgba(10,25,15,0.75);
@@ -38,9 +38,9 @@
 </style>
 </head>
 <body>
-<div id="fase">FASE 2 — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V17</div>
+<div id="fase">FASE 2 — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V18</div>
 <div id="hud">
-  <b>Ellesméra — Floresta viva v17</b><br>
+  <b>Ellesméra — Floresta viva v18</b><br>
   WASD mover · Mouse olhar · Shift correr · Espaço pular<br>
   <b>M</b>/<b>N</b> teletransporte · <b>G</b> inspecionar Menoa · <b>TAB</b> minimapa<br>
   <span style="color:#8ab98a">Roda sobre o minimapa: zoom local ↔ visão geral</span>
@@ -52,7 +52,7 @@
 <div id="minimapa-container"><canvas id="minimapa" width="220" height="220"></canvas></div>
 <div id="aviso-layout">Layout provisório de produção — não canônico</div>
 <div id="start"><div>
-  <b>ELLESMÉRA — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V17</b><br><br>
+  <b>ELLESMÉRA — FLORESTA VIVA + LOCAIS CONSTRUÍDOS V18</b><br><br>
   Floresta procedural em camadas, Menoa monumental e estruturas construídas nos locais de Ellesméra.<br><br>
   Clique para entrar.<br>
   <span style="color:#8ab98a">WASD · mouse · Shift · Espaço · M/N · G · TAB</span>
@@ -156,15 +156,16 @@ function alturaTerreno(x, z) {
   let y = 0;
   y += (fbm(x*0.004, z*0.004, 5) - 0.5) * 4.5;
   y += (fbm(x*0.02, z*0.02, 3) - 0.5) * 1.2;
-  y += (fbm(x*0.09, z*0.09, 2) - 0.5) * 0.55;
-  y += (fbm(x*0.22, z*0.22, 2) - 0.5) * 0.16;
+  y += (fbm(x*0.09, z*0.09, 2) - 0.5) * 0.72;
+  y += (fbm(x*0.22, z*0.22, 2) - 0.5) * 0.34;
+  y += (fbm(x*0.48, z*0.48, 2) - 0.5) * 0.10;
   return y;
 }
 
 // ============================================================================
 // 5. TERRENO
 // ============================================================================
-const TERR_W = 3200, TERR_H = 3200, segs = 320;
+const TERR_W = 3200, TERR_H = 3200, segs = 440;
 const terrenoGeo = new THREE.PlaneGeometry(TERR_W, TERR_H, segs, segs);
 terrenoGeo.rotateX(-Math.PI/2);
 
@@ -182,12 +183,21 @@ for (let i = 0; i < posAttr.count; i++) {
   const n = fbm(x*0.03, z*0.03, 3);
   const damp = fbm(x*0.008+71, z*0.008-29, 4);
   const soil = fbm(x*0.075, z*0.075, 3);
-  corTerreno.setHSL(0.245 + n*0.045 + damp*0.012, 0.24 + soil*0.12, 0.105 + n*0.045 + damp*0.035);
+  corTerreno.setHSL(0.22 + n*0.055 + damp*0.025, 0.19 + soil*0.15, 0.36 + n*0.09 + damp*0.045);
   cores[i*3] = corTerreno.r; cores[i*3+1] = corTerreno.g; cores[i*3+2] = corTerreno.b;
 }
 terrenoGeo.setAttribute('color', new THREE.BufferAttribute(cores, 3));
 
-const terrenoMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+function criarTexturaSolo(){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#aaa084';ctx.fillRect(0,0,1024,1024);
+  const paleta=['rgba(49,55,34,0.42)','rgba(79,69,43,0.46)','rgba(128,108,69,0.38)','rgba(56,76,43,0.34)','rgba(145,133,99,0.42)'];
+  for(let i=0;i<36000;i++){const x=Math.random()*1024,y=Math.random()*1024;ctx.fillStyle=paleta[Math.floor(Math.random()*paleta.length)];ctx.beginPath();ctx.ellipse(x,y,.5+Math.random()*3.5,.4+Math.random()*1.8,Math.random()*Math.PI,0,Math.PI*2);ctx.fill();}
+  for(let i=0;i<5500;i++){const x=Math.random()*1024,y=Math.random()*1024,a=Math.random()*Math.PI*2,len=2+Math.random()*15;ctx.strokeStyle=Math.random()<.55?'rgba(45,48,28,0.45)':'rgba(138,112,69,0.42)';ctx.lineWidth=.4+Math.random()*1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);ctx.stroke();}
+  const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(150,150);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;return tex;
+}
+const TEX_SOLO=criarTexturaSolo();
+const terrenoMat = new THREE.MeshStandardMaterial({ map:TEX_SOLO, vertexColors:true, roughness:1.0 });
 const terreno = new THREE.Mesh(terrenoGeo, terrenoMat);
 terreno.receiveShadow = true;
 scene.add(terreno);
@@ -449,10 +459,13 @@ TEX_AGULHA.repeat.set(3, 3);
 const TEX_AGULHA_N = normalRudimentar(TEX_AGULHA);
 const TEX_MUSGO = texRuido('#2a3a1e', 'rgba(50,70,30,ALPHA)', 256, 256, 5);
 const TEX_PEDRA = texRuido('#6a6a60', 'rgba(40,40,35,ALPHA)', 256, 256, 5);
+const TEX_GALHO = texRuido('#3c3024', 'rgba(22,16,10,ALPHA)', 512, 512, 5);
+TEX_GALHO.repeat.set(2,5);
 TEX_PEDRA.repeat.set(2, 2);
 
 const MATERIAIS = {
-  tronco: new THREE.MeshStandardMaterial({ map: TEX_CASCA, normalMap: TEX_CASCA_N, roughness: 0.95, color: 0x9a8a7a }),
+  tronco: new THREE.MeshStandardMaterial({ map:TEX_CASCA, normalMap:TEX_CASCA_N, roughness:0.96, color:0x927c62 }),
+  galho: new THREE.MeshStandardMaterial({ map:TEX_GALHO, roughness:0.98, color:0x806c52 }),
   copa: new THREE.MeshStandardMaterial({ map: TEX_AGULHA, normalMap: TEX_AGULHA_N, roughness: 0.9, color: 0x5a7a4a, side: THREE.FrontSide }),
   pedra: new THREE.MeshStandardMaterial({ map: TEX_PEDRA, roughness: 0.95, color: 0x8a8a80 }),
   musgo: new THREE.MeshStandardMaterial({ map: TEX_MUSGO, roughness: 1.0, color: 0x6a7a4a }),
@@ -497,101 +510,102 @@ function emClareira(x, z, margemExtra = 0) {
 }
 
 // ============================================================================
-// 12. PINHEIRO PROCEDURAL
-// ============================================================================
-function criarPinheiroGeo(seed) {
-  // Árvores coníferas agora têm tronco completo, inclinação/curvatura e copa
-  // composta por massas orgânicas irregulares — não por anéis de cone repetidos.
-  const rnd=(a,b)=>a+Math.random()*(b-a);
-  const altura=rnd(38,78), raioBase=rnd(1.1,2.6), radial=14, segY=24;
-  const posT=[], idxT=[];
-  for(let j=0;j<=segY;j++){
-    const t=j/segY, y=t*altura;
-    const rr=raioBase*(1-t*0.82)*(1+(t<0.12?(0.12-t)*2.0:0))*(1+Math.sin(t*13+seed)*0.06+Math.sin(t*31+seed*2)*0.025);
-    const bendX=Math.sin(t*2.4+seed)*1.3+t*t*0.7, bendZ=Math.cos(t*1.9+seed*0.7)*0.8;
-    for(let k=0;k<radial;k++){
-      const a=k/radial*Math.PI*2, noise=1+Math.sin(a*3+seed)*0.055+Math.cos(a*5-seed)*0.035;
-      posT.push(Math.cos(a)*rr*noise+bendX,y,Math.sin(a)*rr*noise+bendZ);
-    }
-    if(j<segY) for(let k=0;k<radial;k++){
-      const a=j*radial+k,b=j*radial+(k+1)%radial,c=(j+1)*radial+k,d=(j+1)*radial+(k+1)%radial;
-      idxT.push(a,c,b,b,c,d);
-    }
-  }
-  const gT=new THREE.BufferGeometry();gT.setAttribute('position',new THREE.Float32BufferAttribute(posT,3));gT.setIndex(idxT);gT.computeVertexNormals();
-  // Geometria de copa: vários lobos de folhagem, alturas e projeções diferentes.
-  const gC=new THREE.BufferGeometry(), cp=[], ci=[]; let offset=0;
-  const crownStart=altura*rnd(0.36,0.49), crownHeight=altura-crownStart;
-  const lobes=17+Math.floor(Math.random()*9);
-  function addBlob(cx,cy,cz,rx,ry,rz){
-    const blob=new THREE.IcosahedronGeometry(1,2); const a=blob.attributes.position;
-    for(let i=0;i<a.count;i++){
-      let x=a.getX(i),y=a.getY(i),z=a.getZ(i);
-      const wave=1+0.11*Math.sin(x*5+seed)*Math.cos(z*4+seed*0.3)+0.07*Math.sin(y*7+x*3);
-      cp.push(cx+x*rx*wave,cy+y*ry*wave,cz+z*rz*wave);
-    }
-    // IcosahedronGeometry pode vir sem index (geometria não indexada).
-    // Nesse caso, cada trio consecutivo já representa um triângulo.
-    if(blob.index){
-      const id=blob.index.array;
-      for(let i=0;i<id.length;i++)ci.push(offset+id[i]);
-    } else {
-      for(let i=0;i<a.count;i++)ci.push(offset+i);
-    }
-    offset+=a.count; blob.dispose();
-  }
-  // Núcleo estreito, irregular, mais aberto na base e quebrado em silhueta.
-  for(let i=0;i<lobes;i++){
-    const t=i/lobes, ang=i*2.399963+seed*0.13;
-    const y=crownStart+crownHeight*(0.12+t*0.78)+rnd(-crownHeight*0.07,crownHeight*0.07);
-    const envelope=Math.sin(Math.PI*(0.12+t*0.78))*0.85+0.22;
-    const r=rnd(5.0,10.5)*envelope;
-    const x=Math.cos(ang)*r, z=Math.sin(ang)*r;
-    const size=rnd(5.8,11.5)*envelope;
-    addBlob(x,y,z,size*rnd(0.8,1.35),size*rnd(0.75,1.25),size*rnd(0.8,1.35));
-  }
-  // Grandes braços de copa laterais e alguns ramos pendentes para evitar cone.
-  for(let b=0;b<8;b++){
-    const a=b/8*Math.PI*2+seed*0.04, y=crownStart+crownHeight*rnd(0.18,0.65);
-    const len=rnd(12,22), tipY=y+rnd(-3,9);
-    for(let q=0;q<3;q++){
-      const t=0.35+q*0.28, px=Math.cos(a)*len*t, pz=Math.sin(a)*len*t;
-      const sz=rnd(5.2,9.2)*(1-t*0.25);
-      addBlob(px, y+(tipY-y)*t, pz, sz*1.2, sz*0.9, sz*1.1);
-    }
-  }
-  gC.setAttribute('position',new THREE.Float32BufferAttribute(cp,3));gC.setIndex(ci);gC.computeVertexNormals();
-  return {tronco:gT,copa:gC,altura,raioBase};
-}
+ // 12. ÁRVORES PROCEDURAIS — troncos altos, ramificação estrutural e agulhas
+ // ============================================================================
+function criarPinheiroGeo(seed,tipo='adulto'){
+  const rand=(a,b)=>a+Math.random()*(b-a),sapling=tipo==='sub-bosque';
+  const altura=sapling?rand(22,42):rand(76,112);
+  const raioBase=sapling?rand(.48,.95):rand(1.55,2.75);
+  const topoRaio=sapling ? .07 : .17;
+  const crownStart=altura*(sapling?rand(.38,.48):rand(.56,.64));
+  const posT=[],idxT=[],posB=[],idxB=[],posF=[],idxF=[];
+  const cx=Math.sin(seed*1.73)*.8,cz=Math.cos(seed*2.11)*.7;
 
-// ============================================================================
-// 13. ÁRVORE SECUNDÁRIA
-// ============================================================================
-function criarSecundariaGeo(seed) {
-  // Espécie broadleaf/subcanopy: copa ampla e irregular, tronco inteiro.
-  const altura=18+Math.random()*28, raio=0.55+Math.random()*1.2;
-  const trunk=new THREE.CylinderGeometry(raio*0.55,raio*1.35,altura,10,8);
-  const tp=trunk.attributes.position;
-  for(let i=0;i<tp.count;i++){const y=tp.getY(i);tp.setX(i,tp.getX(i)+Math.sin(y*0.12+seed)*0.12);tp.setZ(i,tp.getZ(i)+Math.cos(y*0.1+seed)*0.1);}
-  trunk.computeVertexNormals(); trunk.translate(0,altura*0.5,0);
-  const canopy=new THREE.BufferGeometry(),pos=[],ind=[];let off=0;
-  const count=9+Math.floor(Math.random()*7);
-  for(let i=0;i<count;i++){
-    const blob=new THREE.IcosahedronGeometry(1,2),a=blob.attributes.position;
-    const ang=i*2.399+seed, t=0.2+Math.random()*0.65;
-    const cx=Math.cos(ang)*(altura*0.18),cz=Math.sin(ang)*(altura*0.18),cy=altura*(0.58+t*0.26);
-    const size=altura*(0.16+Math.random()*0.11);
-    for(let v=0;v<a.count;v++){
-      const x=a.getX(v),y=a.getY(v),z=a.getZ(v),wave=1+0.12*Math.sin(x*5+seed)*Math.cos(z*4)+0.06*Math.sin(y*6);
-      pos.push(cx+x*size*wave,cy+y*size*0.82*wave,cz+z*size*wave);
+  function addTube(pos,idx,points,r0,r1,radial=8,segments=12,irregular=.10){
+    const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.35);
+    const frames=curve.computeFrenetFrames(segments,false),base=pos.length/3;
+    for(let s=0;s<=segments;s++){
+      const t=s/segments,center=curve.getPointAt(t),radius=r0*(1-t)+r1*t;
+      for(let k=0;k<radial;k++){
+        const a=k/radial*Math.PI*2,wob=1+Math.sin(a*3+seed+t*7)*irregular+Math.cos(a*5-seed)*irregular*.32;
+        const off=frames.normals[s].clone().multiplyScalar(Math.cos(a)*radius*wob).add(frames.binormals[s].clone().multiplyScalar(Math.sin(a)*radius*wob));
+        pos.push(center.x+off.x,center.y+off.y,center.z+off.z);
+      }
     }
-    if(blob.index){for(const n of blob.index.array)ind.push(off+n);}
-    else {for(let n=0;n<a.count;n++)ind.push(off+n);}
-    off+=a.count;blob.dispose();
+    for(let s=0;s<segments;s++)for(let k=0;k<radial;k++){
+      const p=base+s*radial+k,q=base+s*radial+(k+1)%radial,r=base+(s+1)*radial+k,t=base+(s+1)*radial+(k+1)%radial;
+      idx.push(p,q,r,q,t,r);
+    }
   }
-  canopy.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));canopy.setIndex(ind);canopy.computeVertexNormals();
-  return {tronco:trunk,copa:canopy,altura,raio};
+  function addNeedle(p,dir,len,width){
+    const d=new THREE.Vector3(...dir).normalize(),ref=Math.abs(d.y)>.86?new THREE.Vector3(1,0,0):new THREE.Vector3(0,1,0);
+    const side=new THREE.Vector3().crossVectors(d,ref).normalize().multiplyScalar(width);
+    const lift=new THREE.Vector3().crossVectors(side,d).normalize().multiplyScalar(width*.22);
+    const base=posF.length/3,mid=new THREE.Vector3(...p).addScaledVector(d,len*.52).add(lift),tip=new THREE.Vector3(...p).addScaledVector(d,len);
+    const left=mid.clone().add(side),right=mid.clone().sub(side);
+    posF.push(p[0],p[1],p[2],left.x,left.y,left.z,tip.x,tip.y,tip.z,right.x,right.y,right.z);
+    idxF.push(base,base+1,base+2,base,base+2,base+3);
+  }
+  function toGeo(pos,idx){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;}
+
+  // Tronco contínuo com conicidade forte, leve sinuosidade e casca irregular.
+  const trunk=[];
+  for(let s=0;s<=12;s++){const t=s/12;trunk.push([cx+Math.sin(t*2.4+seed)*(.25+t*.8),t*altura,cz+Math.cos(t*1.9+seed*.4)*(.22+t*.55)]);}
+  addTube(posT,idxT,trunk,raioBase,topoRaio,20,48,.055);
+
+  // Raízes expostas, ligadas ao colo do tronco e apoiadas sobre o solo.
+  const rootCount=sapling?6:11;
+  for(let r=0;r<rootCount;r++){
+    const a=r/rootCount*Math.PI*2+rand(-.18,.18),len=sapling?rand(2.8,5.8):rand(8,16),side=Math.sin(a*2+seed)*.8;
+    const root=[
+      [cx+Math.cos(a)*raioBase*.42,.18,cz+Math.sin(a)*raioBase*.42],
+      [cx+Math.cos(a)*len*.28+Math.cos(a+Math.PI/2)*side,.55,cz+Math.sin(a)*len*.28+Math.sin(a+Math.PI/2)*side],
+      [cx+Math.cos(a)*len*.68+Math.cos(a+Math.PI/2)*side*1.8,.22,cz+Math.sin(a)*len*.68+Math.sin(a+Math.PI/2)*side*1.8],
+      [cx+Math.cos(a)*len,.07,cz+Math.sin(a)*len]
+    ];
+    addTube(posT,idxT,root,raioBase*rand(.24,.38),.035,8,20,.20);
+    if(r%2===0){const fork=root[2],fa=a+rand(-.65,.65),fl=len*rand(.35,.58);addTube(posT,idxT,[fork,[fork[0]+Math.cos(fa)*fl*.45,.18,fork[2]+Math.sin(fa)*fl*.45],[fork[0]+Math.cos(fa)*fl,.05,fork[2]+Math.sin(fa)*fl]],.22,.025,7,12,.16);}
+  }
+
+  // Andares de galhos, mais longos na parte inferior da copa e progressivamente
+  // menores no alto, com pequenos ramos alternados e agulhas finas individuais.
+  const levels=sapling?5:7,arms=sapling?6:8,baseReach=sapling?rand(6.5,10):rand(21,30);
+  for(let level=0;level<levels;level++){
+    const t=level/(levels-1),y=crownStart+t*(altura-crownStart)*.92,reach=baseReach*(1-t*.86)+1.8,count=arms+(level%2);
+    for(let arm=0;arm<count;arm++){
+      const a=arm/count*Math.PI*2+level*.39+rand(-.16,.16),len=reach*rand(.82,1.17),droop=(1-t)*len*.13;
+      const root=[cx+Math.cos(a)*raioBase*.55,y,cz+Math.sin(a)*raioBase*.55];
+      const p1=[cx+Math.cos(a)*len*.34,y+len*.045,cz+Math.sin(a)*len*.34];
+      const p2=[cx+Math.cos(a)*len*.70,y+len*.025-droop*.28,cz+Math.sin(a)*len*.70];
+      const tip=[cx+Math.cos(a)*len,y+len*.015-droop,cz+Math.sin(a)*len];
+      addTube(posB,idxB,[root,p1,p2,tip],sapling ? .20 : .48,sapling ? .025 : .055,7,18,.13);
+
+      // Pequenos sprays distribuídos ao longo do galho principal.
+      for(let s=1;s<=5;s++){
+        const q=s/6,px=cx+Math.cos(a)*len*q,py=y+len*.025*q-droop*q*.65,pz=cz+Math.sin(a)*len*q;
+        for(let n=0;n<4;n++){const aa=a+n*Math.PI*.5+rand(-.25,.25);addNeedle([px,py,pz],[Math.cos(aa)*.56+Math.cos(a)*.62,.34+rand(-.05,.38),Math.sin(aa)*.56+Math.sin(a)*.62],rand(sapling ? .28 : .72,sapling ? .62 : 1.55),sapling ? .035 : .075);}
+      }
+
+      // Ramificações secundárias alternadas que quebram a silhueta em fios vegetais.
+      const twigN=sapling?4:6;
+      for(let twig=0;twig<twigN;twig++){
+        const q=.18+twig*.125,side=twig%2===0?1:-1,bx=cx+Math.cos(a)*len*q,by=y+len*.025*q-droop*q*.65,bz=cz+Math.sin(a)*len*q;
+        const aa=a+side*rand(.52,.92),tl=len*rand(.14,.22)*(1-t*.25);
+        const mid=[bx+Math.cos(aa)*tl*.52,by+tl*.13,bz+Math.sin(aa)*tl*.52],end=[bx+Math.cos(aa)*tl,by+tl*.16+rand(.2,1.1),bz+Math.sin(aa)*tl];
+        addTube(posB,idxB,[[bx,by,bz],mid,end],sapling ? .12 : .22,.018,6,9,.16);
+        for(let n=0;n<7;n++){
+          const a2=aa+n*Math.PI*2/7+rand(-.18,.18),p=[end[0]-Math.cos(aa)*rand(0,.7),end[1]-rand(0,.35),end[2]-Math.sin(aa)*rand(0,.7)];
+          addNeedle(p,[Math.cos(a2)*.68+Math.cos(aa)*.35,.22+rand(.05,.48),Math.sin(a2)*.68+Math.sin(aa)*.35],rand(sapling ? .32 : .7,sapling ? .66 : 1.6),sapling ? .035 : .085);
+        }
+      }
+    }
+  }
+  // Ponteiro superior e raminhos terminais irregulares, sem tufo esférico.
+  addTube(posB,idxB,[[cx,altura*.84,cz],[cx+.2,altura*.94,cz-.15],[cx-.1,altura,cz+.1]],sapling ? .13 : .28,.025,7,14,.12);
+  for(let n=0;n<10;n++){const a=n/10*Math.PI*2;addNeedle([cx+Math.cos(a)*.25,altura*.91,cz+Math.sin(a)*.25],[Math.cos(a)*.3,.9,Math.sin(a)*.3],sapling ? .55 : 1.2,sapling ? .035 : .08);}
+  return {tronco:toGeo(posT,idxT),galhos:toGeo(posB,idxB),copa:toGeo(posF,idxF),altura,raioBase};
 }
+function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 
 // ============================================================================
 // 14. INSTANCIAMENTO — PINHEIROS E SECUNDÁRIAS
@@ -619,23 +633,20 @@ for (const p of PINHEIROS) gruposPinheiro[Math.floor(Math.random()*VARIANTES_PIN
 VARIANTES_PINHEIRO.forEach((variante, vi) => {
   const lista = gruposPinheiro[vi];
   if (lista.length === 0) return;
-  const imT = new THREE.InstancedMesh(variante.tronco, MATERIAIS.tronco, lista.length);
-  const imC = new THREE.InstancedMesh(variante.copa, MATERIAIS.copa, lista.length);
-  imT.castShadow = true; imT.receiveShadow = true;
-  imC.castShadow = true; imC.receiveShadow = true;
-  const dummy = new THREE.Object3D();
-  lista.forEach((p, i) => {
-    dummy.position.set(p.x, alturaTerreno(p.x, p.z), p.z);
-    dummy.rotation.y = Math.random()*Math.PI*2;
-    const scale=0.72+Math.random()*0.72; dummy.scale.set(scale,scale*(0.88+Math.random()*0.25),scale);
-    dummy.updateMatrix();
-    imT.setMatrixAt(i, dummy.matrix);
-    imC.setMatrixAt(i, dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(0.27+Math.random()*0.045,0.30+Math.random()*0.16,0.22+Math.random()*0.13));
-    colisores.push({ x: p.x, z: p.z, raio: variante.raioBase + 0.4 });
+  const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
+  const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
+  const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
+  imT.castShadow=true;imT.receiveShadow=true;imB.castShadow=true;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  const dummy=new THREE.Object3D();
+  lista.forEach((p,i)=>{
+    dummy.position.set(p.x,alturaTerreno(p.x,p.z),p.z);dummy.rotation.y=Math.random()*Math.PI*2;
+    const scale=.78+Math.random()*.68;dummy.scale.set(scale,scale*(.92+Math.random()*.18),scale);dummy.updateMatrix();
+    imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
+    imC.setColorAt(i,new THREE.Color().setHSL(.265+Math.random()*.055,.38+Math.random()*.18,.17+Math.random()*.12));
+    colisores.push({x:p.x,z:p.z,raio:variante.raioBase+.7});
   });
-  imT.instanceMatrix.needsUpdate = true; imC.instanceMatrix.needsUpdate = true;
-  scene.add(imT); scene.add(imC);
+  imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
+  if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
 });
 
 const SECUNDARIAS = [];
@@ -655,23 +666,20 @@ for (const s of SECUNDARIAS) gruposSec[Math.floor(Math.random()*VARIANTES_SEC.le
 VARIANTES_SEC.forEach((variante, vi) => {
   const lista = gruposSec[vi];
   if (lista.length === 0) return;
-  const imT = new THREE.InstancedMesh(variante.tronco, MATERIAIS.tronco, lista.length);
-  const imC = new THREE.InstancedMesh(variante.copa, MATERIAIS.copa, lista.length);
-  imT.castShadow = true; imT.receiveShadow = true;
-  imC.castShadow = true; imC.receiveShadow = true;
-  const dummy = new THREE.Object3D();
-  lista.forEach((s, i) => {
-    dummy.position.set(s.x, alturaTerreno(s.x, s.z), s.z);
-    dummy.rotation.y = Math.random()*Math.PI*2;
-    const scale=0.62+Math.random()*1.15; dummy.scale.set(scale,scale*(0.85+Math.random()*0.3),scale);
-    dummy.updateMatrix();
-    imT.setMatrixAt(i, dummy.matrix);
-    imC.setMatrixAt(i, dummy.matrix);
-    imC.setColorAt(i,new THREE.Color().setHSL(0.25+Math.random()*0.07,0.34+Math.random()*0.18,0.22+Math.random()*0.16));
-    colisores.push({ x: s.x, z: s.z, raio: variante.raio + 0.4 });
+  const imT=new THREE.InstancedMesh(variante.tronco,MATERIAIS.tronco,lista.length);
+  const imB=new THREE.InstancedMesh(variante.galhos,MATERIAIS.galho,lista.length);
+  const imC=new THREE.InstancedMesh(variante.copa,MATERIAIS.copa,lista.length);
+  imT.castShadow=true;imT.receiveShadow=true;imB.castShadow=true;imB.receiveShadow=true;imC.castShadow=false;imC.receiveShadow=true;
+  const dummy=new THREE.Object3D();
+  lista.forEach((s,i)=>{
+    dummy.position.set(s.x,alturaTerreno(s.x,s.z),s.z);dummy.rotation.y=Math.random()*Math.PI*2;
+    const scale=.74+Math.random()*.68;dummy.scale.set(scale,scale*(.9+Math.random()*.2),scale);dummy.updateMatrix();
+    imT.setMatrixAt(i,dummy.matrix);imB.setMatrixAt(i,dummy.matrix);imC.setMatrixAt(i,dummy.matrix);
+    imC.setColorAt(i,new THREE.Color().setHSL(.25+Math.random()*.055,.34+Math.random()*.18,.18+Math.random()*.12));
+    colisores.push({x:s.x,z:s.z,raio:variante.raioBase+.35});
   });
-  imT.instanceMatrix.needsUpdate = true; imC.instanceMatrix.needsUpdate = true;
-  scene.add(imT); scene.add(imC);
+  imT.instanceMatrix.needsUpdate=true;imB.instanceMatrix.needsUpdate=true;imC.instanceMatrix.needsUpdate=true;
+  if(imC.instanceColor)imC.instanceColor.needsUpdate=true;scene.add(imT);scene.add(imB);scene.add(imC);
 });
 
 // ============================================================================
