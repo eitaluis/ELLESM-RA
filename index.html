@@ -1076,6 +1076,36 @@ function addHoneycombRoof(parent,cx,cy,cz,length,width){
         [hx+Math.cos(a)*rad*.48,cy+archCenter+.4,hz+Math.sin(a)*rad*.48]],.09,.05,woodMat,5,8,.08);}
   }
 }
+function buildCanopyStairTower(parent,x,z,groundY,targetY,seed=0){
+  const rise=targetY-groundY,turns=6.0,radius=7.3,samples=600;
+  addLivingTrunk(parent,x,groundY,z,rise+13,3.0,Math.sin(seed)*1.2,Math.cos(seed)*1.1,woodMat);
+  const path=[],outer=[],inner=[];
+  for(let i=0;i<=samples;i++){
+    const t=i/samples,a=t*Math.PI*2*turns,y=groundY+.18+t*(rise-.05);
+    path.push([x+Math.cos(a)*radius,y,z+Math.sin(a)*radius]);
+    outer.push([x+Math.cos(a)*(radius+2.0),y+1.15,z+Math.sin(a)*(radius+2.0)]);
+    inner.push([x+Math.cos(a)*(radius-1.9),y+.95,z+Math.sin(a)*(radius-1.9)]);
+  }
+  registerWalkablePath(path,4.3);
+  addOrganicTube(parent,outer,.24,.15,paleWood,7,560,.12);
+  addOrganicTube(parent,inner,.28,.16,woodMat,7,560,.12);
+  // Degraus instanciados mantêm a escada contínua sem criar centenas de meshes individuais.
+  const stepCount=Math.ceil(rise/.23),stepGeo=new THREE.BoxGeometry(4.5,.20,1.25);
+  const steps=new THREE.InstancedMesh(stepGeo,woodMat,stepCount),dummy=new THREE.Object3D();
+  for(let i=0;i<stepCount;i++){
+    const t=i/(stepCount-1),a=t*Math.PI*2*turns,y=groundY+.23+t*(rise-.10);
+    dummy.position.set(x+Math.cos(a)*radius,y,z+Math.sin(a)*radius);
+    dummy.rotation.set(0,a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();steps.setMatrixAt(i,dummy.matrix);
+  }
+  steps.instanceMatrix.needsUpdate=true;steps.castShadow=true;steps.receiveShadow=true;parent.add(steps);
+  // Galhos em arco sustentam a espiral e a unem ao tronco principal.
+  for(let i=0;i<12;i++){
+    const t=(i+.5)/12,a=t*Math.PI*2*turns,y=groundY+t*rise;
+    addOrganicTube(parent,[[x+Math.cos(a)*(radius+1),y,z+Math.sin(a)*(radius+1)],
+      [x+Math.cos(a)*3.2,y+2.2,z+Math.sin(a)*3.2],[x,y+4,z]],.40,.13,woodMat,7,22,.12);
+  }
+  return {x,y:targetY,z};
+}
 function buildLivingBridge(parent,points,width=3.8){
   const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal',.34);
   const count=Math.max(48,Math.ceil(curve.getLength()/2.2)),samples=curve.getPoints(count),left=[],right=[],indices=[],pos=[],uv=[];
@@ -1100,20 +1130,49 @@ function buildLivingBridge(parent,points,width=3.8){
   const path=samples.map(p=>[p.x,p.y,p.z]);registerWalkablePath(path,width*.72);return path;
 }
 function buildCanopyResidence(parent,x,z,floorY,seed=0){
-  const supports=[[-8,-5],[8,-5],[0,9]];
-  supports.forEach(([dx,dz],i)=>{const tx=x+dx,tz=z+dz,base=alturaTerreno(tx,tz),leanX=-dx*.12,leanZ=-dz*.10;
-    addLivingTrunk(parent,tx,base,tz,54+(i%2)*7,2.0,leanX,leanZ,woodMat);
-    addOrganicTube(parent,[[tx+leanX,base+35,tz+leanZ],[x+dx*.45,floorY+5,z+dz*.45],[x,floorY+2.8,z]],.8,.22,woodMat,8,30,.15);});
-  const rx=5.7,ry=3.25,rz=4.7,centerY=floorY+2.9;
-  addOpenOvoidPod(parent,x,centerY,z,rx,ry,rz,woodMat,Math.PI/2);
-  addResidenceFloor(parent,x,floorY,z,rx*.78,rz*.76,mossFloorMat);addLivingDoorFrame(parent,x,floorY,z+rz*.93,2.25,3.0);
-  addOval(parent,x-1.5,floorY+.55,z-1.1,1.25,.42,2.0,paleWood,16);addOval(parent,x-1.5,floorY+.88,z-1.1,1.08,.18,1.78,mossFloorMat,16);
-  addOval(parent,x+1.65,floorY+.68,z-.55,.72,.72,.72,woodMat,14);
-  for(let k=0;k<3;k++)addOrganicTube(parent,[[x+3.0,floorY+.4+k*.65,z-2.3],[x+3.5,floorY+.5+k*.65,z-2.1],[x+3.2,floorY+.55+k*.65,z-1.8]],.08,.05,paleWood,5,8,.05);
-  const gemMat=new THREE.MeshStandardMaterial({color:[0x3d8e7d,0x6879a8,0x98734d][seed%3],emissive:0x10231a,roughness:.2,metalness:.12});
-  addOval(parent,x+rx*.91,centerY+.15,z,.46,.82,.12,gemMat,12);addOval(parent,x-rx*.91,centerY+.15,z,.46,.82,.12,gemMat,12);
-  registerWalkablePath([[x,floorY,z+rz*.84],[x,floorY,z+1.5],[x,floorY,z-.8]],2.5);
-  return {x,y:floorY,z:z+rz*.92};
+  // Casa suspensa com silhueta hexagonal facetada, mais cúbica, mas crescida dos três pinheiros.
+  const supports=[[-10,-7],[10,-7],[0,11]];
+  supports.forEach(([dx,dz],i)=>{
+    const tx=x+dx,tz=z+dz,base=alturaTerreno(tx,tz),leanX=-dx*.13,leanZ=-dz*.09;
+    addLivingTrunk(parent,tx,base,tz,Math.max(76,floorY-base+28),2.6,leanX,leanZ,woodMat);
+    addOrganicTube(parent,[[tx+leanX,base+floorY-base-16,tz+leanZ],
+      [x+dx*.55,floorY+5,z+dz*.55],[x,floorY+3.6,z]],1.0,.22,woodMat,9,34,.14);
+  });
+  const rx=7.4,ry=4.35,rz=6.0,centerY=floorY+ry-.12;
+  addHexagonalLivingShell(parent,x,centerY,z,rx,ry,rz,woodMat,true);
+  addResidenceFloor(parent,x,floorY,z,rx*.88,rz*.82,mossFloorMat);
+  addLivingDoorFrame(parent,x,floorY,z+rz*.96,2.8,3.7);
+  // Nervuras grossas e cobertura abaulada de galhos entrelaçados.
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3,pts=[[x+Math.sin(a)*rx,floorY+.2,z+Math.cos(a)*rz],
+      [x+Math.sin(a)*rx*.92,centerY+ry*.55,z+Math.cos(a)*rz*.92],
+      [x+Math.sin(a)*rx*.56,centerY+ry*1.13,z+Math.cos(a)*rz*.56],
+      [x,centerY+ry*1.22,z]];
+    addOrganicTube(parent,pts,.34,.09,paleWood,8,24,.12);
+  }
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4,px=x+Math.sin(a)*rx*.88,pz=z+Math.cos(a)*rz*.88;
+    const windowMat=new THREE.MeshStandardMaterial({color:0xf0cb86,emissive:0xffb94d,emissiveIntensity:1.35,roughness:.22,metalness:.06});
+    const isFront=Math.abs(a)<.9;
+    addOval(parent,px,floorY+2.45,pz,isFront?.58:.16,1.02,isFront?.18:.72,windowMat,12);
+  }
+  // Entrada escura recessed sob o arco, com iluminação interior quente visível de fora.
+  addOval(parent,x,floorY+1.9,z+rz*.94,1.12,1.78,.08,darkMat,14);
+  const interiorLight=new THREE.PointLight(0xffc875,3.4,34,1.7);
+  interiorLight.position.set(x,floorY+2.6,z-1.0);parent.add(interiorLight);
+  const porchLight=new THREE.PointLight(0xffd18a,.85,11,2);
+  porchLight.position.set(x,floorY+3.2,z+rz*.93);parent.add(porchLight);
+  // Interior legível: leito, mesa baixa, banco e nichos de armazenamento.
+  addOval(parent,x-2.2,floorY+.42,z-1.8,1.5,.38,2.0,paleWood,16);
+  addOval(parent,x-2.2,floorY+.70,z-1.8,1.25,.14,1.72,mossFloorMat,16);
+  addOval(parent,x+2.0,floorY+.62,z-1.2,1.0,.56,.78,woodMat,14);
+  addOval(parent,x+2.0,floorY+.96,z-1.2,.82,.12,.62,paleWood,12);
+  for(let k=0;k<3;k++)addOrganicTube(parent,[[x+4.0,floorY+.35+k*.62,z-3.0],
+    [x+4.35,floorY+.48+k*.62,z-2.6],[x+4.05,floorY+.55+k*.62,z-2.2]],.11,.06,paleWood,6,10,.06);
+  // Pequena varanda de madeira viva na frente da porta.
+  buildLivingBridge(parent,[[x-5,floorY,z+rz+1],[x,floorY+.15,z+rz+2.1],[x+5,floorY,z+rz+1]],3.2);
+  registerWalkablePath([[x,floorY,z+rz+2],[x,floorY,z+rz*.72],[x,floorY,z]],2.9);
+  return {x,y:floorY,z:z+rz+2.0,door:[x,floorY,z+rz+1.4]};
 }
 function addOrganicTube(parent,points,r0,r1,mat=woodMat,radial=9,segments=18,irregular=.12){
   let bucket=ARCH_TUBE_BUCKETS.get(mat);
