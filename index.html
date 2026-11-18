@@ -673,10 +673,10 @@ function criarSecundariaGeo(seed){return criarPinheiroGeo(seed,'sub-bosque');}
 const colisores = [];
 const ROOT_WALKS = [];
 const ARCHITECTURE_CLEARINGS = [
-  [410,-110,32],[150,-80,32],[-60,-165,32],[305,-92,25],[0,0,26],
+  [410,-110,54],[150,-80,54],[-60,-165,54],[305,-92,42],[0,0,30],
   [470,-180,13],[155,-120,13],[-75,-165,13],[20,18,13],
-  [350,-18,22],[215,-82,20],[165,-235,20],[520,-142,22],
-  [250,-40,38],[200,-160,24],[120,70,24],[-180,220,26],[-600,60,28]
+  [350,-18,28],[215,-82,27],[165,-235,27],[520,-142,28],
+  [250,-40,48],[200,-160,28],[120,70,28],[-180,220,26],[-600,60,28]
 ];
 function pertoDaArquitetura(x,z,extra=0){
   for(const p of ARCHITECTURE_CLEARINGS)
@@ -1180,9 +1180,20 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   const house=new THREE.Group();house.position.set(x,0,z);parent.add(house);
   const w=14*scale,d=12*scale,h=7.4*scale,wall=.52*scale;
   const halfW=w/2,halfD=d/2,doorW=2.9*scale,doorH=4.45*scale;
-  const addBox=(sx,sy,sz,mat,px,py,pz)=>{
-    const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
-    mesh.position.set(px,py,pz);mesh.castShadow=true;mesh.receiveShadow=true;house.add(mesh);return mesh;
+  const boxBuckets=new Map(),boxTransform=new THREE.Object3D();
+  const addBox=(sx,sy,sz,mat,px,py,pz,rotY=0,rotZ=0)=>{
+    const geometry=new THREE.BoxGeometry(sx,sy,sz);
+    boxTransform.position.set(px,py,pz);boxTransform.rotation.set(0,rotY,rotZ);boxTransform.scale.set(1,1,1);boxTransform.updateMatrix();
+    geometry.applyMatrix4(boxTransform.matrix);
+    let bucket=boxBuckets.get(mat);
+    if(!bucket){bucket={p:[],uv:[],idx:[]};boxBuckets.set(mat,bucket);}
+    const base=bucket.p.length/3,pos=geometry.getAttribute('position'),uv=geometry.getAttribute('uv'),idx=geometry.index.array;
+    for(let i=0;i<pos.count;i++){
+      bucket.p.push(pos.getX(i),pos.getY(i),pos.getZ(i));
+      bucket.uv.push(uv.getX(i),uv.getY(i));
+    }
+    for(let i=0;i<idx.length;i++)bucket.idx.push(base+idx[i]);
+    geometry.dispose();
   };
 
   if(elevated){
@@ -1194,12 +1205,12 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
       trunk.position.set(sx,base+height/2,sz);
       trunk.rotation.z=-sx*.003;trunk.castShadow=true;trunk.receiveShadow=true;house.add(trunk);
     }
-    addBox(1.25*scale,1.15*scale,d*.46,woodMat,-w*.35,floorY-.70*scale,-d*.12).rotation.z=-.12;
-    addBox(1.25*scale,1.15*scale,d*.46,woodMat,w*.35,floorY-.70*scale,-d*.12).rotation.z=.12;
+    addBox(1.25*scale,1.15*scale,d*.46,woodMat,-w*.35,floorY-.70*scale,-d*.12,0,-.12);
+    addBox(1.25*scale,1.15*scale,d*.46,woodMat,w*.35,floorY-.70*scale,-d*.12,0,.12);
     addBox(w*.42,1.1*scale,1.3*scale,woodMat,0,floorY-.68*scale,d*.30);
   }
 
-  // Plataforma e fachadas com abertura de entrada atravessável.
+  // Piso e paredes: o centro da fachada fica aberto para atravessar a porta.
   addBox(w+.55*scale,.62*scale,d+.65*scale,woodMat,0,floorY-.31*scale,0);
   addBox(w-.8*scale,.13*scale,d-.8*scale,mossFloorMat,0,floorY+.035*scale,0);
   addBox(wall,h,d-wall,dwellingWallMat,-halfW+wall/2,floorY+h/2,0);
@@ -1210,14 +1221,12 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   addBox(sideWidth,h,wall,dwellingWallMat,doorW/2+sideWidth/2,floorY+h/2,halfD-wall/2);
   addBox(doorW,h-doorH,wall,dwellingWallMat,0,floorY+doorH+(h-doorH)/2,halfD-wall/2);
 
-  // Cantos e molduras para uma silhueta legível à distância.
   for(const sx of [-1,1])for(const sz of [-1,1])
     addBox(.34*scale,h+.2*scale,.34*scale,dwellingTrimMat,sx*(halfW-.12*scale),floorY+h/2,sz*(halfD-.12*scale));
   addBox(w+.25*scale,.3*scale,.35*scale,paleWood,0,floorY+h*.58,halfD+.08*scale);
   addBox(w+.25*scale,.3*scale,.35*scale,paleWood,0,floorY+h*.58,-halfD-.08*scale);
 
-  // Portal escuro, ombreiras e folha da porta aberta.
-  // O vão central permanece aberto; a folha girada não bloqueia a entrada.
+  // Entrada livre com folha articulada aberta para o lado externo.
   addBox(.22*scale,doorH+.25*scale,.24*scale,paleWood,-doorW/2-.15*scale,floorY+doorH/2,halfD+.18*scale);
   addBox(.22*scale,doorH+.25*scale,.24*scale,paleWood,doorW/2+.15*scale,floorY+doorH/2,halfD+.18*scale);
   addBox(doorW+.55*scale,.24*scale,.30*scale,paleWood,0,floorY+doorH+.08*scale,halfD+.18*scale);
@@ -1226,7 +1235,7 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   doorLeaf.position.set(doorW*.44,doorH*.455,0);doorLeaf.castShadow=true;hinge.add(doorLeaf);
   hinge.rotation.y=-.92;
 
-  // Janelas frontais iluminadas e emolduradas.
+  // Janelas frontais emissivas, com moldura e travessa.
   const windowW=2.05*scale,windowH=2.35*scale,windowY=floorY+3.55*scale,windowZ=halfD+.18*scale;
   for(const sx of [-1,1]){
     const wx=sx*(doorW/2+sideWidth*.55);
@@ -1236,19 +1245,16 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
     addBox(windowW,.12*scale,.10*scale,paleWood,wx,windowY,windowZ+.16*scale);
   }
   for(const sx of [-1,1]){
-    const glass=addBox(.08*scale,1.75*scale,2.0*scale,dwellingGlassMat,sx*(halfW+.07*scale),floorY+3.5*scale,0);
-    glass.rotation.y=sx*Math.PI/2;
-    addBox(.16*scale,2.1*scale,2.35*scale,dwellingTrimMat,sx*(halfW+.04*scale),floorY+3.5*scale,0).rotation.y=sx*Math.PI/2;
+    addBox(.08*scale,1.75*scale,2.0*scale,dwellingGlassMat,sx*(halfW+.07*scale),floorY+3.5*scale,0,sx*Math.PI/2);
+    addBox(.16*scale,2.1*scale,2.35*scale,dwellingTrimMat,sx*(halfW+.04*scale),floorY+3.5*scale,0,sx*Math.PI/2);
   }
 
-  // Telhado de duas águas com acabamento musgoso e cumeeira.
-  const roofL=addBox(w*.62,.58*scale,d+1.5*scale,dwellingRoofMat,-w*.235,floorY+h+.72*scale,0);
-  roofL.rotation.z=.30;
-  const roofR=addBox(w*.62,.58*scale,d+1.5*scale,dwellingRoofMat,w*.235,floorY+h+.72*scale,0);
-  roofR.rotation.z=-.30;
+  // Telhado de duas águas.
+  addBox(w*.62,.58*scale,d+1.5*scale,dwellingRoofMat,-w*.235,floorY+h+.72*scale,0,0,.30);
+  addBox(w*.62,.58*scale,d+1.5*scale,dwellingRoofMat,w*.235,floorY+h+.72*scale,0,0,-.30);
   addBox(.5*scale,.48*scale,d+1.7*scale,paleWood,0,floorY+h+1.85*scale,0);
 
-  // Varanda frontal com guarda-corpo.
+  // Varanda frontal com proteção lateral.
   const porchZ=halfD+1.55*scale;
   addBox(w*.82,.28*scale,2.6*scale,woodMat,0,floorY-.05*scale,porchZ);
   for(const sx of [-1,1]){
@@ -1259,15 +1265,22 @@ function buildReadableDwelling(parent,x,z,floorY,scale=1,elevated=false){
   }
   addBox(w*.82,.16*scale,.18*scale,paleWood,0,floorY+1.02*scale,porchZ+.95*scale);
 
-  // Mobiliário simples e luz quente no interior.
+  // Mobiliário e luz interna; os vidros também emitem luz sem depender dela.
   addBox(3.4*scale,.42*scale,2.5*scale,paleWood,-2.2*scale,floorY+.45*scale,-1.7*scale);
   addBox(3.0*scale,.18*scale,2.15*scale,mossFloorMat,-2.2*scale,floorY+.72*scale,-1.7*scale);
   addBox(1.8*scale,.85*scale,1.2*scale,woodMat,2.0*scale,floorY+.55*scale,-1.3*scale);
   addBox(2.2*scale,.18*scale,.85*scale,paleWood,2.0*scale,floorY+1.02*scale,-1.3*scale);
   const roomLight=new THREE.PointLight(0xffc477,3.0*scale,30*scale,1.7);
   roomLight.position.set(0,floorY+3.2*scale,-1.0*scale);house.add(roomLight);
-  const porchLight=new THREE.PointLight(0xffd18a,1.1*scale,12*scale,2);
-  porchLight.position.set(0,floorY+3.0*scale,halfD+1.2*scale);house.add(porchLight);
+
+  // Uma malha por material, em vez de dezenas de objetos separados por casa.
+  for(const [mat,b] of boxBuckets){
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(b.p,3));
+    geometry.setAttribute('uv',new THREE.Float32BufferAttribute(b.uv,2));
+    geometry.setIndex(b.idx);geometry.computeVertexNormals();geometry.computeBoundingSphere();
+    const mesh=new THREE.Mesh(geometry,mat);mesh.castShadow=true;mesh.receiveShadow=true;house.add(mesh);
+  }
 
   const doorZ=z+halfD+3.0*scale;
   registerWalkablePath([[x,floorY,doorZ],[x,floorY,z+halfD+.6*scale],[x,floorY,z],[x,floorY,z-halfD+1.4*scale]],2.7*scale,'house');
