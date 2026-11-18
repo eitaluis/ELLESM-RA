@@ -979,6 +979,53 @@ function addOpenOvoidPod(parent,x,y,z,rx,ry,rz,mat=woodMat,frontAngle=Math.PI/2)
   geo.setAttribute('uv',new THREE.Float32BufferAttribute(outUV,2));geo.computeVertexNormals();source.dispose();
   const shell=new THREE.Mesh(geo,mat);shell.castShadow=true;shell.receiveShadow=true;parent.add(shell);return shell;
 }
+function addHexagonalLivingShell(parent,x,y,z,rx,ry,rz,mat=woodMat,door=true){
+  // Seis painéis arqueados de madeira viva entrelaçada; o painel frontal mantém a abertura da porta.
+  const positions=[],uvs=[],indices=[],rows=14,cols=6;
+  for(let face=0;face<6;face++){
+    const a0=-Math.PI/6+face*Math.PI/3,base=positions.length/3;
+    for(let row=0;row<=rows;row++){
+      const t=row/rows*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6));
+      for(let col=0;col<=cols;col++){
+        const u=col/cols,a=a0+u*Math.PI/3;
+        const wobble=1+.018*Math.sin(face*2.3+u*8+t*5);
+        positions.push(x+Math.sin(a)*rx*profile*wobble,y+t*ry,z+Math.cos(a)*rz*profile*wobble);
+        uvs.push(u,t*.5+.5);
+      }
+    }
+    for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+      const t=(row+.5)/rows*2-1,u=(col+.5)/cols;
+      // O vão frontal vai do piso até a altura de uma pessoa, sob o arco simbólico.
+      if(door&&face===0&&u>.34&&u<.67&&t<-.05&&t>-.92)continue;
+      const a=base+row*(cols+1)+col,b=a+1,d=base+(row+1)*(cols+1)+col,e=d+1;
+      indices.push(a,b,d,b,e,d);
+    }
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+  const shell=new THREE.Mesh(geo,mat);shell.castShadow=true;shell.receiveShadow=true;parent.add(shell);
+  // Linhas de fibras entrelaçadas atravessam cada painel, deixando visível a construção.
+  for(let face=0;face<6;face++){
+    const a0=-Math.PI/6+face*Math.PI/3;
+    for(let row=1;row<rows;row+=2){
+      const t=row/rows*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),pts=[];
+      for(let col=0;col<=6;col++){
+        const u=col/6,a=a0+u*Math.PI/3,wobble=1+.018*Math.sin(face*2.3+u*8+t*5);
+        pts.push([x+Math.sin(a)*rx*profile*wobble,y+t*ry,z+Math.cos(a)*rz*profile*wobble]);
+      }
+      addOrganicTube(parent,pts,.065,.045,row%4?woodMat:paleWood,5,14,.10);
+    }
+    for(let col=1;col<=5;col+=2){
+      const u=col/6,pts=[];
+      for(let row=0;row<=8;row++){
+        const t=row/8*2-1,profile=.84+.16*(1-Math.pow(Math.abs(t),1.6)),a=a0+u*Math.PI/3;
+        pts.push([x+Math.sin(a)*rx*profile,y+t*ry,z+Math.cos(a)*rz*profile]);
+      }
+      addOrganicTube(parent,pts,.075,.045,woodMat,5,18,.10);
+    }
+  }
+  return shell;
+}
 function addResidenceFloor(parent,x,y,z,rx,rz,mat=mossFloorMat){
   const floor=new THREE.Mesh(new THREE.CircleGeometry(1,48),mat);floor.rotation.x=-Math.PI/2;
   floor.position.set(x,y+.04,z);floor.scale.set(rx,rz,1);floor.receiveShadow=true;parent.add(floor);return floor;
@@ -1343,17 +1390,26 @@ function buildTialdari(parent,x,y,z){
 function buildHexagonalResidence(parent,x,y,z,scale=1){
   addLivingTrunk(parent,x,y,z,28*scale,2.8*scale,.6*scale,-.4*scale);
   const lowY=y+4*scale,upperY=y+8.2*scale;
-  addOpenOvoidPod(parent,x,lowY,z,7.2*scale,3.6*scale,6.7*scale,woodMat,Math.PI/2);
-  addOpenOvoidPod(parent,x,upperY,z,3.6*scale,2.1*scale,3.35*scale,paleWood,Math.PI/2);
+  addHexagonalLivingShell(parent,x,lowY,z,7.2*scale,3.6*scale,6.7*scale,woodMat,true);
+  addHexagonalLivingShell(parent,x,upperY,z,3.6*scale,2.1*scale,3.35*scale,paleWood,true);
   const lowFloor=lowY-3.17*scale,upperFloor=upperY-1.85*scale;
   addResidenceFloor(parent,x,lowFloor,z,5.9*scale,5.2*scale,mossFloorMat);addResidenceFloor(parent,x,upperFloor,z,2.8*scale,2.65*scale,mossFloorMat);
   addLivingDoorFrame(parent,x,lowFloor,z+6.2*scale,2.2*scale,3.0*scale);addLivingDoorFrame(parent,x,upperFloor,z+3.1*scale,1.7*scale,2.2*scale);
+  // Sombra recuada no vão da fachada: a porta parece escura, mas permanece aberta à navegação.
+  addOval(parent,x,lowFloor+1.45*scale,z+6.05*scale,.82*scale,1.42*scale,.07*scale,darkMat,14);
+  addOval(parent,x,upperFloor+1.05*scale,z+3.0*scale,.62*scale,1.0*scale,.06*scale,darkMat,12);
+  // Símbolos orgânicos entalhados no arco frontal, em vez de moldura reta.
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2;
     addOrganicTube(parent,[[x+Math.cos(a)*7.0*scale,y+1.5*scale,z+Math.sin(a)*6.5*scale],[x+Math.cos(a)*7.6*scale,y+5*scale,z+Math.sin(a)*7.0*scale],
       [x+Math.cos(a)*4.0*scale,y+10*scale,z+Math.sin(a)*3.8*scale],[x+Math.cos(a)*.4*scale,y+11*scale,z+Math.sin(a)*.4*scale]],.38*scale,.11*scale,paleWood,8,20,.12);
     const jewelColors=[0x367f72,0x586caa,0x9b7050,0x547d52,0x926e9c,0x9b8751];
     const gem=new THREE.MeshStandardMaterial({color:jewelColors[i],roughness:.22,metalness:.12,side:THREE.DoubleSide});
     addOval(parent,x+Math.cos(a)*6.5*scale,y+4.4*scale,z+Math.sin(a)*6.0*scale,.50*scale,.9*scale,.18*scale,gem,10);}
+  for(let glyph=0;glyph<3;glyph++){
+    const gx=x+(glyph-1)*.55*scale;
+    addOrganicTube(parent,[[gx,lowFloor+2.55*scale,z+6.28*scale],[gx+.18*scale,lowFloor+2.78*scale,z+6.34*scale],
+      [gx,lowFloor+2.98*scale,z+6.28*scale]],.055*scale,.035*scale,paleWood,5,8,.04);
+  }
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2,px=x+Math.cos(a)*7.3*scale,pz=z+Math.sin(a)*6.8*scale;
     addOrganicTube(parent,[[px,y+6.7*scale,pz],[x+Math.cos(a)*6.3*scale,y+7.3*scale,pz-Math.sin(a)*.3],[x+Math.cos(a)*4.3*scale,y+8.3*scale,z+Math.sin(a)*4.0*scale]],.23*scale,.08*scale,woodMat,6,11,.1);}
   const spiral=[];for(let i=0;i<=64;i++){const t=i/64,a=t*Math.PI*2*2.0,rr=1.2+t*2.7;spiral.push([x+Math.cos(a)*rr*scale,lowFloor+t*(upperFloor-lowFloor),z+Math.sin(a)*rr*scale]);}
