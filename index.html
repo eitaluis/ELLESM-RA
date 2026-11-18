@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ellesméra — V27 · pontes em arco e praça da copa</title>
+<title>Ellesméra — V28 · cidade habitada e vida na floresta</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="fase">FASES 1–5 — ELLESMÉRA V27 · ÁRVORES RETORCIDAS E NÉVOA</div>
+<div id="fase">FASES 1–6 — ELLESMÉRA V28 · INTERIORES E VIDA NA FLORESTA</div>
 <div id="hud">
-  <b>Ellesméra — floresta viva V27</b><br>
+  <b>Ellesméra — floresta viva V28</b><br>
   WASD mover · Mouse olhar · Shift correr · Espaço pular<br>
   <b>H</b> núcleo da cidade · <b>J</b> base da escada principal · <b>G</b> Menoa<br>
   <b>M</b>/<b>N</b> teletransportar · <b>TAB</b> minimapa · <b>O</b> som
@@ -22,7 +22,7 @@
 <div id="aviso-layout">Layout provisório de produção — não canônico</div>
 <div id="start"><div>
   <b>ELLESMÉRA — FLORESTA VIVA V27</b><br><br>
-  Moradias orgânicas, pontes arqueadas com circulação livre e um pavilhão suspenso no alto da copa.<br><br>
+  Moradias mobiliadas, espaços comunitários e vida silvestre em movimento entre as copas.<br><br>
   Clique para entrar.<br>
   <span style="color:#8ab98a">WASD · mouse · Shift · Espaço · H cidade · J escada · G Menoa · O som ambiente</span>
 </div></div>
@@ -41,16 +41,28 @@ const files = [
   './js/04-forest-architecture.js',
   './js/05-architecture-menoa.js',
   './js/06-menoa-minimap.js',
-  './js/07-minimap-player.js'
+  './js/07-minimap-player.js',
+  './js/08-forest-life.js'
 ];
-for (const src of files) {
-  await new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error('Falha ao carregar ' + src));
-    document.body.appendChild(script);
-  });
+try {
+  for (const src of files) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Falha ao carregar ' + src));
+      document.body.appendChild(script);
+    });
+  }
+} catch (error) {
+  console.error('Falha ao iniciar Ellesméra:', error);
+  const fase = document.getElementById('fase');
+  const start = document.getElementById('start');
+  if (fase) fase.textContent = 'ERRO AO CARREGAR A FLORESTA';
+  if (start) {
+    start.style.display = 'flex';
+    start.innerHTML = '<div><b>Não foi possível iniciar Ellesméra.</b><br><br>Um dos módulos falhou ao carregar. Atualize a página e tente novamente.<br><br><span style="color:#d5a47c">Abra o console do navegador (F12) para ver o arquivo responsável.</span></div>';
+  }
 }
 </script>
 </body>
